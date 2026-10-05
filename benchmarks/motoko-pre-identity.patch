@@ -1,0 +1,81 @@
+--- a/motoko/src/lib.mo
++++ b/motoko/src/lib.mo
+@@ -471,7 +471,6 @@
+     var outputSize = 0;
+     var bytes : [var Nat8] = [var];
+     var writing = false;
+-    var matching = true;
+     func reserve(length : Nat) : Nat {
+       let start = outputSize;
+       if (not failed()) {
+@@ -483,16 +482,6 @@
+     };
+     func add(source : Blob) {
+       let start = reserve(source.size());
+-      if (not writing and matching and not failed()) {
+-        if (start > data.size() or source.size() > Prim.abs((data.size() : Int) - start)) matching := false
+-        else {
+-          var i = 0;
+-          while (i < source.size() and matching) {
+-            if (source[i] != data[start + i]) matching := false;
+-            i += 1
+-          }
+-        }
+-      };
+       if (writing and not failed()) {
+         var i = 0;
+         while (i < source.size()) { bytes[start + i] := source[i]; i += 1 }
+@@ -500,9 +489,6 @@
+     };
+     func span(offset : Nat, length : Nat) {
+       let start = reserve(length);
+-      // Aligned input spans are identical without reading their bytes. Once
+-      // output shifts, use the writer; do not scan large shifted payloads.
+-      if (not writing and matching and length != 0 and offset != start) matching := false;
+       if (writing and not failed()) {
+         var i = 0;
+         while (i < length) { bytes[start + i] := data[offset + i]; i += 1 }
+@@ -510,25 +496,6 @@
+     };
+     func floats(offset : Nat, count : Nat, size : Nat) {
+       let start = reserve(count * size);
+-      if (not writing and matching and count != 0 and not failed()) {
+-        if (offset != start) matching := false
+-        else {
+-          let canonical : Blob = if (size == 4) "\00\00\c0\7f"
+-            else "\00\00\00\00\00\00\f8\7f";
+-          var i = 0;
+-          while (i < count and matching) {
+-            let source = offset + i * size;
+-            if (isNaN(data, source, size)) {
+-              var j = 0;
+-              while (j < size and matching) {
+-                if (data[source + j] != canonical[j]) matching := false;
+-                j += 1
+-              }
+-            };
+-            i += 1
+-          }
+-        }
+-      };
+       if (writing and not failed()) {
+         var i = 0;
+         while (i < count) {
+@@ -549,9 +516,6 @@
+     };
+     func octet(b : Nat8) {
+       let start = reserve(1);
+-      if (not writing and matching and not failed()) {
+-        if (start >= data.size() or data[start] != b) matching := false
+-      };
+       if (writing and not failed()) bytes[start] := b
+     };
+     func num(n : Int, signed : Bool) {
+@@ -640,7 +604,6 @@
+       }
+     };
+     message();
+-    if (not failed() and matching and outputSize == data.size()) return #ok(input);
+     if (not failed()) {
+       bytes := Prim.Array_init<Nat8>(outputSize, 0);
+       outputSize := 0;

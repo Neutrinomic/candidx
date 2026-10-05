@@ -1,0 +1,64 @@
+{
+  "language": "Motoko",
+  "runtime": "WASI / Wasmtime with fuel instrumentation; fuel is not IC cycles",
+  "cases": [
+    {
+      "name": "float64-canonical",
+      "ordinary_bytes": 32779,
+      "canonical_bytes": 32779,
+      "canonicalize_preencoded": {
+        "median_us": 1462.3102000000001,
+        "min_us": 1458.3983,
+        "max_us": 1481.1161,
+        "median_fuel": 9022550.8,
+        "allocated_bytes_per_op": 304336.0,
+        "iterations_per_trial": 10,
+        "trials": 7
+      }
+    },
+    {
+      "name": "float64-nan-first",
+      "ordinary_bytes": 32779,
+      "canonical_bytes": 32779,
+      "canonicalize_preencoded": {
+        "median_us": 1485.6091000000001,
+        "min_us": 1465.8442,
+        "max_us": 1494.9521,
+        "median_fuel": 9022632.7,
+        "allocated_bytes_per_op": 304336.0,
+        "iterations_per_trial": 10,
+        "trials": 7
+      }
+    },
+    {
+      "name": "float64-nan-last",
+      "ordinary_bytes": 32779,
+      "canonical_bytes": 32779,
+      "canonicalize_preencoded": {
+        "median_us": 1474.0531999999998,
+        "min_us": 1455.4292,
+        "max_us": 1478.1562,
+        "median_fuel": 9022549.5,
+        "allocated_bytes_per_op": 304336.0,
+        "iterations_per_trial": 10,
+        "trials": 7
+      }
+    },
+    {
+      "name": "text-64k",
+      "ordinary_bytes": 65546,
+      "canonical_bytes": 65546,
+      "canonicalize_preencoded": {
+        "median_us": 2439.459,
+        "min_us": 2393.814,
+        "max_us": 2489.723,
+        "median_fuel": 20754473.3,
+        "allocated_bytes_per_op": 595416.0,
+        "iterations_per_trial": 10,
+        "trials": 7
+      }
+    }
+  ],
+  "codec_source_sha256": "c039b5cfefd4a06211f1ab0d1ff5114ef3f1f3e29906aee4cf19c7e36a837662",
+  "harness_source_sha256": "a86f48e4222cf69e768866a4ad75f9b0531bc19263f8b2632cd04935d3e8d3b8"
+}

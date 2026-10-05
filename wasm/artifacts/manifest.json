@@ -1,0 +1,123 @@
+{
+  "profile": "cx",
+  "package_version": "1.0.0",
+  "license": "MIT (CandidX source); see THIRD_PARTY_NOTICES.md for linked upstream artifacts",
+  "rust_source_sha256": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+  "artifacts": {
+    "cx.wasm": {
+      "sha256": "8789214dae6638840c021ab9f5730aa7f64baadb9a086b0af415672bb57f2cec",
+      "bytes": 61849
+    },
+    "mo-rts.wasm": {
+      "sha256": "13832fceda4cf6ebd7778f8cac8573d1a714a2db90297315c8e3bb134a08e7ce",
+      "bytes": 283788
+    },
+    "mo-rts-debug.wasm": {
+      "sha256": "185a6cc7893b4682ba495aa8adb13c22142b5c15892d4d9c18a3babfd12ef852",
+      "bytes": 9641562
+    }
+  },
+  "motoko_base_commit": "9384e1076bf71c1c44b78627b9191011d8543deb",
+  "compiler_worktree": "/srv/shared/code/candidx/wasm/_build/motoko",
+  "compiler_patch_sha256": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+  "rust_sources_sha256": {
+    "src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "Cargo.toml": "fd83fe1e11837b1efec339b3365191ebcedb6b5610511ac0e0b3280379f0374b",
+    "Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5"
+  },
+  "wasm_sources_sha256": {
+    "src/lib.rs": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49",
+    "Cargo.toml": "2dc57445a73f1650d792a65884a545fd2b0f5766ad6409b7f08b427825616e8c",
+    "Cargo.lock": "026f3d8320bff9c9514abed77c9896c1321c1e62af7bfabd936582b79da5ca4e"
+  },
+  "standalone_toolchain": "1.98.1",
+  "compiler_js_embedded_rts_source_sha256": "f1599f1c487f9e1cd812c9d514ba2da4efaae6b62bad3ceb6fbba1767f8019a8",
+  "compiler_sources_sha256": {
+    "Changelog.md": "a0e129cb6a5027850b9b2957052302e41ce27d04e180e4d95b0de358463d1161",
+    "rts/motoko-rts/Cargo.lock": "ebeea0bd80ae5cc44e05370ddb7d2883f8f665c79577a7542363d7833883039e",
+    "rts/motoko-rts/Cargo.toml": "c95f3292c3fb03af14d962c0bd2d3e7529167e9533625b15142c5aa5cf8a46eb",
+    "rts/motoko-rts/src/allocator.rs": "879ecb95475df33bfd9b275355c734a8bb35872550268465f12773dcdf505503",
+    "rts/motoko-rts/src/candidx.rs": "4db4e99e098ba76c80126fdd355c60781e85a976fe0beddfb5671a2faee71448",
+    "rts/motoko-rts/src/lib.rs": "11f169fa2a4540a39ec6136b46f60022b1a475d88a78b46c8b1f5624f0a99cfd",
+    "rts/motoko-rts/src/text.rs": "49740e4fb945d26eb727697534dd40afd5c99336058635bfde55e4624992bff2",
+    "src/codegen/compile.ml": "647735a4ac6592582290e65badf354fe322a3e8158bfc827e8f5a6df7b85d920",
+    "src/gen-grammar/grammar.sed": "5b8c3fbfd9d2d5e772d4a530f513889e7fb7b29dfb70ffff3cf82078dd5f0fc3",
+    "src/idllib/escape.ml": "12150ad287f9ddd88a9518d51a5e34f755f2ea70b97d196a2c512bff1880dddb",
+    "src/ir_def/arrange_ir.ml": "3fb11bedb37732b2058c693834881aa6aa357960d5b2a4257a22fac201da9847",
+    "src/ir_def/check_ir.ml": "e81b78d7fe70850cfc9a70ac34d914e02ac78717ab89fbcf7d6e620474e0fe70",
+    "src/ir_def/construct.ml": "543f7436c3c0cee344dea071b8ab23f06f0fde9d94a7b173cd741dd72e53fa2b",
+    "src/ir_def/ir.ml": "b9143f6dfd853965d32680ff58f59d127e723944b3e29dadddd6da3f2f30fb30",
+    "src/ir_interpreter/interpret_ir.ml": "a350eb13774e5203ee9397d79c45ca3c41fb245cfd27b3df91579c70bc81561b",
+    "src/js/astjs.ml": "8b06710f79bc68d1dabfd3cb6b812457cf7106833eb2790af86a3fd1b86c8fd3",
+    "src/lowering/desugar.ml": "cb937562b448d2afc1c35f25dffe0110a4b53042b20bd50ff2065dd1fbff65bb",
+    "src/mo_def/arrange.ml": "7b0c1fc151bdaabd2522a48138ce6a0194ae2b35454c984ec23307af86cd850a",
+    "src/mo_def/syntax.ml": "0ddea454bbab9e311cc34c91baeaa160a4f028ee74a90bb34092e4d9434f75fa",
+    "src/mo_frontend/definedness.ml": "250335b15e7d63823cfa1b3e1b3d2ca2bb8c68cb35b4af960eb8d2796ab5983d",
+    "src/mo_frontend/effect.ml": "bbbd97634a1d1b463936f2e4c0db5c51e176582564d99662f3ab64681ea6f32e",
+    "src/mo_frontend/error_reporting.ml": "0f9d59fd4df4fcb22e0e2d58e2af134b8a2ee76b6cee86e10443eb39766a2b7a",
+    "src/mo_frontend/parser.mly": "d8b0031059081dfd93fb85951a6026608a0b7d487cb532d51baa3420a7f2408a",
+    "src/mo_frontend/printers.ml": "a334b435d9481454c659164f02b93d61a9f48c55f1dd32161ed0cb8e4338e39d",
+    "src/mo_frontend/source_lexer.mll": "c89fe8a8ce295155ae017b5abfbbbea6720fc9201146c5ad4a8a47eaadcf803a",
+    "src/mo_frontend/source_token.ml": "a20527ad2a0eccf7a0fa59795c0034ea76f741e5aa00c9280442b60746208a4a",
+    "src/mo_frontend/static.ml": "d79b95d7969c8ff173d86f164e0c6397fe98661042a8be4c41d1d9594de1856b",
+    "src/mo_frontend/traversals.ml": "cb9f1e6f8e3445e4c39f64fe1a18649dbdc97266415c143d04aaa1280b21ee87",
+    "src/mo_frontend/typing.ml": "798798007473de0494f98228caaa9f2336568776b92249af1134c27b75e4c9a7",
+    "src/mo_interpreter/interpret.ml": "ed2f16701d85ba39ee734a17fe49b1245382ff8ce5c3a40f073231b36b66b95f",
+    "src/mo_values/candidx.ml": "a27b042d0fe9e45d5559d3fcaadef3113c0670618b61672bf3413c6b824d32a6",
+    "src/mo_values/candidx.mli": "aa0a6f58eeeed7d910e26b2cbc7fad88991fae3cc57e287d3679f842f38117b3",
+    "src/mo_values/prim.ml": "3e438fd29812bdf4de1bfe3122c1302368a04359b7dd92497a6d32566b798bb4",
+    "src/prelude/prim.mo": "01f1d89fd9b7c73c11e608bd8f8d54487659abe9ad8a99c7bec2aea1e751022b",
+    "test/fail/cx-direct-nonshared.mo": "8742aa29bfc286ce6be43ad2bbb6cd4b93228d8268cbee7b59f1420d11db83fb",
+    "test/fail/ok/cx-direct-nonshared.tc-human.ok": "64dab2107e9760f1734ab8d80a3f3fbcc7bbf1bf4ff143b586ba140b86776cb4",
+    "test/fail/ok/cx-direct-nonshared.tc-human.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/fail/ok/cx-direct-nonshared.tc.ok": "020728723f76fa50acb687f86db9ae206eb67002abc0e325ac45f345cc8206b1",
+    "test/fail/ok/cx-direct-nonshared.tc.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/run/cx-candid.mo": "918520acaf522af39c84aefbd8a521475f6c22f6664bb7956f225c93d5e70276",
+    "test/run/cx-direct-candid.mo": "9dcb6491a52eb63f6bd2c0ad9ffc3ea86c036ba6bd457e605371b677558345e0",
+    "test/trap/cx-direct-depth.mo": "b2264b5d358f7083ae7f350b99f140e6a42034645af006f8504e44addcf540f4",
+    "test/trap/cx-direct-function.mo": "ad95b486832b0b52120f4cd7412d4518398cec0dd64504a97eb0b12c04db12b7",
+    "test/trap/cx-direct-service.mo": "c8d2ea609b5bdfe5e4e8f378ecfd2894c14d9e79b253ebd10e337e6c1a1c578d",
+    "test/trap/cx-direct-unused-duplicate.mo": "8dd316a09bfbf2a069cc69ac7addc4abecde0d95931db31ce29becc4c67e5c65",
+    "test/trap/ok/cx-direct-depth.run-ir.ok": "d6ba283db82007221029de477b60d7c8f5b534e644dcacd1af5ec78d18b29fde",
+    "test/trap/ok/cx-direct-depth.run-low.ok": "d6ba283db82007221029de477b60d7c8f5b534e644dcacd1af5ec78d18b29fde",
+    "test/trap/ok/cx-direct-depth.run.ok": "d6ba283db82007221029de477b60d7c8f5b534e644dcacd1af5ec78d18b29fde",
+    "test/trap/ok/cx-direct-depth.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/trap/ok/cx-direct-depth.wasm-run.ok": "f1b80c04b868d49d499cfa841693d4fd3f3c437ba4ce3580207593cacba73d9b",
+    "test/trap/ok/cx-direct-depth.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5",
+    "test/trap/ok/cx-direct-function.run-ir.ok": "5e932bf3dd98d975bb47238fa9204865ee536df61bdb20e9ed7cfbef5b75ee25",
+    "test/trap/ok/cx-direct-function.run-low.ok": "5e932bf3dd98d975bb47238fa9204865ee536df61bdb20e9ed7cfbef5b75ee25",
+    "test/trap/ok/cx-direct-function.run.ok": "5e932bf3dd98d975bb47238fa9204865ee536df61bdb20e9ed7cfbef5b75ee25",
+    "test/trap/ok/cx-direct-function.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/trap/ok/cx-direct-service.run-ir.ok": "649a9c4bdd0e14c3b559e60dc25e58cfa544fc56f96db123de62da1d0b226aa7",
+    "test/trap/ok/cx-direct-service.run-low.ok": "649a9c4bdd0e14c3b559e60dc25e58cfa544fc56f96db123de62da1d0b226aa7",
+    "test/trap/ok/cx-direct-service.run.ok": "649a9c4bdd0e14c3b559e60dc25e58cfa544fc56f96db123de62da1d0b226aa7",
+    "test/trap/ok/cx-direct-service.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/trap/ok/cx-direct-service.wasm-run.ok": "d39ed3d5f78480f3fc9ba82fb52e3add9657c85627d3391b81bf690aafa72437",
+    "test/trap/ok/cx-direct-service.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5",
+    "test/trap/ok/cx-direct-unused-duplicate.run-ir.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
+    "test/trap/ok/cx-direct-unused-duplicate.run-low.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
+    "test/trap/ok/cx-direct-unused-duplicate.run.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
+    "test/trap/ok/cx-direct-unused-duplicate.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
+    "test/trap/ok/cx-direct-unused-duplicate.wasm-run.ok": "56330c23799ad50fb5bf50f3b3dbcea1e76797152fb9f9cc79907d101a4c4de0",
+    "test/trap/ok/cx-direct-unused-duplicate.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5"
+  },
+  "compiler_build_artifacts": {
+    "src/_build/default/exes/moc.exe": {
+      "sha256": "0b13d798a8836a4aa95412d0fbc80614a254a38f406e40298d7284c2e288988d",
+      "bytes": 17189776
+    },
+    "src/_build/default/js/moc_js.bc.js": {
+      "sha256": "8192d4744b073fd5d7a1357028be0ca78037977bbcc9678a6f9502e044ad5267",
+      "bytes": 3140427
+    },
+    "src/_build/default/js/moc_interpreter.bc.js": {
+      "sha256": "ce33fb33de7cf5fbf274f03a76f4caa7aac1fdf72b9f04c391f866218f54bb8c",
+      "bytes": 2002173
+    }
+  },
+  "compiler_typed_operator": "to_candid_canonical",
+  "compiler_inbound_primitive": "Prim.canonicalizeCandid"
+}

@@ -1,0 +1,41 @@
+{
+  "name": "candidx",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Value-based canonical Candid encoding",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./candid": {
+      "types": "./dist/candid.d.ts",
+      "default": "./dist/candid.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "@icp-sdk/core": ">=6.1.0 <7"
+  },
+  "peerDependenciesMeta": {
+    "@icp-sdk/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@icp-sdk/core": "^6.1.0",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "profile": "cx",
+  "status": "fixed cx encoding contract; standalone implementation",
+  "sources": {
+    "Motoko": {
+      "path": "/srv/shared/code/motoko_candid",
+      "revision": "9384e1076bf71c1c44b78627b9191011d8543deb",
+      "origin": "https://github.com/caffeinelabs/motoko.git"
+    },
+    "Candid": {
+      "path": "/srv/shared/code/candid_canonical",
+      "revision": "89b7cff95ff706507ced4563f4069379eb50bb7b",
+      "origin": "https://github.com/dfinity/candid.git"
+    },
+    "icp-js-core": {
+      "path": "/srv/shared/code/icp_js_core_canonical",
+      "revision": "28bbb0ab8e63ee3b2acc4c3146ced320bf6e4ada",
+      "origin": "https://github.com/dfinity/icp-js-core.git"
+    },
+    "motoko-core": {
+      "path": "/srv/shared/code/motoko-core",
+      "revision": "d2e7b51eba78e54be784a1ee8a5d5e47fe6848f2",
+      "origin": "https://github.com/dfinity/motoko-core.git"
+    }
+  },
+  "typed_dependencies": {
+    "rust_candid": "0.10.37",
+    "typescript_core": "6.1.0",
+    "motoko_core": "1.0.0"
+  },
+  "fixture_sha256": "878efe14b3f4fb9727dc409bb6d4be20571e46e3afb67e20d7f382975fa4bf86",
+  "scope": "value identity under absent optional record fields/unselected variant cases; no schema ID or hashing API",
+  "performance": "benchmarks/performance.md",
+  "verification": "research/verification.md",
+  "package_version": "1.0.0",
+  "license": "MIT",
+  "wasm_artifacts": "wasm/artifacts/manifest.json",
+  "compiler_integration": "wasm/motoko-compiler.patch",
+  "final_codec_sha256": {
+    "Rust": {
+      "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+      "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+      "rust/src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+      "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f"
+    },
+    "TypeScript": {
+      "ts/src/index.ts": "0ea79fbd4039e81b8d1c0d6166a8a11f03aa9b59fe6a6f30914e1b18e74295ca",
+      "ts/src/codec.ts": "b802f039c25c44157976235b3eb26e69e8417c455445f30ee072a4a84823b750",
+      "ts/src/candid.ts": "7534dd3413ffd5ed81ed0aa855b8d23e2f157f2cde16901c3f91cad544acfaa6",
+      "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9"
+    },
+    "OCaml": {
+      "ocaml/candidx.ml": "fe03d63f891bb713b0e04f3a6853440a0c167da32b0252d2c211cbb6f30539e1",
+      "ocaml/candidx.mli": "76ee926b6025d6005d11eda75d490e76439f244a29c019bb69ebd29895a9586b"
+    },
+    "native Motoko": {
+      "motoko/src/lib.mo": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9"
+    },
+    "Wasm": {
+      "wasm/src/lib.rs": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49",
+      "wasm/runtime.py": "9986027fbe5728160bb52ffb3ecedd30334501708452617a5c8442f24db93884",
+      "wasm/motoko-compiler.patch": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7"
+    }
+  },
+  "direct_encoding": "research/direct_encoding.md",
+  "repository": "https://github.com/Neutrinomic/candidx",
+  "registry_published": false,
+  "upstream_adopted": false,
+  "historical_adapter_verification": "research/verification-normalizers.md",
+  "historical_adapter_performance": "benchmarks/performance-adapters.md",
+  "encoding_paths": {
+    "Rust": "direct CandidType callbacks",
+    "TypeScript": "direct SDK type/value visitor",
+    "OCaml": "direct typed witnesses",
+    "native Motoko": "unchanged ordinary-encode then normalize fallback",
+    "compiler RTS": "direct native heap source visitor",
+    "standalone Wasm": "direct typed-memory nodes"
+  },
+  "historical_validation": {
+    "fixed_suite_passes": 3,
+    "messages_per_fixed_pass_and_backend": 476,
+    "native_optimization_regressions_per_fresh_instance": 870,
+    "fuzz_seeds": 3,
+    "messages_per_independent_normalizer_and_wasm_embedding": 13530,
+    "packages": "research/results/packaging.json",
+    "wasm": "research/results/wasm-validation.json",
+    "heap": "benchmarks/performance-adapters.md",
+    "stage": "adapter-only validation retained separately; excluded from final direct counts",
+    "fixed_reports": [
+      "research/results/final-pass-1.json",
+      "research/results/final-pass-2.json",
+      "research/results/final-pass-3.json"
+    ]
+  },
+  "final_validation": {
+    "stage": "direct-final-v3",
+    "completed_utc": "2026-10-05T00:45:48.435185+00:00",
+    "status": "pass",
+    "fixed_suite_passes": 3,
+    "fixed_reports": [
+      "research/results/direct-final-pass-1.json",
+      "research/results/direct-final-pass-2.json",
+      "research/results/direct-final-pass-3.json"
+    ],
+    "directed_typed_cases_per_implementation_per_pass": 93,
+    "directed_argument_roots": 125,
+    "frozen_golden_cases": 61,
+    "messages_per_normalizer_per_fixed_pass": 476,
+    "native_optimization_regressions_per_fresh_instance": 870,
+    "source_fingerprint_count": 79,
+    "source_maps_identical_across_fixed_fuzz_and_package_reports": true,
+    "sources_changed_during_runs": false,
+    "unit_validation": {
+      "rust_all_features_tests": 27,
+      "rust_no_default_features_tests": 15,
+      "rust_all_targets_clippy": "passed with -D warnings",
+      "typescript_node_tests": 28,
+      "ocaml_native_typed_tests": 66
+    },
+    "fuzz_seeds": 3,
+    "seed_reports": [
+      {
+        "seed": 830749,
+        "seed_hex": "0xcad1d",
+        "report": "research/results/direct-fuzz-cad1d.json",
+        "random_records": 500,
+        "matching_typed_records": 1130,
+        "unused_schema_extension_pairs": 565,
+        "messages_per_normalizer": 5664,
+        "original_value_recoveries": 14490,
+        "vanilla_sdk_decoder_caveats": 352,
+        "corpus_sha256": "08efee2203f03ccd58ea05d1156823516e183cb6676c9fc907252eefc3b0d32c"
+      },
+      {
+        "seed": 20261004,
+        "seed_hex": "0x135288c",
+        "report": "research/results/direct-fuzz-135288c.json",
+        "random_records": 500,
+        "matching_typed_records": 1130,
+        "unused_schema_extension_pairs": 565,
+        "messages_per_normalizer": 5664,
+        "original_value_recoveries": 14490,
+        "vanilla_sdk_decoder_caveats": 346,
+        "corpus_sha256": "ce350f21eaa048410a1b65bdba2294f8267fc211ec2def25f505f3f5afcb9b56"
+      },
+      {
+        "seed": 324508639,
+        "seed_hex": "0x13579bdf",
+        "report": "research/results/direct-fuzz-13579bdf.json",
+        "random_records": 500,
+        "matching_typed_records": 1130,
+        "unused_schema_extension_pairs": 565,
+        "messages_per_normalizer": 5664,
+        "original_value_recoveries": 14490,
+        "vanilla_sdk_decoder_caveats": 328,
+        "corpus_sha256": "5449c74ca8f986823fce0eb1d2da5704c617bb8e547d3328565847f6aa606ec1"
+      }
+    ],
+    "matching_typed_records": 3390,
+    "unused_schema_extension_pairs": 1695,
+    "messages_per_normalizer_and_wasm_embedding": 16992,
+    "independent_saved_oracle_messages": 36453,
+    "independent_oracle": "research/results/direct-fuzz-oracle.json",
+    "original_value_roundtrips": {
+      "status": "pass",
+      "method": "Decoder-only driver modes compare complete values with independently constructed source-schema/value witnesses; no encoder decides equality.",
+      "equality": "Complete argument arity, field presence, option wrappers, variant payloads and recursive data; all non-NaN float bits including signed zero, infinity and subnormal; NaN class; Candid Reserved ignored-value semantics.",
+      "decoders": [
+        "Rust Candid ordinary decoder",
+        "TypeScript decodeCompatible"
+      ],
+      "seeded_output_producers": [
+        "Rust direct",
+        "TypeScript direct",
+        "OCaml direct",
+        "native Motoko fallback",
+        "standalone Wasm typed ABI using Rust",
+        "Motoko compiler/RTS direct using Rust"
+      ],
+      "seeded_cases_per_output_producer_per_decoder_per_seed": 1130,
+      "directed_output_producers": [
+        "Rust direct",
+        "TypeScript direct",
+        "OCaml direct",
+        "standalone Wasm typed ABI using Rust",
+        "Motoko compiler/RTS direct using Rust"
+      ],
+      "directed_cases_per_output_producer_per_decoder_per_run": 93,
+      "seeded_main_recoveries": 40680,
+      "seeded_directed_recoveries": 2790,
+      "seeded_total_recoveries": 43470,
+      "fixed_suite_recoveries": 2790,
+      "successful_recovery_calls_total": 46260,
+      "counting": "Execution counts include the repeated directed corpus; these are not unique values.",
+      "native_original_value_assertions": "Rust, TypeScript and Motoko programs also compare their canonical round trips directly with original native values.",
+      "ocaml_ordinary_decoder": "not available; actual OCaml encoder output is checked by both host decoders",
+      "standalone_wasm_ordinary_decoder": "not supplied; actual Wasm encoder output is checked by both host decoders",
+      "vanilla_sdk_decoder_caveats": "Recorded separately per seed and excluded from successful vanilla SDK recovery; compatible decoding passes."
+    },
+    "constructor_coverage": {
+      "report_field": "constructor_coverage maps record declared kinds, visited values and observed edge classes; directed coverage is under direct_typed_encoders/direct_typed_cases",
+      "inhabited_primitives": [
+        "bool",
+        "float32",
+        "float64",
+        "int",
+        "int16",
+        "int32",
+        "int64",
+        "int8",
+        "nat",
+        "nat16",
+        "nat32",
+        "nat64",
+        "nat8",
+        "null",
+        "principal",
+        "reserved",
+        "text"
+      ],
+      "compound_edges": [
+        "recursive source aliases and finite lists/chains",
+        "record and variant vector joins",
+        "absent optional fields and unused-schema extensions",
+        "None and Some(None)",
+        "explicit null and reserved",
+        "empty/nonempty binary and nonbinary vectors",
+        "zero/single/multiple arguments and numeric tuple labels"
+      ],
+      "scalar_edges": [
+        "both float widths: finite bits, signed zero, infinity, subnormal, NaN class/payload witnesses",
+        "every integer width",
+        "Unicode, BOM, NUL and empty text",
+        "empty/nonempty principal and blob"
+      ],
+      "boundary_checks": "Native unit suites and independent review additionally cover malformed native witnesses, collisions, callback errors, 1024/1025 output-table entries, scalar/output byte bounds, depth and traversal limits.",
+      "source_shorthands": "list and chain denote recursive Candid constructors; kind counters describe the source corpus."
+    },
+    "roundtrip_comparison_guards": {
+      "source": "tests/roundtrip_guard.py",
+      "source_sha256": "c183beb80a2ec694032fc38f0b5ac50f85dadd926f749ee775e41f6d7b42ba6b",
+      "reports": "Embedded in every final fixed-suite and seed report under roundtrip_comparison_guards.",
+      "method": "Independent original/native mutant witnesses; valid decoder inputs from the source-value oracle.",
+      "rust": {
+        "status": "pass",
+        "comparator_cases": 62,
+        "comparator_positive_cases": 13,
+        "comparator_negative_cases": 49,
+        "decoder_positive_cases": 76,
+        "decoder_negative_cases": 47
+      },
+      "typescript": {
+        "status": "pass",
+        "comparator_cases": 62,
+        "comparator_positive_cases": 13,
+        "comparator_negative_cases": 49,
+        "decoder_positive_cases": 76,
+        "decoder_negative_cases": 47
+      },
+      "native_motoko_current": {
+        "status": "pass",
+        "cases": 55,
+        "positive_cases": 13,
+        "negative_cases": 42,
+        "statically_incompatible_cases": [
+          "tuple-arity-missing",
+          "tuple-arity-extra",
+          "root-extra",
+          "root-missing-optional",
+          "root-missing-reserved",
+          "zero-roots-extra",
+          "optional-field-native-arity"
+        ]
+      },
+      "native_motoko_0_16_3": {
+        "status": "pass",
+        "cases": 49,
+        "positive_cases": 11,
+        "negative_cases": 38,
+        "statically_incompatible_cases": [
+          "tuple-arity-missing",
+          "tuple-arity-extra",
+          "root-extra",
+          "root-missing-optional",
+          "root-missing-reserved",
+          "zero-roots-extra",
+          "optional-field-native-arity"
+        ],
+        "unavailable_kinds": [
+          "float32"
+        ],
+        "skipped_count": 6,
+        "skipped_cases": [
+          "float32-signed-zero",
+          "float32-finite",
+          "float32-subnormal",
+          "float32-nan-to-finite",
+          "float32-nan-class",
+          "float32-same-zero"
+        ],
+        "skip_diagnostic": "type error [M0029], unbound type Float32"
+      },
+      "mutation_scope": "Arguments, scalar values and widths, float bits, byte content and lengths, optional wrappers, record presence, variants and recursive tails; NaN/Reserved equality controls."
+    },
+    "packages": "research/results/direct-packaging.json",
+    "package_archive_sha256": {
+      "rust_crate": "477def0c64adc1685cbb54537df034d2006fd0e6befb64392af8e76006ba48b6",
+      "typescript_tarball": "e0c9fabc53fe4606e3e9d58a155e1a0baa3b59728fb6cd515e90a918cb6f6f21"
+    },
+    "wasm": "wasm/artifacts/validation.json",
+    "wasm_shared_codec": "Rust; standalone and RTS embeddings are integration paths, not additional independent codecs",
+    "compiler_patch": {
+      "clean_apply_file_count": 67,
+      "source_fingerprint_count": 76,
+      "patch_sha256": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+      "manifest_sha256": "2095d6f6e8ed0cdc618904a03b32bdd5bfb1f1348fea50bb2de12254cb1a6c1b",
+      "build_binary_fingerprints": 6
+    },
+    "direct_guards": "research/results/direct-guards.json",
+    "independent_direct_review": "research/results/direct-review.json",
+    "rust_cpu_and_allocator_evidence": "research/results/rust-typed-cpu.json",
+    "historical_rust_shape_reuse_allocations": "research/results/rust-direct-allocations.json",
+    "heap": "benchmarks/performance.md"
+  },
+  "source_paths_usage": "Historical checkout provenance only; local paths are not runtime or standalone-package dependencies."
+}

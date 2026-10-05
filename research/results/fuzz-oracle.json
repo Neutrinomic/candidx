@@ -1,0 +1,29 @@
+{
+  "status": "pass",
+  "normalizer": "independent Python research model",
+  "checks": "canonical bytes, idempotence, complete normalized data, external hashes",
+  "runs": [
+    {
+      "directory": "_out/fuzz-cx-final-cad1d-500",
+      "typed_records": 1124,
+      "messages": 4510,
+      "status": "pass",
+      "records_sha256": "011a3ea0574f2e607d26e94c6eb01822c1df81e604fa03156750cbca54aa6ab9"
+    },
+    {
+      "directory": "_out/fuzz-cx-final-13579bdf-500",
+      "typed_records": 1124,
+      "messages": 4510,
+      "status": "pass",
+      "records_sha256": "b10cb0fc97fc4aad175f9422f0105075afac62df0580adade97df27f82d3a03c"
+    },
+    {
+      "directory": "_out/fuzz-cx-final-135288c-500",
+      "typed_records": 1124,
+      "messages": 4510,
+      "status": "pass",
+      "records_sha256": "1b35a0e44f0589c99e0afe2bd7ad41d00c5ae413a011e6bb41c134bef2b957af"
+    }
+  ],
+  "messages": 13530
+}

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cx_wasm_dir="$(cd "$(dirname "$0")" && pwd)"
+cx_compiler_dir="${CX_MOTOKO_DIR:-$cx_wasm_dir/_build/motoko}"
+export MOC_RELEASE_RTS="$cx_compiler_dir/rts/mo-rts.wasm"
+export MOC_DEBUG_RTS="$cx_compiler_dir/rts/mo-rts-debug.wasm"
+exec "$cx_compiler_dir/src/_build/default/exes/moc.exe" "$@"

@@ -1,0 +1,270 @@
+{
+  "status": "pass",
+  "profile": "cx",
+  "package_version": "1.0.0",
+  "recorded_utc": "2026-10-04T20:33:46.819662+00:00",
+  "architecture": {
+    "standalone": "No-import memory32 Wasm, arena allocator, same no_std Rust canonicalizer.",
+    "linked_motoko": "Existing ordinary Candid encoding followed by Prim.canonicalizeCandid(Blob) : Blob in the shared memory64 RTS.",
+    "independent_algorithm": false,
+    "shared_algorithm": "Rust",
+    "hashing_api": false,
+    "application_schema_identifier": false,
+    "compiler_scope": "Local unpublished integration; not a direct typed encoder."
+  },
+  "toolchains": {
+    "standalone_rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "wasmtime_python_standalone": "49.0.0",
+    "wasmtime_cli_compiler_bridge": "45.0.2",
+    "motoko": "Motoko compiler (source 1.16.1-44-g9384e1076-dirty)",
+    "motoko_base_commit": "9384e1076bf71c1c44b78627b9191011d8543deb",
+    "ocaml": "5.4.1, with local Bigarray findlib metadata workaround"
+  },
+  "artifacts": {
+    "cx.wasm": {
+      "sha256": "2c2882b4638192a1b6041c5eac2bff1f173c9d04ad2a587ada87f75b79f5cb06",
+      "bytes": 46807
+    },
+    "mo-rts.wasm": {
+      "sha256": "96e4497e5d564053e079dfef90a28b32bb3a9dd3eb409765ddea9271a31d3088",
+      "bytes": 248489
+    },
+    "mo-rts-debug.wasm": {
+      "sha256": "6f43dc322fff3d76629179e5663c5cacf066f8ec3fb40a112d115f70605eba26",
+      "bytes": 8897572
+    }
+  },
+  "artifact_manifest": {
+    "path": "wasm/artifacts/manifest.json",
+    "sha256": "d4b721564bcc1daa73255d88beaf69a0ba84c2e77cc2b9963faa422a4401e2ed"
+  },
+  "source_sha256": {
+    "rust/src/lib.rs": "dc9ff1de87403586d66482bbc39efe88a162873f55112d88450623c67eb13660",
+    "rust/Cargo.toml": "519a67ffc271e2a660b54772e325164a1bc75ff2a1f66d07d497d16505400600",
+    "rust/Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5",
+    "rust/examples/profile.rs": "9b0f454b6c901d8f11a58a18c2f224b217d84a9106bc30cc26676f77537c3e29",
+    "wasm/src/lib.rs": "33819fe268d79f17fa29e836d07acaf7388680f5bc8dfe6546d0d0cecbe9cab8",
+    "wasm/Cargo.toml": "2dc57445a73f1650d792a65884a545fd2b0f5766ad6409b7f08b427825616e8c",
+    "wasm/Cargo.lock": "026f3d8320bff9c9514abed77c9896c1321c1e62af7bfabd936582b79da5ca4e",
+    "wasm/runtime.py": "c0d37863601432670f4a3ea135f96a9be327f9ef84e6332983f9290a8d9878c6",
+    "wasm/build.py": "7a18acebc7aa396c55b2c95aeaf5fc7eb26bfe1b7b6acb3691b5184409fe750f",
+    "wasm/test.py": "59923d731e91fa6a2dfefcbd36140c88f6a15949568880997afa30490dee287a",
+    "wasm/test_bridge.py": "99369c629cb8b28bfa0c62360314913026e8bada0491318a703dfc72978c714d",
+    "wasm/moc": "6ec9033bc4c8b7917a97a99dab0367761ad9d72e804c80408a693a9eb9e1bb8e",
+    "wasm/adapter.mo": "f5e4b797d338879fed58b638c2cc5ecabacca03bc3b8504e289ead2027d4714c",
+    "wasm/smoke.mo": "2dbf700f2e3bf314e1a835f31d529176805b70506a47dc490a1c8165d1799e31",
+    "wasm/README.md": "64874b9b1c6da6e67da60bd32f5269af3bd9b33f3098ad99190066924fe26352",
+    "wasm/motoko-compiler.patch": "eca68b2cadcf76ee285ad20e5323361cbb9a54341ff6f815c2bc28bfa34820da",
+    "wasm/LICENSE": "e1fafcceec58dd564d18425253ec132d46ad752ecd8110ca414820efeafa2d45",
+    "wasm/THIRD_PARTY_NOTICES.md": "b73b5691129d6b7c195f4abfa0917eeff758d7f2fcd786bdf6241ca9a406c420",
+    "tests/vectors.json": "878efe14b3f4fb9727dc409bb6d4be20571e46e3afb67e20d7f382975fa4bf86"
+  },
+  "compiler_build": {
+    "status": "pass",
+    "completed_commands": [
+      "python3 wasm/build.py --skip-tests",
+      "python3 wasm/build.py --compiler-only"
+    ],
+    "targets": [
+      "native compiler executables",
+      "JS compiler and interpreter targets",
+      "release memory64 RTS",
+      "debug memory64 RTS"
+    ],
+    "test_runner": {
+      "status": "pass",
+      "tests": 4,
+      "command": "test-runner -b -f 'cx-candid|idl-ops|idl-decoding-bug|leb-random' test/run",
+      "cwd": "wasm/_build/motoko inside the Motoko Nix environment",
+      "cases": [
+        "cx-candid",
+        "idl-ops",
+        "idl-decoding-bug",
+        "leb-random"
+      ]
+    },
+    "clean_base_patch_apply_check": true,
+    "patch_apply_base_commit": "9384e1076bf71c1c44b78627b9191011d8543deb",
+    "patch_apply_command": "git -C wasm/_build/patch-check apply --check /srv/shared/code/candidx/wasm/motoko-compiler.patch",
+    "isolated_diff_whitespace_check": true,
+    "upstream_tracked_sources_unchanged": true,
+    "vendored_rust_source_matches_standalone": true,
+    "binary_sha256": {
+      "native_moc": "96ca22160c7881cd444c242e470515ae027ce2c8908bf681acb2a0e2c41493fe",
+      "js_moc": "2c60570d2f52abf0d7f46498d8856575ba7f1b9481e9d27e514554d7c0293742",
+      "js_interpreter": "5d1dbea3d4cceb91c32a56d16f8986b044fdd4dd0237b762107baeae8ba78abf"
+    },
+    "preexisting_js_build_warnings": [
+      "integer truncation of 0xffffffff",
+      "missing caml_unix_map_file_bytecode"
+    ],
+    "new_missing_numeric_primitives": false
+  },
+  "rust_validation": {
+    "status": "pass",
+    "default_features": {
+      "unit_tests": 2,
+      "integration_tests": 3
+    },
+    "no_default_features": {
+      "unit_tests": 2,
+      "integration_tests": 1
+    },
+    "all_features_all_targets_clippy_with_warnings_denied": true,
+    "no_default_features_clippy_with_warnings_denied": true,
+    "no_std_core_external_crate_dependencies": 0,
+    "allocation_profiler": {
+      "path": "rust/examples/profile.rs",
+      "sha256": "9b0f454b6c901d8f11a58a18c2f224b217d84a9106bc30cc26676f77537c3e29"
+    }
+  },
+  "standalone_validation": {
+    "status": "pass",
+    "positive_messages": 3574,
+    "idempotence_checks": 3574,
+    "negative_cases": 30,
+    "arena_reuse_calls": 1000,
+    "module_imports": 0,
+    "memory_bytes": 1114112,
+    "scratch_limit_trap_and_reset": true,
+    "command": "_build/wasm-venv/bin/python wasm/test.py --corpus _out/fuzz-cx-135288c-500/records.json --resource-stress",
+    "cwd": "/srv/shared/code/candidx",
+    "raw_result": {
+      "path": "_out/wasm-standalone-validation.json",
+      "sha256": "9807deb99421ba6d92ac20495bbf1c4732dcca6f2a26153b1f4da1e26f76a44f"
+    },
+    "abi_checks": [
+      "oversized allocation rejected",
+      "invalid and overflowing input spans rejected",
+      "result cleared after reset",
+      "equal-workload memory capacity remains constant"
+    ],
+    "scratch_stress": "Eight 32 MiB ABI allocations fill the arena; the next byte traps with fuel remaining and no result. Reset then successfully normalizes another message."
+  },
+  "compiler_bridge_validation": {
+    "status": "pass",
+    "raw_messages_per_runtime": 3574,
+    "idempotence_checks_per_runtime": 1204,
+    "malformed_trap_checks_per_runtime": 30,
+    "runtimes": [
+      "native OCaml interpreter",
+      "Motoko compiler-emitted memory64 Wasm/RTS"
+    ],
+    "typed_recovery_smoke": true,
+    "rts_scratch_limit_trap": true,
+    "command": "nix develop --command python3 /srv/shared/code/candidx/wasm/test_bridge.py --corpus /srv/shared/code/candidx/_out/fuzz-cx-135288c-500/records.json --resource-stress",
+    "cwd": "/srv/shared/code/motoko_candid",
+    "raw_result": {
+      "path": "_out/wasm-bridge-validation.json",
+      "sha256": "9f427bea39d0cadb668883a6cd7a8601ce597046d9f34c2a24a03c24ce2998ee"
+    },
+    "malformed_traps_have_readable_candidx_error": true,
+    "malformed_traps_have_rts_panic": false,
+    "typed_recovery": "Existing compiler from_candid recovers the original supported schema in wasm/smoke.mo.",
+    "scratch_stress": {
+      "records": 30303,
+      "explicit_null_fields_per_record": 65,
+      "traversal_steps": 1999999,
+      "valid_input_within_codec_limits": true,
+      "trap_message": "CandidX error: scratch byte limit"
+    }
+  },
+  "parent_differential_validation": {
+    "status": "pass",
+    "messages_per_logical_normalizer_and_wasm_embedding": 13530,
+    "logical_normalizers": [
+      "Rust",
+      "TypeScript",
+      "OCaml",
+      "native Motoko"
+    ],
+    "additional_embeddings": [
+      "standalone memory32 Rust/Wasm ABI",
+      "actual compiler-linked memory64 Rust/RTS bridge"
+    ],
+    "runs": [
+      {
+        "path": "_out/fuzz-cx-final-135288c-500/report.json",
+        "sha256": "c717c58c6e5977cdd31bcf5457b6a7dbfd8bc1a91ee154433301a97f8c5079c7",
+        "seed": "0x135288c",
+        "completed_utc": "2026-10-04T20:30:07.365130+00:00",
+        "generation_corpus": {
+          "path": "_out/fuzz-cx-final-135288c-500/corpus.json",
+          "sha256": "012560ef8786f1c9ffff5ae331db875041bd927e254d46511890e6491acb9a44"
+        },
+        "typed_wire_records": {
+          "path": "_out/fuzz-cx-final-135288c-500/records.json",
+          "sha256": "1b35a0e44f0589c99e0afe2bd7ad41d00c5ae413a011e6bb41c134bef2b957af"
+        },
+        "typed_cases": 1124,
+        "schema_extension_pairs": 562,
+        "messages_per_logical_normalizer_and_wasm_embedding": 4510,
+        "sources_changed_during_run": false,
+        "native_motoko_source_sha256": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+        "replay_with_both_wasm_embeddings": "_build/wasm-venv/bin/python tests/fuzz.py --seed 0x135288c --cases 500 --runtime-moc wasm/moc --out _out/fuzz-cx-final-135288c-500"
+      },
+      {
+        "path": "_out/fuzz-cx-final-13579bdf-500/report.json",
+        "sha256": "7f8f822fb32c59ec64ec6bb003d74f2a2931b13c7a61137fd8628f5a1eaddefb",
+        "seed": "0x13579bdf",
+        "completed_utc": "2026-10-04T20:29:21.042104+00:00",
+        "generation_corpus": {
+          "path": "_out/fuzz-cx-final-13579bdf-500/corpus.json",
+          "sha256": "8e6de8e416e918de821c4008bad6acb739abd9d578b54061b58233fc06ce70d5"
+        },
+        "typed_wire_records": {
+          "path": "_out/fuzz-cx-final-13579bdf-500/records.json",
+          "sha256": "b10cb0fc97fc4aad175f9422f0105075afac62df0580adade97df27f82d3a03c"
+        },
+        "typed_cases": 1124,
+        "schema_extension_pairs": 562,
+        "messages_per_logical_normalizer_and_wasm_embedding": 4510,
+        "sources_changed_during_run": false,
+        "native_motoko_source_sha256": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+        "replay_with_both_wasm_embeddings": "_build/wasm-venv/bin/python tests/fuzz.py --seed 0x13579bdf --cases 500 --runtime-moc wasm/moc --out _out/fuzz-cx-final-13579bdf-500"
+      },
+      {
+        "path": "_out/fuzz-cx-final-cad1d-500/report.json",
+        "sha256": "09b14c414879ca072427a2bd0d0d6c3f3ca7e8de61485233ec2731a76e6ab299",
+        "seed": "0xcad1d",
+        "completed_utc": "2026-10-04T20:28:35.983888+00:00",
+        "generation_corpus": {
+          "path": "_out/fuzz-cx-final-cad1d-500/corpus.json",
+          "sha256": "16330787541ddc6c0416c338a29f79bdbb2af9674bfa5377f58b28776c82d283"
+        },
+        "typed_wire_records": {
+          "path": "_out/fuzz-cx-final-cad1d-500/records.json",
+          "sha256": "011a3ea0574f2e607d26e94c6eb01822c1df81e604fa03156750cbca54aa6ab9"
+        },
+        "typed_cases": 1124,
+        "schema_extension_pairs": 562,
+        "messages_per_logical_normalizer_and_wasm_embedding": 4510,
+        "sources_changed_during_run": false,
+        "native_motoko_source_sha256": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+        "replay_with_both_wasm_embeddings": "_build/wasm-venv/bin/python tests/fuzz.py --seed 0xcad1d --cases 500 --runtime-moc wasm/moc --out _out/fuzz-cx-final-cad1d-500"
+      }
+    ],
+    "gc_stress_evidence": "Parent benchmarks/heap.mjs canister stress crossed the 64 MiB allocation partition, retained typed values, and verified reclamation; see benchmarks/performance.md for metrics."
+  },
+  "resource_bounds": {
+    "input_and_output_bytes_each": 33554432,
+    "collection_and_traversal_limit": 2000000,
+    "type_table_entries": 1024,
+    "value_depth": 256,
+    "scalar_leb_bytes": 4096,
+    "standalone_arena_bytes_including_input": 268435456,
+    "standalone_linear_memory_bytes": 536870912,
+    "rts_scratch_requested_bytes_including_rust_blob_headers_and_alignment": 268435456,
+    "rts_returned_blob_separately_bounded": true,
+    "resource_exhaustion": "Reject or trap without partial canonical output; IC trapping messages roll back scratch counter and temporary heap changes."
+  },
+  "remaining_scope_limits": [
+    "Browser JS interpreter execution of the new primitive is outside validation scope.",
+    "The upstream native interpreter lacks ordinary to_candid/from_candid; literal wire inputs establish primitive parity.",
+    "Both Wasm embeddings reuse the Rust algorithm and are not independent normalizers.",
+    "Memory32 and memory64 object footprints differ; scratch exhaustion need not occur on identical messages.",
+    "Post-GC occupied heap is not exact live-object size because the current allocation partition is retained.",
+    "Generated testing provides evidence and is not a formal proof."
+  ],
+  "licensing": "CandidX source MIT; linked Motoko RTS Apache-2.0 and other upstream components retain their licenses in wasm/THIRD_PARTY_NOTICES.md."
+}

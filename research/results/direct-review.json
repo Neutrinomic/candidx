@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "profile": "cx",
+  "status": "pass",
+  "captured_at_utc": "2026-10-04T23:48:28.552315Z",
+  "method": "Independent primary-source review and deterministic local edge/differential tests against the frozen direct implementations.",
+  "scope": [
+    "Rust CandidType callbacks, no_std typed tree, and no_std native source visitor",
+    "TypeScript SDK-schema/native-value visitor and shared writer",
+    "OCaml native descriptors, conversions, record getters, and variant selectors",
+    "Compiler-generated CXTY layout metadata, Motoko RTS heap visitor, and standalone typed-memory ABI"
+  ],
+  "architecture": {
+    "primary_direct_paths": [
+      "Rust CandidType: used-shape callbacks, then direct payload callbacks",
+      "TypeScript: typed value/shape visitor, then direct emitter",
+      "OCaml: native descriptor/getter visit, then direct emitter",
+      "Compiler/RTS: original heap values through DirectSource; static layout metadata and root handles, without a materialized payload tree"
+    ],
+    "ordinary_message_or_parser_on_primary_encode_path": false,
+    "full_payload_tree_on_primary_encode_path": false,
+    "separate_interfaces": [
+      "Inbound ordinary-message normalizers remain separate.",
+      "The standalone typed-memory ABI marshals a typed tree; its host/node conversion cost is separate from native heap traversal.",
+      "The temporary native Motoko library remains the authorized encode-and-normalize implementation."
+    ]
+  },
+  "deterministic_checks": [
+    {
+      "language": "TypeScript",
+      "cases": 66,
+      "status": "pass",
+      "harness": "_out/direct-review-ts.mjs",
+      "command": "node _out/direct-review-ts.mjs",
+      "oracle": "canonicalize(SDK ordinary encoding), plus output re-canonicalization",
+      "covers": "All scalar kinds, exact float edges, valid Unicode scalar text and exact UTF-8, nested options, recursive aliases, record pruning, variant unions/reindexing, empty vectors and binary subarrays, integer typed arrays, numeric label collisions, output type-table 1024/1025, poisoned SDK encodeValue."
+    },
+    {
+      "language": "TypeScript supplemental native boundaries",
+      "cases": 9,
+      "status": "pass",
+      "harness": "_out/direct-review-native-views.mjs",
+      "command": "node _out/direct-review-native-views.mjs",
+      "covers": "Float-view rejection, spoofed vector length, true principal length, 1025 unused source declarations with a tiny derived output, and absent/empty Empty/Func/Service children."
+    },
+    {
+      "language": "TypeScript native Text validation",
+      "positive_cases": 15,
+      "rejection_cases": 53,
+      "status": "pass",
+      "harness": "_out/direct-review-text.mjs",
+      "command": "node _out/direct-review-text.mjs",
+      "oracle": "Valid native strings match canonicalize(SDK ordinary encoding), re-canonicalize unchanged, and decodeCompatible reconstructs exact strings. Invalid native witnesses must throw.",
+      "covers": "Unicode boundary scalars, minimum/maximum surrogate pairs, literal U+FFFD, BOM/NUL/combining text, nested vectors/options/records/variants, unpaired high/low surrogates and bad adjacency, first/second getter validation, and rejection of newly present formerly omitted fields."
+    },
+    {
+      "language": "Rust callback/tree",
+      "cases": 54,
+      "count_method": "39 value differential cases, 3 positive boundary/dynamic cases, 6 tree rejection cases, and 6 custom serializer rejection cases.",
+      "status": "pass",
+      "harness": "_out/direct-review-rust/src/main.rs",
+      "command": "rustup run 1.98.1 cargo run --offline --manifest-path _out/direct-review-rust/Cargo.toml --bin candidx_direct_review",
+      "covers": "Native units/newtypes, flattened and wrapped variant payloads, serde_bytes, nested options, exact integer magnitudes, dynamic explicit types, label ordering/collisions, binary steps/depth, output table bounds, shape flips, swallowed errors, and forgotten compounds."
+    },
+    {
+      "language": "Rust adaptive source cache and warmed callbacks",
+      "positive_cases": 15,
+      "rejection_cases": 12,
+      "status": "pass",
+      "harness": "_out/direct-review-rust/src/bin/cache.rs",
+      "command": "rustup run 1.98.1 cargo run --offline --manifest-path _out/direct-review-rust/Cargo.toml --bin cache",
+      "oracle": "Canonical ordinary Candid where representable within raw-input limits; unchanged typed-tree encoding for unused-schema and alias boundary cases; output re-canonicalization.",
+      "covers": "Fresh Rc types in 4096-field variants/records, 1025 unused compound declarations, metadata field/node quota fallback, aliases and recursive schema reuse, cached/uncached alias depth 256/257, absent/empty Empty/Func/Service children, malformed cached variant IDs, and warmed swallowed-wrong/forgotten/missing-flat callbacks."
+    },
+    {
+      "language": "Rust native source visitor",
+      "differential_cases": 2218,
+      "pairwise_shape_reuse_cases": 2187,
+      "rejection_cases": 19,
+      "additional_positive_boundary_cases": 2,
+      "status": "pass",
+      "harness": "_out/direct-review-rust/src/bin/source.rs",
+      "command": "rustup run 1.98.1 cargo run --offline --manifest-path _out/direct-review-rust/Cargo.toml --bin source",
+      "oracle": "Unoptimized typed-tree join/emission, plus output re-canonicalization",
+      "covers": "27 optional-field presence combinations paired across record vectors, nested vectors, and variant unions; scalar-kind/compound mismatches; binary slice length; both-pass shape/step bounds; output table 1024/1025; 32 MiB output; 4096-byte scalar LEB; empty vectors at depth 256 versus nonempty children at 257."
+    },
+    {
+      "language": "OCaml",
+      "cases": 49,
+      "additional_getter_rejection_cases": 1,
+      "status": "pass",
+      "harness": "_out/direct_review_ocaml.ml",
+      "command": "_out/direct-review-ocaml",
+      "covers": "Pruning versus explicit null/reserved and Some(None), recursive/View aliases, scalar ranges, malformed UTF-8, oversized principals, IEEE bits, binary/array/list aliases, source ID collisions, variant selection, and output table 1024/1025."
+    }
+  ],
+  "fixed_findings": [
+    {
+      "id": "binary-step-and-depth-accounting",
+      "affected": [
+        "Rust typed tree"
+      ],
+      "before": "Blob byte elements skipped the ordinary traversal/depth charges: 2000000 root bytes and a nonempty Blob at depth 256 could encode outputs rejected by the normalizer.",
+      "after": "Root bytes 1999999 are accepted; 2000000 bytes and a nonempty byte child at depth 257 reject.",
+      "regression_sources": [
+        "rust/tests/direct.rs",
+        "rust/tests/visitor.rs"
+      ]
+    },
+    {
+      "id": "changing-getter-option-presence",
+      "affected": [
+        "TypeScript",
+        "OCaml",
+        "Rust callbacks"
+      ],
+      "before": "A getter returning Some on the first visit and None on the second could return noncanonical bytes; formerly omitted None fields could hide a later Some.",
+      "after": "Both visits enforce bounds, emitted used shapes are compared with the first roots, and omitted fields are inspected again; both presence flips reject.",
+      "regression_sources": [
+        "ts/test/direct.test.mjs",
+        "ocaml/direct_tests.ml",
+        "rust/tests/direct.rs",
+        "rust/tests/visitor.rs"
+      ]
+    },
+    {
+      "id": "flattened-variant-source-label-validation",
+      "affected": [
+        "Rust callbacks"
+      ],
+      "before": "Flattened record payload callbacks bypassed record label ordering checks; duplicate source variant IDs could also be accepted.",
+      "after": "Shared source field-order validation covers records, source variant cases, and flattened payload records.",
+      "regression_sources": [
+        "rust/tests/direct.rs"
+      ]
+    },
+    {
+      "id": "swallowed-custom-serializer-error",
+      "affected": [
+        "Rust callbacks"
+      ],
+      "before": "A Bool source serializer swallowing serialize_nat8's error returned DIDL with an uninhabited empty root: 4449444c00016f. Reused child shapes could also obscure an incomplete later callback.",
+      "after": "Visits reset the completion sentinel, reject missing complete values, and retain child/output-bound failures even when custom callers ignore callback results.",
+      "regression_sources": [
+        "rust/tests/direct.rs"
+      ]
+    },
+    {
+      "id": "empty-vector-depth-boundary",
+      "affected": [
+        "Rust native source visitor"
+      ],
+      "before": "An eager shape-depth walk rejected 256 present options around an empty binary/nonbinary vector because the unused element type was at 257, while the established encoders/normalizers accepted the value.",
+      "after": "Used value/join/emission depth accounting is retained; empty vector depth 256 accepts and nonempty child 257 rejects.",
+      "regression_sources": [
+        "rust/tests/visitor.rs"
+      ]
+    },
+    {
+      "id": "noninteger-native-view",
+      "affected": [
+        "TypeScript"
+      ],
+      "before": "Float32Array([1]) under Vec Nat32 encoded direct integer 1 instead of the SDK's IEEE bits 0x3f800000; Float64Array/Vec Nat64 had the same problem.",
+      "after": "Intrinsic integer typed-array brands and widths are checked; float/DataView and spoofed views reject.",
+      "regression_sources": [
+        "ts/test/direct.test.mjs"
+      ]
+    },
+    {
+      "id": "spoofed-native-span-length",
+      "affected": [
+        "TypeScript vectors",
+        "TypeScript principals"
+      ],
+      "before": "Uint8Array([1,2]) with public length=3 emitted [1,2,0]. A 30-byte Principal view with public length=29 bypassed the principal bound and truncated to 29 bytes.",
+      "after": "Intrinsic backing-storage metadata produces trusted views; vector metadata spoofing rejects and principal validation uses the actual native span.",
+      "regression_sources": [
+        "ts/test/direct.test.mjs"
+      ]
+    },
+    {
+      "id": "unfinished-custom-compound",
+      "affected": [
+        "Rust callbacks"
+      ],
+      "discovery": "Implementation-owner finding, independently verified.",
+      "before": "Forgetting a nonempty serialize_vec compound skipped Drop completion checks and could leave a truncated payload.",
+      "after": "Each visit checks balanced compound counts; forgotten roots and swallowed forgotten-child errors reject.",
+      "regression_sources": [
+        "rust/tests/direct.rs"
+      ]
+    },
+    {
+      "id": "malformed-native-utf16-text",
+      "affected": [
+        "TypeScript native Text"
+      ],
+      "before": "Unpaired high and low UTF-16 surrogates were silently replaced with U+FFFD by TextEncoder; all three inputs encoded to 4449444c00017103efbfbd and decoding lost the original code unit. The ordinary SDK shared this coercion, masking it in differential tests.",
+      "after": "Both source visits validate surrogate pairing in the UTF-8 length scan and reject malformed native Text. The emitter reuses the validated length; valid scalar strings, paired surrogates, literal U+FFFD, and exact UTF-8 bytes are unchanged.",
+      "contract_basis": [
+        "spec/CanonicalValues.md",
+        "spec/CandidAppendix.md",
+        "Pinned Candid spec/Candid.md Text definition: Unicode scalar values"
+      ],
+      "regression_sources": [
+        "ts/test/direct.test.mjs"
+      ]
+    }
+  ],
+  "layout_review": [
+    "Verified lazy/moved BigInt access through mp_int_ptr, bounded significant bits/used limbs, and 60-bit limb extraction without ordinary LEB construction.",
+    "Verified true=1 pointer exception, null sentinel, single Some unboxing, unsigned Nat64 versus signed Int64 shifts/boxed Bits64, Float32/Float64 bits, and Char conversion.",
+    "Verified tuple array order, Candid IDs versus Motoko heap hashes, sorted object hash lookup, variant mapping, Blob/text borrowing and rope flattening.",
+    "Verified no callback or GC increment while Rust borrows heap spans; scratch/output/schema values are discarded before result publication through allocation_barrier.",
+    "Inspected standalone pointer/span/index/flag/depth checks; standalone ABI validation and compiler execution results are captured separately by the compiler/RTS owner."
+  ],
+  "contracts": [
+    "Custom serializers, getters, converters, and source metadata must be accurate and stable during both visits. Shape checks do not compare scalar contents of the same kind.",
+    "Low-level tree/source vector values must originate from one uniformly typed source schema with accurate optional-field metadata; arbitrary heterogeneous record trees are outside that contract.",
+    "Native Text denotes Unicode scalar values. TypeScript strings with unpaired UTF-16 surrogates reject; the binding does not silently replace them with U+FFFD. Valid text and numeric schema-label IDs keep their existing bytes."
+  ],
+  "outstanding_findings": [],
+  "shared_final_randomized_verification_claimed": false,
+  "benchmark_claims_included": false,
+  "provenance": "Focused harnesses are local ignored _out files; public regression source paths are listed for every fixed finding. Complete source-final corpus/fuzz and performance captures are separate reports.",
+  "source_sha256": {
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "ts/src/candid.ts": "7534dd3413ffd5ed81ed0aa855b8d23e2f157f2cde16901c3f91cad544acfaa6",
+    "ts/src/codec.ts": "b802f039c25c44157976235b3eb26e69e8417c455445f30ee072a4a84823b750",
+    "ts/src/index.ts": "0ea79fbd4039e81b8d1c0d6166a8a11f03aa9b59fe6a6f30914e1b18e74295ca",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ocaml/candidx.ml": "fe03d63f891bb713b0e04f3a6853440a0c167da32b0252d2c211cbb6f30539e1",
+    "ocaml/candidx.mli": "76ee926b6025d6005d11eda75d490e76439f244a29c019bb69ebd29895a9586b",
+    "wasm/src/lib.rs": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49",
+    "wasm/motoko-compiler.patch": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+    "wasm/_build/motoko/rts/motoko-rts/src/candidx.rs": "4db4e99e098ba76c80126fdd355c60781e85a976fe0beddfb5671a2faee71448",
+    "wasm/_build/motoko/src/codegen/compile.ml": "647735a4ac6592582290e65badf354fe322a3e8158bfc827e8f5a6df7b85d920",
+    "wasm/_build/motoko/rts/motoko-rts/src/allocator.rs": "879ecb95475df33bfd9b275355c734a8bb35872550268465f12773dcdf505503",
+    "wasm/_build/motoko/rts/motoko-rts/src/types.rs": "3175db649bebacd15e438cb1383b0e87a26058684d3d299b19e8ce45b5bcd0be",
+    "wasm/_build/motoko/rts/motoko-rts/src/bigint.rs": "14880caf2e583e3c38536cab2a2c8d0b261bf1fb75fe1579c8dad0a265178701",
+    "wasm/_build/motoko/rts/motoko-rts/src/text.rs": "49740e4fb945d26eb727697534dd40afd5c99336058635bfde55e4624992bff2",
+    "wasm/_build/motoko/rts/motoko-rts/src/memory.rs": "1fb55e4b36389dbf1af84ca5f01d7b01b55399b3fc724e88b44edb6c3a350e75",
+    "wasm/_build/motoko/rts/motoko-rts/src/memory/ic/partitioned_memory.rs": "37b9eafda772123f273ad336eea3c667c2b4f3ad1b453b0c097ae06f149c3982",
+    "wasm/_build/motoko/rts/motoko-rts/src/memory/ic/enhanced_memory.rs": "c2fd41f2458af538f147fe42d70a2bd313097afb508a429c0d15b2c60ccc9a10",
+    "wasm/_build/motoko/rts/motoko-rts/src/gc/incremental/partitioned_heap.rs": "4166cf48f196c461fd01c18d4232a8c6d9da531f8930c18a2dc946ce52ae602c",
+    "spec/CanonicalValues.md": "8cd4fda70c17f4be00d5f61102f57b689469ae17302294f2656c28cbe3d653e4",
+    "spec/CandidAppendix.md": "23cd57aafffd3b2172ae107e568ea715d60534b2aa39313501370004fad9893c",
+    "rust/tests/direct.rs": "6c5718d3d04792c6e35a5de4bbb99084dd8f85f424b6d58589e30420598e73f9",
+    "rust/tests/visitor.rs": "672ec189400560bab0c2c618c4b24d9a40bf3971946079acad8153d7a879a928",
+    "ts/test/direct.test.mjs": "bc538c3f738960c600d7057a13bfb151a4afda5457fdd93f3b81bccfafd1263c",
+    "ts/test/direct-guard.mjs": "ce655b99114119696588e571287ef70f3509cf3af8bbb586cba64d7e9722f705",
+    "ocaml/direct_tests.ml": "e4243f48cec513a2c25f945b077cad4fa205e38fe6c8d5a0afcc91a029441678"
+  },
+  "local_harness_sha256": {
+    "_out/direct-review-ts.mjs": "54f0a897ebd849fe2bfaa177e0d6fb5f7777848344e1587feea4d8df61489a56",
+    "_out/direct-review-native-views.mjs": "304e4d0b53c7ca106cbb7db5e5f0681f9f1a6ea31f6615ba09e6c661964d410d",
+    "_out/direct-review-rust/src/main.rs": "9ac05bf03f0e7d97b9370a7d338daadbebc4e8d465609c7b2fcb8b18884030b9",
+    "_out/direct-review-rust/src/bin/source.rs": "ce2bef40d008fd0552d5952c1c9c523c03619237bb455fb464c1be7eb5323817",
+    "_out/direct_review_ocaml.ml": "fcf301b19f4b9f2cebbc4993abd6796a430695d71030b8e7889f982b29dc09fd",
+    "_out/direct-review-text.mjs": "9316d6f2a13e81505af63cc2941d1b394dd94771532d833a62b9e0435c3db7e2",
+    "_out/direct-review-rust/src/bin/cache.rs": "7766bdf9cbca443d3dd7e145bc8f7029b8943979b28a77ea7e8d24e5cb2e0345"
+  },
+  "final_change_review": [
+    "TypeScript Unicode checks preserve the valid Text domain and reject invalid native UTF-16; no cx wire contract change.",
+    "Rust std-only callback source metadata cache activates after 32 actual callback events; bulk primitive item charges do not activate it. Rc pointer keys stay alive; cached nodes are capped at 1024 and aggregate field/case entries at 4096. Excess metadata uses the original uncached descriptors, preserving wide-schema acceptance. Only selected variant children are registered. Core join/emission and no_std RTS traversal remain unchanged.",
+    "Callback completion, sticky child/writer failures, compound balance, actual shape consistency, and both-pass budgets remain enforced."
+  ],
+  "reviewed_document_sha256": {
+    "ts/README.md": "2aa14c12f745d3d144459d177ee2a708d4989c5dbad8fac1ea167fc2bd9e9dda"
+  }
+}

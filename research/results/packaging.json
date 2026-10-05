@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "profile": "cx",
+  "completed_utc": "2026-10-04T20:22:36.968343+00:00",
+  "package_versions": {
+    "rust": "1.0.0",
+    "ts": "1.0.0",
+    "ocaml": "1.0.0",
+    "motoko": "1.0.0",
+    "wasm": "1.0.0"
+  },
+  "license": "MIT",
+  "rust_package": "cargo package --locked --allow-dirty --offline; extracted crate tests --no-default-features and --all-features",
+  "typescript_package": "local npm tarball with LICENSE; import without SDK; typed adapter with SDK 6.1.0",
+  "ocaml_package": "dune build -p candidx including installed LICENSE",
+  "crate_sha256": "2f395bf1b95b0468d65fc53dd249b52866e676f9bb11e7c776a0843d72d8ad99",
+  "tarball_sha256": "65c63b69f818412c5c2681d15cfb98e4d44497824c04f4e51775732faf35f0a9",
+  "publication": "none"
+}

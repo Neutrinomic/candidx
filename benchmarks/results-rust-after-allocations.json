@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "allocated_bytes": 3574,
+      "allocation_requests": 36,
+      "name": "small",
+      "peak_live_allocation_bytes": 3318,
+      "retained_output_capacity_bytes": 374
+    },
+    {
+      "allocated_bytes": 34264,
+      "allocation_requests": 201,
+      "name": "records-128",
+      "peak_live_allocation_bytes": 34008,
+      "retained_output_capacity_bytes": 5944
+    },
+    {
+      "allocated_bytes": 68337,
+      "allocation_requests": 32,
+      "name": "blob-64k",
+      "peak_live_allocation_bytes": 68081,
+      "retained_output_capacity_bytes": 65745
+    },
+    {
+      "allocated_bytes": 245251,
+      "allocation_requests": 1396,
+      "name": "records-1024",
+      "peak_live_allocation_bytes": 244995,
+      "retained_output_capacity_bytes": 35331
+    }
+  ],
+  "language": "Rust",
+  "method": "System allocator requested bytes, counting whole realloc requests; excludes allocator metadata, input, and host fixtures",
+  "codec_source_sha256": "dc9ff1de87403586d66482bbc39efe88a162873f55112d88450623c67eb13660"
+}

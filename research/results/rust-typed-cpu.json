@@ -1,0 +1,1226 @@
+{
+  "profile": "cx",
+  "package_version": "1.0.0",
+  "backend": "Rust CandidType direct typed callbacks",
+  "toolchain": "rustc 1.98.1",
+  "baseline_typed_source_sha256": "0c13b04c05ad1eb4169dce347785f72e133b2805e64ac1068dd0333233b136c7",
+  "final_sha256": {
+    "rust/src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "rust/Cargo.toml": "fd83fe1e11837b1efec339b3365191ebcedb6b5610511ac0e0b3280379f0374b",
+    "rust/Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5",
+    "rust/examples/bench.rs": "e44472a9e0447a8b960ab8c2d632fb8f7941056f19dcaf17be42924926bffac7",
+    "rust/examples/profile.rs": "cbee607fb6a2c12b037fd14ac7ebdfcc956deaaeef62730f47957c5517c135bf",
+    "rust/examples/support/mod.rs": "3b2b3dbda5c82b8166c995c0504b76fda1f4356ce4c3ccab923922fdf1413b3c",
+    "rust/tests/direct.rs": "6c5718d3d04792c6e35a5de4bbb99084dd8f85f424b6d58589e30420598e73f9",
+    "rust/tests/visitor.rs": "672ec189400560bab0c2c618c4b24d9a40bf3971946079acad8153d7a879a928"
+  },
+  "baseline_snapshot": "_out/rust-typed-cpu-before",
+  "scope": "std CandidType metadata lookup and callback inlining only; no_std DirectSource, typed-tree, core normalizer and canonical wire rules unchanged",
+  "implementation": [
+    "Keep original typed value visits and actual-shape witness on emission; no ordinary encoder, wire parser or intermediate payload tree.",
+    "Cache validated source opcodes, resolved aliases, record numeric labels and selected variant child descriptors using retained Rc identity keys.",
+    "Activate caching after 32 actual serializer callbacks; bulk byte/value-step accounting remains separate.",
+    "Bound cache at 1024 source nodes and 4096 aggregate record-field/selected-case descriptors; larger valid metadata falls back to original streaming checks.",
+    "Validate all variant source labels but register only selected child descriptors; unused variants do not allocate child cache entries.",
+    "Preserve sticky callback/compound errors, two-pass shape checks and all output/value/depth limits."
+  ],
+  "timing_method": "Seven trials per phase, median of per-operation wall time; three warmup calls, adaptive repetitions targeting 25 ms per trial clamped to 2..2000; shared CPU slot isolated during captures. Timings are platform-dependent; min/max are retained.",
+  "hotspot_evidence": {
+    "tool": "Valgrind callgrind 3.27.1",
+    "path": "_out/rust-typed-cpu-before/callgrind.out",
+    "workload": "records1024 direct, 50 loop iterations plus fixture setup and ordinary/canonical correctness controls",
+    "total_instructions": 406579692,
+    "approximate_self_instruction_share_percent": {
+      "serialize_element": 8.86,
+      "visit": 7.56,
+      "source_resolve": 5.52,
+      "source_label_id_and_hash": 8.5,
+      "budget_check": 2.34
+    },
+    "finding": "Repeated source resolution, labels and callback dispatch were measurable; upstream Nat emission already uses linear radix128 conversion."
+  },
+  "cases": [
+    {
+      "name": "small",
+      "direct_before_us": 8.620659500000002,
+      "direct_after_us": 8.798208,
+      "speedup_before_over_after": 0.979819924693756,
+      "after_ordinary_us": 5.5049685,
+      "after_pipeline_us": 8.525592999999999,
+      "after_direct_over_pipeline": 1.0319760748607167,
+      "direct_requested_bytes_before_cache": 9475,
+      "direct_requested_bytes_after_cache": 9491,
+      "pipeline_requested_bytes": 11898,
+      "direct_allocation_reduction_vs_pipeline_percent": 20.230290805177344,
+      "ordinary_message_sha256": "2c096b610e5e8490b62f1ee28fa2e855a8d0ff73a3d712410c1507667f8c8505",
+      "canonical_message_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+    },
+    {
+      "name": "records-128",
+      "direct_before_us": 107.46641048034935,
+      "direct_after_us": 99.1075867768595,
+      "speedup_before_over_after": 1.084340906436454,
+      "after_ordinary_us": 24.446099902056805,
+      "after_pipeline_us": 51.93444279661017,
+      "after_direct_over_pipeline": 1.9083209800669776,
+      "direct_requested_bytes_before_cache": 30710,
+      "direct_requested_bytes_after_cache": 33998,
+      "pipeline_requested_bytes": 78801,
+      "direct_allocation_reduction_vs_pipeline_percent": 56.85587746348397,
+      "ordinary_message_sha256": "75dd57de180f116b18ac61196a9bea6883384e439b5ef42b22e1adb195117556",
+      "canonical_message_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+    },
+    {
+      "name": "blob-64k",
+      "direct_before_us": 7.4055195000000005,
+      "direct_after_us": 7.8626465,
+      "speedup_before_over_after": 0.9418609243083738,
+      "after_ordinary_us": 7.5900265,
+      "after_pipeline_us": 11.0537165,
+      "after_direct_over_pipeline": 0.7113124802866077,
+      "direct_requested_bytes_before_cache": 73872,
+      "direct_requested_bytes_after_cache": 73888,
+      "pipeline_requested_bytes": 337837,
+      "direct_allocation_reduction_vs_pipeline_percent": 78.12909776016245,
+      "ordinary_message_sha256": "60adb7fd3effb1126aad19643db986f4f497b799befab76b0c2e702016822e11",
+      "canonical_message_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+    },
+    {
+      "name": "records-1024",
+      "direct_before_us": 812.1586451612902,
+      "direct_after_us": 740.7880606060605,
+      "speedup_before_over_after": 1.0963441345110765,
+      "after_ordinary_us": 157.25993251533743,
+      "after_pipeline_us": 351.6874583333333,
+      "after_direct_over_pipeline": 2.106381797396748,
+      "direct_requested_bytes_before_cache": 173631,
+      "direct_requested_bytes_after_cache": 176919,
+      "pipeline_requested_bytes": 452426,
+      "direct_allocation_reduction_vs_pipeline_percent": 60.89548346027859,
+      "ordinary_message_sha256": "3822d18591235bdca5cad016adaec32282c50371faba094126114fcf1a35b9c1",
+      "canonical_message_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+    }
+  ],
+  "timing_captures": {
+    "baseline": {
+      "language": "Rust",
+      "cases": [
+        {
+          "canonical_bytes": 296,
+          "canonical_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 9.598594,
+            "median_us": 7.6562945,
+            "min_us": 7.601974499999999,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.6490795,
+            "median_us": 8.620659500000002,
+            "min_us": 8.591144,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.358184,
+            "median_us": 8.311014499999999,
+            "min_us": 8.281884,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 2.8341299999999996,
+            "median_us": 2.8271495,
+            "min_us": 2.8104195,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "small",
+          "ordinary_bytes": 305,
+          "ordinary_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.1741695,
+            "median_us": 8.095959,
+            "min_us": 8.033694500000001,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 5.3232145,
+            "median_us": 5.3012049999999995,
+            "min_us": 5.246819500000001,
+            "trials": 7
+          },
+          "transactions": 4
+        },
+        {
+          "canonical_bytes": 5866,
+          "canonical_decode": {
+            "iterations_per_trial": 214,
+            "max_us": 117.97274766355139,
+            "median_us": 116.92228037383177,
+            "min_us": 116.04746728971962,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 229,
+            "max_us": 108.86479475982533,
+            "median_us": 107.46641048034935,
+            "min_us": 106.63370305676855,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 457,
+            "max_us": 61.42207439824946,
+            "median_us": 54.82577242888403,
+            "min_us": 54.368879649890594,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 806,
+            "max_us": 30.7621935483871,
+            "median_us": 30.30433995037221,
+            "min_us": 30.130878411910672,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "ordinary_decode": {
+            "iterations_per_trial": 125,
+            "max_us": 124.975912,
+            "median_us": 118.463272,
+            "min_us": 117.49399199999999,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 1156,
+            "max_us": 21.728666089965397,
+            "median_us": 21.628527681660902,
+            "min_us": 21.558371972318337,
+            "trials": 7
+          },
+          "transactions": 128
+        },
+        {
+          "canonical_bytes": 65667,
+          "canonical_decode": {
+            "iterations_per_trial": 116,
+            "max_us": 225.9761034482759,
+            "median_us": 215.23972413793103,
+            "min_us": 195.41868965517241,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 9.551014499999999,
+            "median_us": 7.4055195000000005,
+            "min_us": 7.3845095,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 13.396593999999999,
+            "median_us": 11.084294,
+            "min_us": 11.019879,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 3.419985,
+            "median_us": 3.3926495,
+            "min_us": 3.3878900000000005,
+            "trials": 7
+          },
+          "memo_bytes": 65536,
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "ordinary_decode": {
+            "iterations_per_trial": 102,
+            "max_us": 219.91204901960788,
+            "median_us": 217.1698823529412,
+            "min_us": 216.39841176470588,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.5891145,
+            "median_us": 7.5778345,
+            "min_us": 7.550199500000001,
+            "trials": 7
+          },
+          "transactions": 1
+        },
+        {
+          "canonical_bytes": 35253,
+          "canonical_decode": {
+            "iterations_per_trial": 29,
+            "max_us": 830.6768620689655,
+            "median_us": 827.3971724137931,
+            "min_us": 823.4916551724137,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 31,
+            "max_us": 816.3292903225806,
+            "median_us": 812.1586451612902,
+            "min_us": 808.4986451612903,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 64,
+            "max_us": 439.4879375,
+            "median_us": 370.93153125000003,
+            "min_us": 365.43825000000004,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 113,
+            "max_us": 246.10679646017698,
+            "median_us": 222.20060176991151,
+            "min_us": 213.28582300884955,
+            "trials": 7
+          },
+          "memo_bytes": 0,
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "ordinary_decode": {
+            "iterations_per_trial": 29,
+            "max_us": 833.6644137931034,
+            "median_us": 828.1233793103447,
+            "min_us": 826.7175517241379,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 187,
+            "max_us": 161.78817112299464,
+            "median_us": 141.87373262032085,
+            "min_us": 132.9952834224599,
+            "trials": 7
+          },
+          "transactions": 1024
+        }
+      ]
+    },
+    "inlining_only": {
+      "language": "Rust",
+      "cases": [
+        {
+          "canonical_bytes": 296,
+          "canonical_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.382803,
+            "median_us": 7.292248000000001,
+            "min_us": 7.2417584999999995,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.580249,
+            "median_us": 8.502604000000002,
+            "min_us": 8.446049,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.635104,
+            "median_us": 8.448943499999999,
+            "min_us": 8.403999,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 2.8555215,
+            "median_us": 2.7531165,
+            "min_us": 2.712406,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "small",
+          "ordinary_bytes": 305,
+          "ordinary_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.845349000000001,
+            "median_us": 7.7527735,
+            "min_us": 7.7015839999999995,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 5.951802499999999,
+            "median_us": 5.6316975000000005,
+            "min_us": 5.5465875,
+            "trials": 7
+          },
+          "transactions": 4
+        },
+        {
+          "canonical_bytes": 5866,
+          "canonical_decode": {
+            "iterations_per_trial": 201,
+            "max_us": 113.41139800995025,
+            "median_us": 111.63090049751243,
+            "min_us": 110.8857263681592,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 239,
+            "max_us": 106.42707531380753,
+            "median_us": 104.54971548117153,
+            "min_us": 103.23686610878661,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 461,
+            "max_us": 53.56839696312364,
+            "median_us": 52.75972017353579,
+            "min_us": 51.812366594360086,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 853,
+            "max_us": 28.791572098475967,
+            "median_us": 28.567048065650642,
+            "min_us": 28.253846424384527,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "ordinary_decode": {
+            "iterations_per_trial": 223,
+            "max_us": 112.78126457399104,
+            "median_us": 112.23938116591927,
+            "min_us": 111.05242600896861,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 1036,
+            "max_us": 24.863071428571427,
+            "median_us": 24.374828185328184,
+            "min_us": 24.204789575289574,
+            "trials": 7
+          },
+          "transactions": 128
+        },
+        {
+          "canonical_bytes": 65667,
+          "canonical_decode": {
+            "iterations_per_trial": 129,
+            "max_us": 197.6278449612403,
+            "median_us": 196.68048062015504,
+            "min_us": 195.4481550387597,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.311782999999999,
+            "median_us": 7.2796885,
+            "min_us": 7.2413335,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 10.679390000000001,
+            "median_us": 10.577879999999999,
+            "min_us": 10.507620000000001,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 3.2829465,
+            "median_us": 3.2595465,
+            "min_us": 3.2314815,
+            "trials": 7
+          },
+          "memo_bytes": 65536,
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "ordinary_decode": {
+            "iterations_per_trial": 130,
+            "max_us": 200.3847076923077,
+            "median_us": 198.14686153846154,
+            "min_us": 196.66116923076925,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.352318499999999,
+            "median_us": 7.258583499999999,
+            "min_us": 7.225848,
+            "trials": 7
+          },
+          "transactions": 1
+        },
+        {
+          "canonical_bytes": 35253,
+          "canonical_decode": {
+            "iterations_per_trial": 30,
+            "max_us": 801.8850333333334,
+            "median_us": 795.1303666666666,
+            "min_us": 784.7943666666667,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 32,
+            "max_us": 802.714125,
+            "median_us": 796.5535,
+            "min_us": 789.04909375,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 71,
+            "max_us": 353.4643802816902,
+            "median_us": 351.902,
+            "min_us": 350.81311267605633,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 111,
+            "max_us": 209.55018018018018,
+            "median_us": 208.40027927927926,
+            "min_us": 205.83405405405404,
+            "trials": 7
+          },
+          "memo_bytes": 0,
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "ordinary_decode": {
+            "iterations_per_trial": 31,
+            "max_us": 802.3394193548387,
+            "median_us": 800.2806774193548,
+            "min_us": 792.2271612903227,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 150,
+            "max_us": 157.66407333333333,
+            "median_us": 155.80114,
+            "min_us": 154.69386666666665,
+            "trials": 7
+          },
+          "transactions": 1024
+        }
+      ]
+    },
+    "bounded_always_on_cache": {
+      "language": "Rust",
+      "cases": [
+        {
+          "canonical_bytes": 296,
+          "canonical_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.5402595,
+            "median_us": 7.45831,
+            "min_us": 7.3649145,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 1839,
+            "max_us": 9.263588363240892,
+            "median_us": 9.069542686242523,
+            "min_us": 8.945170744970094,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.6899345,
+            "median_us": 8.5535445,
+            "min_us": 8.491194499999999,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 2.9297445,
+            "median_us": 2.8411895000000005,
+            "min_us": 2.7895745,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "small",
+          "ordinary_bytes": 305,
+          "ordinary_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.095785,
+            "median_us": 7.971444499999999,
+            "min_us": 7.80022,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 5.7910445,
+            "median_us": 5.6236945,
+            "min_us": 5.5940199999999995,
+            "trials": 7
+          },
+          "transactions": 4
+        },
+        {
+          "canonical_bytes": 5866,
+          "canonical_decode": {
+            "iterations_per_trial": 220,
+            "max_us": 116.79445000000001,
+            "median_us": 115.40222272727273,
+            "min_us": 113.85694545454547,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 264,
+            "max_us": 96.24810227272727,
+            "median_us": 95.26245454545455,
+            "min_us": 94.70889772727271,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 471,
+            "max_us": 52.884541401273886,
+            "median_us": 52.36776857749469,
+            "min_us": 52.097428874734604,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 894,
+            "max_us": 28.505860178970913,
+            "median_us": 28.245467561521252,
+            "min_us": 27.75138590604027,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "ordinary_decode": {
+            "iterations_per_trial": 220,
+            "max_us": 127.88580909090908,
+            "median_us": 115.0527181818182,
+            "min_us": 114.34713181818184,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 935,
+            "max_us": 26.394758288770053,
+            "median_us": 26.10901497326203,
+            "min_us": 25.178351871657753,
+            "trials": 7
+          },
+          "transactions": 128
+        },
+        {
+          "canonical_bytes": 65667,
+          "canonical_decode": {
+            "iterations_per_trial": 133,
+            "max_us": 196.83405263157894,
+            "median_us": 193.42465413533833,
+            "min_us": 192.10006766917292,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.1402995,
+            "median_us": 8.0833445,
+            "min_us": 8.0695895,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 11.0269645,
+            "median_us": 10.976559499999999,
+            "min_us": 10.9445245,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 3.349175,
+            "median_us": 3.3166845,
+            "min_us": 3.294075,
+            "trials": 7
+          },
+          "memo_bytes": 65536,
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "ordinary_decode": {
+            "iterations_per_trial": 124,
+            "max_us": 195.8503870967742,
+            "median_us": 193.7656290322581,
+            "min_us": 192.64595967741934,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.485495,
+            "median_us": 7.459239999999999,
+            "min_us": 7.3987245,
+            "trials": 7
+          },
+          "transactions": 1
+        },
+        {
+          "canonical_bytes": 35253,
+          "canonical_decode": {
+            "iterations_per_trial": 31,
+            "max_us": 839.2244838709678,
+            "median_us": 822.2522258064516,
+            "min_us": 818.0418709677419,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 34,
+            "max_us": 718.8814411764706,
+            "median_us": 713.7461470588235,
+            "min_us": 710.1458529411765,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 66,
+            "max_us": 374.98104545454544,
+            "median_us": 366.9116515151515,
+            "min_us": 365.3111818181818,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 113,
+            "max_us": 212.06741592920352,
+            "median_us": 209.19901769911505,
+            "min_us": 208.24370796460178,
+            "trials": 7
+          },
+          "memo_bytes": 0,
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "ordinary_decode": {
+            "iterations_per_trial": 29,
+            "max_us": 830.9368620689655,
+            "median_us": 818.5989310344827,
+            "min_us": 809.6630344827586,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 153,
+            "max_us": 169.86796078431374,
+            "median_us": 166.40613725490195,
+            "min_us": 162.6292745098039,
+            "trials": 7
+          },
+          "transactions": 1024
+        }
+      ]
+    },
+    "bounded_adaptive_cache_final": {
+      "language": "Rust",
+      "cases": [
+        {
+          "canonical_bytes": 296,
+          "canonical_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.152925499999999,
+            "median_us": 7.113046,
+            "min_us": 7.025440499999999,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.9075385,
+            "median_us": 8.798208,
+            "min_us": 8.689608,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.580988,
+            "median_us": 8.525592999999999,
+            "min_us": 8.4023675,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 2.8185240000000005,
+            "median_us": 2.776964,
+            "min_us": 2.7376440000000004,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "small",
+          "ordinary_bytes": 305,
+          "ordinary_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.206211999999999,
+            "median_us": 7.863287000000001,
+            "min_us": 7.783822,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 5.743454000000001,
+            "median_us": 5.5049685,
+            "min_us": 5.4614080000000005,
+            "trials": 7
+          },
+          "transactions": 4
+        },
+        {
+          "canonical_bytes": 5866,
+          "canonical_decode": {
+            "iterations_per_trial": 229,
+            "max_us": 112.83130567685589,
+            "median_us": 112.28815720524018,
+            "min_us": 111.55278602620088,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 242,
+            "max_us": 99.47390909090909,
+            "median_us": 99.1075867768595,
+            "min_us": 98.7885785123967,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 472,
+            "max_us": 52.743108050847454,
+            "median_us": 51.93444279661017,
+            "min_us": 51.37227966101695,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 897,
+            "max_us": 28.112405797101452,
+            "median_us": 27.90096655518395,
+            "min_us": 27.385926421404683,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "ordinary_decode": {
+            "iterations_per_trial": 224,
+            "max_us": 112.87980803571429,
+            "median_us": 112.86003571428571,
+            "min_us": 112.61963392857145,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 1021,
+            "max_us": 24.582691478942213,
+            "median_us": 24.446099902056805,
+            "min_us": 24.358498530852103,
+            "trials": 7
+          },
+          "transactions": 128
+        },
+        {
+          "canonical_bytes": 65667,
+          "canonical_decode": {
+            "iterations_per_trial": 111,
+            "max_us": 261.4121081081081,
+            "median_us": 251.6792072072072,
+            "min_us": 228.39106306306306,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.974387,
+            "median_us": 7.8626465,
+            "min_us": 7.7663515,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 11.118131499999999,
+            "median_us": 11.0537165,
+            "min_us": 10.9866515,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 3.3239645,
+            "median_us": 3.3024850000000003,
+            "min_us": 3.26844,
+            "trials": 7
+          },
+          "memo_bytes": 65536,
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "ordinary_decode": {
+            "iterations_per_trial": 108,
+            "max_us": 231.01941666666667,
+            "median_us": 229.95728703703702,
+            "min_us": 228.9925648148148,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.6208215,
+            "median_us": 7.5900265,
+            "min_us": 7.542586,
+            "trials": 7
+          },
+          "transactions": 1
+        },
+        {
+          "canonical_bytes": 35253,
+          "canonical_decode": {
+            "iterations_per_trial": 32,
+            "max_us": 800.0280625,
+            "median_us": 797.7855625,
+            "min_us": 793.6705625000001,
+            "trials": 7
+          },
+          "canonical_encode_direct": {
+            "iterations_per_trial": 33,
+            "max_us": 745.2077575757576,
+            "median_us": 740.7880606060605,
+            "min_us": 736.5207878787878,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 72,
+            "max_us": 353.27205555555554,
+            "median_us": 351.6874583333333,
+            "min_us": 348.43231944444443,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 124,
+            "max_us": 205.98409677419357,
+            "median_us": 204.58498387096773,
+            "min_us": 202.50651612903224,
+            "trials": 7
+          },
+          "memo_bytes": 0,
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "ordinary_decode": {
+            "iterations_per_trial": 31,
+            "max_us": 802.0763870967743,
+            "median_us": 796.7834516129033,
+            "min_us": 793.5111935483872,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 163,
+            "max_us": 158.1222024539877,
+            "median_us": 157.25993251533743,
+            "min_us": 156.9506625766871,
+            "trials": 7
+          },
+          "transactions": 1024
+        }
+      ]
+    }
+  },
+  "allocation_method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input",
+  "allocation_captures": {
+    "before_cache": {
+      "cases": [
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 9475,
+            "allocation_requests": 86,
+            "operation_end_measured_allocation_bytes": 5527,
+            "peak_live_allocation_bytes": 7169,
+            "retained_output_capacity_bytes": 407
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 11898,
+            "allocation_requests": 116,
+            "operation_end_measured_allocation_bytes": 5494,
+            "peak_live_allocation_bytes": 8743,
+            "retained_output_capacity_bytes": 374
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 3574,
+            "allocation_requests": 36,
+            "operation_end_measured_allocation_bytes": 374,
+            "peak_live_allocation_bytes": 3318,
+            "retained_output_capacity_bytes": 374
+          },
+          "name": "small",
+          "ordinary_encode": {
+            "allocated_bytes": 8324,
+            "allocation_requests": 80,
+            "operation_end_measured_allocation_bytes": 5425,
+            "peak_live_allocation_bytes": 6307,
+            "retained_output_capacity_bytes": 305
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 30710,
+            "allocation_requests": 416,
+            "operation_end_measured_allocation_bytes": 11382,
+            "peak_live_allocation_bytes": 13024,
+            "retained_output_capacity_bytes": 6262
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 78801,
+            "allocation_requests": 534,
+            "operation_end_measured_allocation_bytes": 11064,
+            "peak_live_allocation_bytes": 45003,
+            "retained_output_capacity_bytes": 5944
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 34264,
+            "allocation_requests": 201,
+            "operation_end_measured_allocation_bytes": 5944,
+            "peak_live_allocation_bytes": 34008,
+            "retained_output_capacity_bytes": 5944
+          },
+          "name": "records-128",
+          "ordinary_encode": {
+            "allocated_bytes": 44537,
+            "allocation_requests": 333,
+            "operation_end_measured_allocation_bytes": 10995,
+            "peak_live_allocation_bytes": 21805,
+            "retained_output_capacity_bytes": 5875
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 73872,
+            "allocation_requests": 72,
+            "operation_end_measured_allocation_bytes": 70889,
+            "peak_live_allocation_bytes": 72473,
+            "retained_output_capacity_bytes": 65769
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 337837,
+            "allocation_requests": 105,
+            "operation_end_measured_allocation_bytes": 70865,
+            "peak_live_allocation_bytes": 202456,
+            "retained_output_capacity_bytes": 65745
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 68337,
+            "allocation_requests": 32,
+            "operation_end_measured_allocation_bytes": 65745,
+            "peak_live_allocation_bytes": 68081,
+            "retained_output_capacity_bytes": 65745
+          },
+          "name": "blob-64k",
+          "ordinary_encode": {
+            "allocated_bytes": 269500,
+            "allocation_requests": 73,
+            "operation_end_measured_allocation_bytes": 70796,
+            "peak_live_allocation_bytes": 202456,
+            "retained_output_capacity_bytes": 65676
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 173631,
+            "allocation_requests": 2806,
+            "operation_end_measured_allocation_bytes": 42863,
+            "peak_live_allocation_bytes": 44505,
+            "retained_output_capacity_bytes": 37743
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 452426,
+            "allocation_requests": 3523,
+            "operation_end_measured_allocation_bytes": 40451,
+            "peak_live_allocation_bytes": 285377,
+            "retained_output_capacity_bytes": 35331
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 245251,
+            "allocation_requests": 1396,
+            "operation_end_measured_allocation_bytes": 35331,
+            "peak_live_allocation_bytes": 244995,
+            "retained_output_capacity_bytes": 35331
+          },
+          "name": "records-1024",
+          "ordinary_encode": {
+            "allocated_bytes": 207175,
+            "allocation_requests": 2127,
+            "operation_end_measured_allocation_bytes": 40382,
+            "peak_live_allocation_bytes": 78840,
+            "retained_output_capacity_bytes": 35262
+          }
+        }
+      ],
+      "language": "Rust",
+      "method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input"
+    },
+    "after_cache": {
+      "cases": [
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 9491,
+            "allocation_requests": 87,
+            "operation_end_measured_allocation_bytes": 5527,
+            "peak_live_allocation_bytes": 7185,
+            "retained_output_capacity_bytes": 407
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 11898,
+            "allocation_requests": 116,
+            "operation_end_measured_allocation_bytes": 5494,
+            "peak_live_allocation_bytes": 8743,
+            "retained_output_capacity_bytes": 374
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 3574,
+            "allocation_requests": 36,
+            "operation_end_measured_allocation_bytes": 374,
+            "peak_live_allocation_bytes": 3318,
+            "retained_output_capacity_bytes": 374
+          },
+          "name": "small",
+          "ordinary_encode": {
+            "allocated_bytes": 8324,
+            "allocation_requests": 80,
+            "operation_end_measured_allocation_bytes": 5425,
+            "peak_live_allocation_bytes": 6307,
+            "retained_output_capacity_bytes": 305
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 33998,
+            "allocation_requests": 423,
+            "operation_end_measured_allocation_bytes": 11382,
+            "peak_live_allocation_bytes": 15064,
+            "retained_output_capacity_bytes": 6262
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 78801,
+            "allocation_requests": 534,
+            "operation_end_measured_allocation_bytes": 11064,
+            "peak_live_allocation_bytes": 45003,
+            "retained_output_capacity_bytes": 5944
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 34264,
+            "allocation_requests": 201,
+            "operation_end_measured_allocation_bytes": 5944,
+            "peak_live_allocation_bytes": 34008,
+            "retained_output_capacity_bytes": 5944
+          },
+          "name": "records-128",
+          "ordinary_encode": {
+            "allocated_bytes": 44537,
+            "allocation_requests": 333,
+            "operation_end_measured_allocation_bytes": 10995,
+            "peak_live_allocation_bytes": 21805,
+            "retained_output_capacity_bytes": 5875
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 73888,
+            "allocation_requests": 73,
+            "operation_end_measured_allocation_bytes": 70889,
+            "peak_live_allocation_bytes": 72489,
+            "retained_output_capacity_bytes": 65769
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 337837,
+            "allocation_requests": 105,
+            "operation_end_measured_allocation_bytes": 70865,
+            "peak_live_allocation_bytes": 202456,
+            "retained_output_capacity_bytes": 65745
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 68337,
+            "allocation_requests": 32,
+            "operation_end_measured_allocation_bytes": 65745,
+            "peak_live_allocation_bytes": 68081,
+            "retained_output_capacity_bytes": 65745
+          },
+          "name": "blob-64k",
+          "ordinary_encode": {
+            "allocated_bytes": 269500,
+            "allocation_requests": 73,
+            "operation_end_measured_allocation_bytes": 70796,
+            "peak_live_allocation_bytes": 202456,
+            "retained_output_capacity_bytes": 65676
+          }
+        },
+        {
+          "canonical_encode_direct": {
+            "allocated_bytes": 176919,
+            "allocation_requests": 2813,
+            "operation_end_measured_allocation_bytes": 42863,
+            "peak_live_allocation_bytes": 46545,
+            "retained_output_capacity_bytes": 37743
+          },
+          "canonical_encode_pipeline": {
+            "allocated_bytes": 452426,
+            "allocation_requests": 3523,
+            "operation_end_measured_allocation_bytes": 40451,
+            "peak_live_allocation_bytes": 285377,
+            "retained_output_capacity_bytes": 35331
+          },
+          "canonicalize_preencoded": {
+            "allocated_bytes": 245251,
+            "allocation_requests": 1396,
+            "operation_end_measured_allocation_bytes": 35331,
+            "peak_live_allocation_bytes": 244995,
+            "retained_output_capacity_bytes": 35331
+          },
+          "name": "records-1024",
+          "ordinary_encode": {
+            "allocated_bytes": 207175,
+            "allocation_requests": 2127,
+            "operation_end_measured_allocation_bytes": 40382,
+            "peak_live_allocation_bytes": 78840,
+            "retained_output_capacity_bytes": 35262
+          }
+        }
+      ],
+      "language": "Rust",
+      "method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input"
+    }
+  },
+  "capture_sha256": {
+    "_out/bench-rust-direct-final-1.json": "2473d3599643dcdbcbe441d39467fe8044e063ffc2d49f71c7a2587a1e334dcf",
+    "_out/rust-typed-cpu-inline-bench.json": "f11d5de182c5b60f08a549c0bf12f7132b9eb2ec941d36c8ab07e1e1a7c77761",
+    "_out/rust-typed-cpu-cache-bench.json": "e7a92ee3ac2c7df9e8fed60fec1b9e236fc99d82be9378e8258a0f69269993ea",
+    "_out/rust-typed-cpu-adaptive-bench.json": "b6a33a8c39a5d56b6694295a02a959ab3d0b040fdc8f15e9e652181a8e05cfb9",
+    "_out/rust-direct-allocations-after-shape-reuse.json": "77c5e2de75a510b4e5bb96274e714096565eb422855971d32f9adcaf2f2ca379",
+    "_out/rust-typed-cpu-adaptive-allocations.json": "792020800c895a78eb42fb68a0b8ced945e8b3e75b3ba0ebc4da9807af8e3435"
+  },
+  "commands": [
+    "rustup run 1.98.1 cargo build --locked --release --manifest-path rust/Cargo.toml --example bench --example profile",
+    "rust/target/release/examples/bench > _out/rust-typed-cpu-adaptive-bench.json",
+    "rust/target/release/examples/profile _out/rust-typed-cpu-adaptive-bench.json > _out/rust-typed-cpu-adaptive-allocations.json",
+    "rustup run 1.98.1 cargo test --locked --manifest-path rust/Cargo.toml --all-features",
+    "rustup run 1.98.1 cargo test --locked --manifest-path rust/Cargo.toml --no-default-features",
+    "rustup run 1.98.1 cargo clippy --locked --manifest-path rust/Cargo.toml --all-features --all-targets -- -D warnings",
+    "valgrind --tool=callgrind --callgrind-out-file=_out/rust-typed-cpu-before/callgrind.out _out/rust-typed-cpu-probe/target/release/cx-typed-cpu-probe direct 50"
+  ],
+  "validation": {
+    "all_features_tests_passed": 27,
+    "no_default_features_tests_passed": 15,
+    "all_features_all_targets_clippy": "passed with -D warnings",
+    "new_regressions": [
+      "16384 distinct unused variant child Rc values register only selected descriptor",
+      "1024-node and 4096-field cache caps fall back without rejecting valid source",
+      "65536 bulk byte element steps do not activate callback cache"
+    ],
+    "all_native_fixture_bytes": "identical to baseline; ordinary and canonical decode equal original native Block",
+    "shared_source_witness_fuzz_and_independent_review": "independent callback/cache/source suites passed on exact final typed source; shared source-witness/cross-decoder reruns retain final counts in shared validation reports",
+    "independent_callback_and_cache_review": {
+      "typed_source_sha256": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+      "callback_tree_checks": 54,
+      "callback_tree_differential": 39,
+      "callback_tree_positive_boundaries": 3,
+      "callback_tree_rejections": 6,
+      "custom_serializer_rejections": 6,
+      "cache_positive_checks": 15,
+      "cache_rejection_checks": 12,
+      "native_source_differential_checks": 2218,
+      "native_source_pairwise_scratch_joins": 2187,
+      "native_source_rejection_checks": 19,
+      "native_source_other_positive_boundaries": 2,
+      "status": "all passed independently; report: research/results/direct-review.json"
+    }
+  },
+  "limitations": [
+    "Record-heavy direct encoding remains about 1.9..2.1 times the ordinary-encode-plus-normalize comparator in this final capture despite its lower requested allocation.",
+    "Small and blob workloads do not show a CPU speed improvement against the previous direct baseline.",
+    "Native allocator requests include whole realloc requests and exclude allocator headers and pre-existing input; these are not actual IC occupied-heap metrics.",
+    "The cache adds 3288 requested bytes to record workloads; no_std RTS paths do not include this std-only cache."
+  ]
+}

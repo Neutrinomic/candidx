@@ -1,0 +1,36 @@
+(library
+ (name candidx)
+ (public_name candidx)
+ (modules candidx)
+ (libraries zarith)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+
+(executable
+ (name probe)
+ (modules probe)
+ (libraries candidx)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+
+(executable
+ (name bench)
+ (modules bench)
+ (libraries candidx unix)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+
+(executable
+ (name direct_probe)
+ (modules direct_probe test_json)
+ (libraries candidx zarith)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+
+(executable
+ (name direct_bench)
+ (modules direct_bench)
+ (libraries candidx zarith unix)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+
+(test
+ (name direct_tests)
+ (modules direct_tests)
+ (libraries candidx zarith)
+ (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))

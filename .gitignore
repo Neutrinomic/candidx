@@ -1,0 +1,23 @@
+_out
+target
+node_modules
+dist
+_build
+__pycache__
+.venv
+.mops
+*.install
+*.pyc
+*.pyo
+.DS_Store
+*~
+
+# Local discussion documents.
+/candid_findings.md
+/candid_proposal.md
+/forum_post.md
+
+# One-time collection and generated comparison/smoke binaries.
+/tests/collect_initial.py
+/wasm/artifacts/*-before.wasm
+/wasm/artifacts/smoke.wasm

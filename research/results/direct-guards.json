@@ -1,0 +1,60 @@
+{
+  "status": "pass",
+  "directed_typed_cases": 93,
+  "corpus_sha256": "a960af8a2e89a2c942cfdfdba09e08e7462ae20976f3dd2036f36fdc12d6d644",
+  "vectors_sha256": "878efe14b3f4fb9727dc409bb6d4be20571e46e3afb67e20d7f382975fa4bf86",
+  "rust": {
+    "typed_cases": 93,
+    "disabled": [
+      "parse",
+      "read_value",
+      "canonicalize"
+    ],
+    "ordinary_serializer": "rejected by native custom CandidType",
+    "exports": [
+      "encode_one",
+      "encode_args",
+      "encode_one_with_type",
+      "encode_args_with_types",
+      "encode_direct_args"
+    ]
+  },
+  "typescript": {
+    "typed_cases": 6,
+    "disabled": [
+      "IDL.encode",
+      "canonicalize",
+      "type encodeValue/encodeType/buildTypeTable"
+    ],
+    "standalone_guard_output": "direct-path guard passed: IDL.encode, encodeValue, encodeType, buildTypeTable, and canonicalize unavailable"
+  },
+  "ocaml": {
+    "typed_cases": 93,
+    "disabled": [
+      "parse",
+      "read_values",
+      "encode_values",
+      "canonicalize"
+    ]
+  },
+  "production_source_modified": false,
+  "source_sha256": {
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "ts/src/candid.ts": "7534dd3413ffd5ed81ed0aa855b8d23e2f157f2cde16901c3f91cad544acfaa6",
+    "ts/src/codec.ts": "b802f039c25c44157976235b3eb26e69e8417c455445f30ee072a4a84823b750",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ts/src/index.ts": "0ea79fbd4039e81b8d1c0d6166a8a11f03aa9b59fe6a6f30914e1b18e74295ca",
+    "rust/examples/fuzz.rs": "f9febcc4b77218680a43c73ca4d75bf1f850fc1fe66de8a381a26053862cfcca",
+    "ts/test/direct-guard.mjs": "ce655b99114119696588e571287ef70f3509cf3af8bbb586cba64d7e9722f705",
+    "ts/test/direct-guard-loader.mjs": "4a69616fedc51c03fa5d992cc73491cf4a7f457f551ae6dde219bfccb310d2cb",
+    "tests/direct.py": "a6118240542d2efb1f146cdb927bb5d70c2f83ca4e902b0d1aa965355daf3572",
+    "ocaml/candidx.ml": "fe03d63f891bb713b0e04f3a6853440a0c167da32b0252d2c211cbb6f30539e1",
+    "ocaml/candidx.mli": "76ee926b6025d6005d11eda75d490e76439f244a29c019bb69ebd29895a9586b",
+    "ocaml/direct_probe.ml": "f8bd390497b9ea23193611b95f887cb96095a5992f0a6b9a5026b0af7b739fe7",
+    "ocaml/test_json.ml": "7dd8695ee8a2799346dde8913249cf3e6d08e57202a4c996353f0b2421a8bd52"
+  },
+  "sources_changed_during_run": false
+}

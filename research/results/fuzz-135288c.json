@@ -1,0 +1,1693 @@
+{
+  "status": "pass",
+  "profile": "cx",
+  "seed": 20261004,
+  "seed_hex": "0x135288c",
+  "random_records": 500,
+  "typed_record_cases": 1124,
+  "unused_schema_extension_pairs": 562,
+  "distinct_data_pairs": 7,
+  "raw_encoders": [
+    "Rust candid",
+    "@icp-sdk/core IDL",
+    "native Motoko to_candid"
+  ],
+  "normalizers": [
+    "Rust",
+    "TypeScript",
+    "OCaml",
+    "native Motoko"
+  ],
+  "cross_messages_per_normalizer": 4510,
+  "external_hash": "Python hashlib.sha256 over full canonical bytes",
+  "canonical_decoder_regressions": 0,
+  "upstream_sdk_decoder_losses": [
+    {
+      "id": "text-efbbbf7374617274-old",
+      "language": "ts",
+      "status": "upstream-decoder-loss"
+    },
+    {
+      "id": "text-efbbbf7374617274-extended",
+      "language": "ts",
+      "status": "upstream-decoder-loss"
+    },
+    {
+      "id": "random-0-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-0-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-1-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-1-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-2-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-2-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-4-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-4-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-6-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-6-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-11-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-11-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-12-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-12-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-13-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-13-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-14-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-14-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-16-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-16-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-19-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-19-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-21-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-21-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-24-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-24-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-26-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-26-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-27-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-27-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-31-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-31-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-34-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-34-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-35-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-35-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-37-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-37-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-38-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-38-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-43-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-43-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-50-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-50-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-51-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-51-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-52-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-52-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-56-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-56-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-59-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-59-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-65-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-65-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-68-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-68-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-73-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-73-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-77-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-77-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-78-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-78-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-79-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-79-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-80-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-80-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-84-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-84-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-90-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-90-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-92-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-92-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-100-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-100-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-101-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-101-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-102-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-102-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-104-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-104-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-108-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-108-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-111-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-111-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-119-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-119-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-124-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-124-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-126-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-126-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-128-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-128-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-130-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-130-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-133-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-133-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-136-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-136-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-138-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-138-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-139-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-139-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-140-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-140-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-141-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-141-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-144-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-144-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-145-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-145-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-146-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-146-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-147-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-147-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-150-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-150-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-151-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-151-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-154-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-154-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-159-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-159-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-163-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-163-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-165-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-165-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-168-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-168-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-169-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-169-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-175-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-175-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-178-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-178-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-188-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-188-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-190-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-190-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-195-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-195-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-196-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-196-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-200-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-200-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-204-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-204-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-207-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-207-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-208-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-208-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-209-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-209-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-211-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-211-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-212-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-212-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-214-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-214-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-218-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-218-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-227-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-227-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-228-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-228-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-229-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-229-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-231-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-231-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-237-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-237-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-245-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-245-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-246-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-246-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-248-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-248-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-251-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-251-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-259-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-259-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-265-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-265-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-275-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-275-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-279-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-279-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-281-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-281-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-289-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-289-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-292-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-292-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-293-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-293-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-295-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-295-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-300-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-300-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-301-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-301-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-309-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-309-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-311-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-311-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-314-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-314-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-316-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-316-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-317-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-317-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-320-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-320-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-327-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-327-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-332-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-332-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-334-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-334-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-336-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-336-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-340-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-340-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-342-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-342-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-345-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-345-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-347-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-347-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-349-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-349-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-351-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-351-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-353-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-353-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-354-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-354-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-355-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-355-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-359-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-359-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-361-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-361-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-362-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-362-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-363-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-363-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-365-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-365-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-367-old",
+      "language": "ts",
+      "status": "upstream-decoder-loss"
+    },
+    {
+      "id": "random-367-extended",
+      "language": "ts",
+      "status": "upstream-decoder-loss"
+    },
+    {
+      "id": "random-370-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-370-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-372-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-372-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-375-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-375-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-376-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-376-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-377-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-377-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-383-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-383-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-385-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-385-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-396-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-396-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-404-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-404-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-405-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-405-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-415-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-415-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-419-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-419-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-423-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-423-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-426-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-426-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-431-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-431-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-432-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-432-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-435-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-435-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-436-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-436-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-437-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-437-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-440-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-440-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-447-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-447-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-450-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-450-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-452-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-452-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-453-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-453-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-456-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-456-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-462-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-462-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-463-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-463-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-470-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-470-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-471-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-471-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-473-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-473-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-477-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-477-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-483-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-483-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-484-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-484-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-485-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-485-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-490-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-490-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-491-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-491-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-497-old",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    },
+    {
+      "id": "random-497-extended",
+      "language": "ts",
+      "status": "sdk-recursive-optional-field-loss"
+    }
+  ],
+  "decodeCompatible_original_value_recovery": "exact for ordinary and canonical TS input",
+  "rust_original_schema_reencoding": "byte-identical ordinary SDK message",
+  "directed_float32_wire_records": 14,
+  "motoko_fresh_instances_per_program": 2,
+  "corpus_sha256": "012560ef8786f1c9ffff5ae331db875041bd927e254d46511890e6491acb9a44",
+  "source_sha256": {
+    "rust/src/lib.rs": "dc9ff1de87403586d66482bbc39efe88a162873f55112d88450623c67eb13660",
+    "rust/examples/fuzz.rs": "95c06a5ee44239066f970494e653570ec4171cf0509f106ccf88324aee337bb1",
+    "ts/src/index.ts": "508df40f9823e4eea7794019daa14b293be3ce98a85ddcf091b71018efd40da3",
+    "ts/src/candid.ts": "ab280ec447273d262f18443c246f79e082f1b1c9fb1fad51c3747d7254e2c546",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ts/test/fuzz.mjs": "512fff5cf0cbe49d9a3a1e498e253bcacac657d292c38ff33d11de4ee8fc8841",
+    "ocaml/candidx.ml": "758d6f35f38de46eb8ff088e8a580406385f998ceab80ef8fabb717b6a5c0fc6",
+    "motoko/src/lib.mo": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+    "tests/fuzz.py": "1b14f0c709828f7d7b098776813369a01faa45414d2e7be0bda31b380fd23b58",
+    "rust/Cargo.toml": "519a67ffc271e2a660b54772e325164a1bc75ff2a1f66d07d497d16505400600",
+    "rust/Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5",
+    "ts/package-lock.json": "7aa2b27b47c3a1687b90f58d24c3019850abfb1c8c9a263448dffa1a9724d996",
+    "wasm/src/lib.rs": "33819fe268d79f17fa29e836d07acaf7388680f5bc8dfe6546d0d0cecbe9cab8",
+    "wasm/runtime.py": "c0d37863601432670f4a3ea135f96a9be327f9ef84e6332983f9290a8d9878c6",
+    "wasm/artifacts/cx.wasm": "2c2882b4638192a1b6041c5eac2bff1f173c9d04ad2a587ada87f75b79f5cb06"
+  },
+  "sources_changed_during_run": false,
+  "wasm_backend": {
+    "status": "pass",
+    "messages": 4510,
+    "shared_codec": "Rust",
+    "artifact_sha256": "2c2882b4638192a1b6041c5eac2bff1f173c9d04ad2a587ada87f75b79f5cb06"
+  },
+  "linked_runtime_bridge": "matches every positive raw and canonical message",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "moc": "Motoko compiler (source 1.16.1-44-g9384e1076-dirty)",
+  "node": "v24.11.1",
+  "rust_candid": "0.10.37",
+  "ts_sdk": "6.1.0",
+  "completed_utc": "2026-10-04T20:30:07.365130+00:00",
+  "replay": "/srv/shared/code/motoko_candid/research/candid-canonical/.venv/bin/python tests/fuzz.py --seed 0x135288c --cases 500 --moc /srv/shared/code/motoko_candid/bin/moc --core /srv/shared/code/motoko-core/src --runtime-moc /srv/shared/code/candidx/wasm/moc"
+}

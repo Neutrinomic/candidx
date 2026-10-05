@@ -1,0 +1,42 @@
+{
+  "profile": "cx",
+  "recorded_utc": "2026-10-04T20:32:17.813842+00:00",
+  "method": "Fresh standalone memory32 instance per workload; arena high-water includes input and temporary allocations until reset; linear memory capacity is retained, not live heap or process RSS",
+  "wasmtime": "49.0.0",
+  "artifact_sha256": "2c2882b4638192a1b6041c5eac2bff1f173c9d04ad2a587ada87f75b79f5cb06",
+  "fixture_sha256": "4a4919e8b7517187dcd1f55c950fff0fd46fa293b114c3e36e78d5101a705dc2",
+  "rows": [
+    {
+      "name": "small",
+      "input_bytes": 305,
+      "output_bytes": 296,
+      "scratch_bytes_including_input": 2398,
+      "linear_memory_capacity_bytes": 1114112,
+      "reused_calls": 100
+    },
+    {
+      "name": "records-128",
+      "input_bytes": 5875,
+      "output_bytes": 5866,
+      "scratch_bytes_including_input": 26096,
+      "linear_memory_capacity_bytes": 1114112,
+      "reused_calls": 100
+    },
+    {
+      "name": "blob-64k",
+      "input_bytes": 65676,
+      "output_bytes": 65667,
+      "scratch_bytes_including_input": 132833,
+      "linear_memory_capacity_bytes": 1245184,
+      "reused_calls": 100
+    },
+    {
+      "name": "records-1024",
+      "input_bytes": 35262,
+      "output_bytes": 35253,
+      "scratch_bytes_including_input": 175671,
+      "linear_memory_capacity_bytes": 1245184,
+      "reused_calls": 100
+    }
+  ]
+}

@@ -1,0 +1,1294 @@
+{
+  "label": "direct-final-v3",
+  "recorded_utc": "2026-10-04T23:43:37.129Z",
+  "profile": "cx",
+  "node": "v24.11.1",
+  "fixture_sha256": "b6a33a8c39a5d56b6694295a02a959ab3d0b040fdc8f15e9e652181a8e05cfb9",
+  "method": "Three fresh Node processes per workload/phase; retain source values; warm SDK/type caches; force four GCs before and after one operation; retain and verify output",
+  "semantics": "Occupied V8 heap, external memory and ArrayBuffer snapshots; not total allocations or guaranteed peak (V8 may collect during the operation). Heap capacity is reserved storage. Small deltas include measurement bookkeeping and GC noise. Existing input and fixtures remain retained in every phase.",
+  "source_fingerprints": {
+    "ts/src/candid.ts": "7534dd3413ffd5ed81ed0aa855b8d23e2f157f2cde16901c3f91cad544acfaa6",
+    "ts/src/codec.ts": "b802f039c25c44157976235b3eb26e69e8417c455445f30ee072a4a84823b750",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ts/src/index.ts": "0ea79fbd4039e81b8d1c0d6166a8a11f03aa9b59fe6a6f30914e1b18e74295ca",
+    "benchmarks/ts_memory.mjs": "c6fdd61db3b2dd41992780c40ef884481d282732569f3589873931cf8bfc380b"
+  },
+  "cases": [
+    {
+      "name": "small",
+      "measurements": [
+        {
+          "trial": 0,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6605320,
+            "heap_capacity_bytes": 11382784,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6816000,
+            "heap_capacity_bytes": 11382784,
+            "external_bytes": 2235544,
+            "array_buffer_bytes": 32015
+          },
+          "retained": {
+            "heap_used_bytes": 6607792,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2232906,
+            "array_buffer_bytes": 29377
+          },
+          "output_bytes": 305,
+          "output_sha256": "78bc96bf286c8d36c2a3d96713ebc021736ee47cb953075ca6342ef4a8218dba"
+        },
+        {
+          "trial": 1,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6605208,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6815888,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2235544,
+            "array_buffer_bytes": 32015
+          },
+          "retained": {
+            "heap_used_bytes": 6607680,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232906,
+            "array_buffer_bytes": 29377
+          },
+          "output_bytes": 305,
+          "output_sha256": "78bc96bf286c8d36c2a3d96713ebc021736ee47cb953075ca6342ef4a8218dba"
+        },
+        {
+          "trial": 2,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6605192,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6815872,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2235544,
+            "array_buffer_bytes": 32015
+          },
+          "retained": {
+            "heap_used_bytes": 6607664,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232906,
+            "array_buffer_bytes": 29377
+          },
+          "output_bytes": 305,
+          "output_sha256": "78bc96bf286c8d36c2a3d96713ebc021736ee47cb953075ca6342ef4a8218dba"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6605200,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6689296,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2233705,
+            "array_buffer_bytes": 30176
+          },
+          "retained": {
+            "heap_used_bytes": 6622144,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6605304,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6689400,
+            "heap_capacity_bytes": 11644928,
+            "external_bytes": 2233705,
+            "array_buffer_bytes": 30176
+          },
+          "retained": {
+            "heap_used_bytes": 6622248,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6605200,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6689296,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2233705,
+            "array_buffer_bytes": 30176
+          },
+          "retained": {
+            "heap_used_bytes": 6622144,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6605152,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6867632,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2236608,
+            "array_buffer_bytes": 33079
+          },
+          "retained": {
+            "heap_used_bytes": 6609136,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6605240,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6867720,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2236608,
+            "array_buffer_bytes": 33079
+          },
+          "retained": {
+            "heap_used_bytes": 6609224,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6605280,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6867760,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2236608,
+            "array_buffer_bytes": 33079
+          },
+          "retained": {
+            "heap_used_bytes": 6609264,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 0,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6605200,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6663800,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2233665,
+            "array_buffer_bytes": 30136
+          },
+          "retained": {
+            "heap_used_bytes": 6607712,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 1,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6605336,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6663936,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2233665,
+            "array_buffer_bytes": 30136
+          },
+          "retained": {
+            "heap_used_bytes": 6607848,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        },
+        {
+          "trial": 2,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6605200,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2232561,
+            "array_buffer_bytes": 29072
+          },
+          "after": {
+            "heap_used_bytes": 6663800,
+            "heap_capacity_bytes": 11907072,
+            "external_bytes": 2233665,
+            "array_buffer_bytes": 30136
+          },
+          "retained": {
+            "heap_used_bytes": 6607712,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2232897,
+            "array_buffer_bytes": 29368
+          },
+          "output_bytes": 296,
+          "output_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb"
+        }
+      ],
+      "summaries": [
+        {
+          "phase": "ordinary_encode",
+          "occupied_heap_delta_bytes": 210680,
+          "array_buffer_delta_bytes": 2943,
+          "retained_heap_delta_bytes": 2472
+        },
+        {
+          "phase": "canonical_encode_direct",
+          "occupied_heap_delta_bytes": 84096,
+          "array_buffer_delta_bytes": 1104,
+          "retained_heap_delta_bytes": 16944
+        },
+        {
+          "phase": "canonical_encode_pipeline",
+          "occupied_heap_delta_bytes": 262480,
+          "array_buffer_delta_bytes": 4007,
+          "retained_heap_delta_bytes": 3984
+        },
+        {
+          "phase": "canonicalize_preencoded",
+          "occupied_heap_delta_bytes": 58600,
+          "array_buffer_delta_bytes": 1064,
+          "retained_heap_delta_bytes": 2512
+        }
+      ]
+    },
+    {
+      "name": "records-128",
+      "measurements": [
+        {
+          "trial": 0,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6825648,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7878032,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2298342,
+            "array_buffer_bytes": 94813
+          },
+          "retained": {
+            "heap_used_bytes": 6777984,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2245606,
+            "array_buffer_bytes": 42077
+          },
+          "output_bytes": 5875,
+          "output_sha256": "361d984e17b5c1c95b1e790d25211c365b57d503a021c4c1d9157d41e162b0b4"
+        },
+        {
+          "trial": 1,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6827256,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7879520,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2298342,
+            "array_buffer_bytes": 94813
+          },
+          "retained": {
+            "heap_used_bytes": 6778368,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2245606,
+            "array_buffer_bytes": 42077
+          },
+          "output_bytes": 5875,
+          "output_sha256": "361d984e17b5c1c95b1e790d25211c365b57d503a021c4c1d9157d41e162b0b4"
+        },
+        {
+          "trial": 2,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6825952,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7850288,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2298342,
+            "array_buffer_bytes": 94813
+          },
+          "retained": {
+            "heap_used_bytes": 6778288,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2245606,
+            "array_buffer_bytes": 42077
+          },
+          "output_bytes": 5875,
+          "output_sha256": "361d984e17b5c1c95b1e790d25211c365b57d503a021c4c1d9157d41e162b0b4"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6827184,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7535272,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2269957,
+            "array_buffer_bytes": 66428
+          },
+          "retained": {
+            "heap_used_bytes": 6797512,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6825960,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7533976,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2269957,
+            "array_buffer_bytes": 66428
+          },
+          "retained": {
+            "heap_used_bytes": 6797272,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6827568,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7583272,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2269957,
+            "array_buffer_bytes": 66428
+          },
+          "retained": {
+            "heap_used_bytes": 6797656,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6826064,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 8531624,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2320336,
+            "array_buffer_bytes": 116807
+          },
+          "retained": {
+            "heap_used_bytes": 6779424,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6827504,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 8542600,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2320336,
+            "array_buffer_bytes": 116807
+          },
+          "retained": {
+            "heap_used_bytes": 6779880,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6826136,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 8478232,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2320336,
+            "array_buffer_bytes": 116807
+          },
+          "retained": {
+            "heap_used_bytes": 6779496,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2245597,
+            "array_buffer_bytes": 42068
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 0,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6827496,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7433704,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2269917,
+            "array_buffer_bytes": 66388
+          },
+          "retained": {
+            "heap_used_bytes": 6831560,
+            "heap_capacity_bytes": 12431360,
+            "external_bytes": 2253789,
+            "array_buffer_bytes": 50260
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 1,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6825888,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7432160,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2269917,
+            "array_buffer_bytes": 66388
+          },
+          "retained": {
+            "heap_used_bytes": 6831176,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2253789,
+            "array_buffer_bytes": 50260
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        },
+        {
+          "trial": 2,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6825888,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2247883,
+            "array_buffer_bytes": 44394
+          },
+          "after": {
+            "heap_used_bytes": 7432160,
+            "heap_capacity_bytes": 12693504,
+            "external_bytes": 2269917,
+            "array_buffer_bytes": 66388
+          },
+          "retained": {
+            "heap_used_bytes": 6831176,
+            "heap_capacity_bytes": 12169216,
+            "external_bytes": 2253789,
+            "array_buffer_bytes": 50260
+          },
+          "output_bytes": 5866,
+          "output_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632"
+        }
+      ],
+      "summaries": [
+        {
+          "phase": "ordinary_encode",
+          "occupied_heap_delta_bytes": 1052264,
+          "array_buffer_delta_bytes": 50419,
+          "retained_heap_delta_bytes": -47664
+        },
+        {
+          "phase": "canonical_encode_direct",
+          "occupied_heap_delta_bytes": 708088,
+          "array_buffer_delta_bytes": 22034,
+          "retained_heap_delta_bytes": -29672
+        },
+        {
+          "phase": "canonical_encode_pipeline",
+          "occupied_heap_delta_bytes": 1705560,
+          "array_buffer_delta_bytes": 72413,
+          "retained_heap_delta_bytes": -46640
+        },
+        {
+          "phase": "canonicalize_preencoded",
+          "occupied_heap_delta_bytes": 606272,
+          "array_buffer_delta_bytes": 21994,
+          "retained_heap_delta_bytes": 5288
+        }
+      ]
+    },
+    {
+      "name": "blob-64k",
+      "measurements": [
+        {
+          "trial": 0,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6811752,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6952112,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 3032958,
+            "array_buffer_bytes": 829429
+          },
+          "retained": {
+            "heap_used_bytes": 6812664,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429114,
+            "array_buffer_bytes": 225585
+          },
+          "output_bytes": 65676,
+          "output_sha256": "028a55a9e2060e78ad1d86a601f8aca782bc12f0f6a3705886a4b5acdf71529c"
+        },
+        {
+          "trial": 1,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6811824,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6952184,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 3032958,
+            "array_buffer_bytes": 829429
+          },
+          "retained": {
+            "heap_used_bytes": 6812736,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429114,
+            "array_buffer_bytes": 225585
+          },
+          "output_bytes": 65676,
+          "output_sha256": "028a55a9e2060e78ad1d86a601f8aca782bc12f0f6a3705886a4b5acdf71529c"
+        },
+        {
+          "trial": 2,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 6811768,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6952128,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 3032958,
+            "array_buffer_bytes": 829429
+          },
+          "retained": {
+            "heap_used_bytes": 6812680,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429114,
+            "array_buffer_bytes": 225585
+          },
+          "output_bytes": 65676,
+          "output_sha256": "028a55a9e2060e78ad1d86a601f8aca782bc12f0f6a3705886a4b5acdf71529c"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6811848,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 7175904,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2626189,
+            "array_buffer_bytes": 422660
+          },
+          "retained": {
+            "heap_used_bytes": 6844944,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6811776,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 7215192,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2626189,
+            "array_buffer_bytes": 422660
+          },
+          "retained": {
+            "heap_used_bytes": 6844872,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 6811704,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 7187080,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2626189,
+            "array_buffer_bytes": 422660
+          },
+          "retained": {
+            "heap_used_bytes": 6844800,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6811920,
+            "heap_capacity_bytes": 11653120,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6992656,
+            "heap_capacity_bytes": 11653120,
+            "external_bytes": 3295669,
+            "array_buffer_bytes": 1092140
+          },
+          "retained": {
+            "heap_used_bytes": 6815496,
+            "heap_capacity_bytes": 11915264,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6811768,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6992504,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 3295669,
+            "array_buffer_bytes": 1092140
+          },
+          "retained": {
+            "heap_used_bytes": 6815344,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 6811712,
+            "heap_capacity_bytes": 11915264,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6992448,
+            "heap_capacity_bytes": 11915264,
+            "external_bytes": 3295669,
+            "array_buffer_bytes": 1092140
+          },
+          "retained": {
+            "heap_used_bytes": 6815288,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 0,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6811792,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6858968,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2626149,
+            "array_buffer_bytes": 422620
+          },
+          "retained": {
+            "heap_used_bytes": 6815456,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 1,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6811800,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6858976,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2626149,
+            "array_buffer_bytes": 422620
+          },
+          "retained": {
+            "heap_used_bytes": 6815464,
+            "heap_capacity_bytes": 12439552,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        },
+        {
+          "trial": 2,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 6811776,
+            "heap_capacity_bytes": 11915264,
+            "external_bytes": 2363398,
+            "array_buffer_bytes": 159909
+          },
+          "after": {
+            "heap_used_bytes": 6858952,
+            "heap_capacity_bytes": 11915264,
+            "external_bytes": 2626149,
+            "array_buffer_bytes": 422620
+          },
+          "retained": {
+            "heap_used_bytes": 6815440,
+            "heap_capacity_bytes": 12177408,
+            "external_bytes": 2429105,
+            "array_buffer_bytes": 225576
+          },
+          "output_bytes": 65667,
+          "output_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3"
+        }
+      ],
+      "summaries": [
+        {
+          "phase": "ordinary_encode",
+          "occupied_heap_delta_bytes": 140360,
+          "array_buffer_delta_bytes": 669520,
+          "retained_heap_delta_bytes": 912
+        },
+        {
+          "phase": "canonical_encode_direct",
+          "occupied_heap_delta_bytes": 375376,
+          "array_buffer_delta_bytes": 262751,
+          "retained_heap_delta_bytes": 33096
+        },
+        {
+          "phase": "canonical_encode_pipeline",
+          "occupied_heap_delta_bytes": 180736,
+          "array_buffer_delta_bytes": 932231,
+          "retained_heap_delta_bytes": 3576
+        },
+        {
+          "phase": "canonicalize_preencoded",
+          "occupied_heap_delta_bytes": 47176,
+          "array_buffer_delta_bytes": 262711,
+          "retained_heap_delta_bytes": 3664
+        }
+      ]
+    },
+    {
+      "name": "records-1024",
+      "measurements": [
+        {
+          "trial": 0,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 7385296,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 9474864,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2503237,
+            "array_buffer_bytes": 299708
+          },
+          "retained": {
+            "heap_used_bytes": 7371856,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2304796,
+            "array_buffer_bytes": 101267
+          },
+          "output_bytes": 35262,
+          "output_sha256": "b64179f3c1a622fd6f5d17cc1ce33214bdfd4b484f0c745b0c98490d34bd21aa"
+        },
+        {
+          "trial": 1,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 7385040,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 9459368,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2503034,
+            "array_buffer_bytes": 299505
+          },
+          "retained": {
+            "heap_used_bytes": 7371600,
+            "heap_capacity_bytes": 16363520,
+            "external_bytes": 2304796,
+            "array_buffer_bytes": 101267
+          },
+          "output_bytes": 35262,
+          "output_sha256": "b64179f3c1a622fd6f5d17cc1ce33214bdfd4b484f0c745b0c98490d34bd21aa"
+        },
+        {
+          "trial": 2,
+          "phase": "ordinary_encode",
+          "before": {
+            "heap_used_bytes": 7385224,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 9485384,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2503440,
+            "array_buffer_bytes": 299911
+          },
+          "retained": {
+            "heap_used_bytes": 7371784,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2304796,
+            "array_buffer_bytes": 101267
+          },
+          "output_bytes": 35262,
+          "output_sha256": "b64179f3c1a622fd6f5d17cc1ce33214bdfd4b484f0c745b0c98490d34bd21aa"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 7385232,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8421736,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390864,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 7385232,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8421736,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390864,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_direct",
+          "before": {
+            "heap_used_bytes": 7385232,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8421736,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390864,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 0,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 7385240,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 10802696,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2580312,
+            "array_buffer_bytes": 376783
+          },
+          "retained": {
+            "heap_used_bytes": 7394984,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 1,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 7385240,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 10815808,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2580312,
+            "array_buffer_bytes": 376783
+          },
+          "retained": {
+            "heap_used_bytes": 7394984,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 2,
+          "phase": "canonical_encode_pipeline",
+          "before": {
+            "heap_used_bytes": 7385240,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 10813160,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2580312,
+            "array_buffer_bytes": 376783
+          },
+          "retained": {
+            "heap_used_bytes": 7390240,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 0,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 7385248,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8918416,
+            "heap_capacity_bytes": 16625664,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390336,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 1,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 7385232,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8921488,
+            "heap_capacity_bytes": 17149952,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390320,
+            "heap_capacity_bytes": 17412096,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        },
+        {
+          "trial": 2,
+          "phase": "canonicalize_preencoded",
+          "before": {
+            "heap_used_bytes": 7385176,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2269494,
+            "array_buffer_bytes": 66005
+          },
+          "after": {
+            "heap_used_bytes": 8912440,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2403091,
+            "array_buffer_bytes": 199562
+          },
+          "retained": {
+            "heap_used_bytes": 7390264,
+            "heap_capacity_bytes": 16887808,
+            "external_bytes": 2304787,
+            "array_buffer_bytes": 101258
+          },
+          "output_bytes": 35253,
+          "output_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31"
+        }
+      ],
+      "summaries": [
+        {
+          "phase": "ordinary_encode",
+          "occupied_heap_delta_bytes": 2089568,
+          "array_buffer_delta_bytes": 233703,
+          "retained_heap_delta_bytes": -13440
+        },
+        {
+          "phase": "canonical_encode_direct",
+          "occupied_heap_delta_bytes": 1036504,
+          "array_buffer_delta_bytes": 133557,
+          "retained_heap_delta_bytes": 5632
+        },
+        {
+          "phase": "canonical_encode_pipeline",
+          "occupied_heap_delta_bytes": 3427920,
+          "array_buffer_delta_bytes": 310778,
+          "retained_heap_delta_bytes": 9744
+        },
+        {
+          "phase": "canonicalize_preencoded",
+          "occupied_heap_delta_bytes": 1533168,
+          "array_buffer_delta_bytes": 133557,
+          "retained_heap_delta_bytes": 5088
+        }
+      ]
+    }
+  ]
+}

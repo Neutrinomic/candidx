@@ -1,0 +1,1149 @@
+--- a/benchmarks/run.py
++++ b/benchmarks/run.py
+@@ -13,7 +13,6 @@
+ import subprocess
+ import sys
+ import time
+-from runtime_sources import runtime_source
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+ OUT = ROOT / "_out"
+@@ -132,13 +131,6 @@
+         for case in rust["cases"]:
+             timing = json.loads(command([ROOT / "ocaml/_build/default/bench.exe"], input_text=case["raw_hex"] + "\n"))
+             results["ocaml"]["cases"].append({"name": case["name"], "ordinary_bytes": case["ordinary_bytes"], "canonical_bytes": case["canonical_bytes"], "canonicalize_preencoded": timing})
+-        direct = json.loads(command([ROOT / "ocaml/_build/default/direct_bench.exe"]))
+-        for case in results["ocaml"]["cases"]:
+-            typed = next(c for c in direct["cases"] if c["name"] == case["name"])
+-            expected = next(c for c in rust["cases"] if c["name"] == case["name"])
+-            assert typed["canonical_hex"] == expected["canonical_hex"], f"OCaml direct: {case['name']}"
+-            case["canonical_hex"] = typed["canonical_hex"]
+-            case["canonical_encode_direct"] = typed["canonical_encode_direct"]
+         (OUT / f"bench-ocaml-{args.label}.json").write_text(json.dumps(results["ocaml"], indent=2) + "\n")
+     for lang in ("motoko", "motoko-wasm"):
+         if lang not in args.languages:
+@@ -147,8 +139,14 @@
+         compiler = args.moc
+         if lang == "motoko-wasm":
+             compiler = args.wasm_moc
++            text = source.read_text().replace('import CandidX "../src/lib";\n', '')
++            old = '''func canonical(raw : Blob) : Blob = switch (CandidX.canonicalize(raw)) {
++  case (#ok bytes) bytes;
++  case (#err e) Prim.trap(e);
++};'''
++            assert old in text, "benchmark adapter source changed"
+             source = OUT / "benchmark-rts.mo"
+-            source.write_text(runtime_source("benchmark"))
++            source.write_text(text.replace(old, 'func canonical(raw : Blob) : Blob { Prim.canonicalizeCandid(raw) };'))
+         artifact = OUT / f"benchmark-{lang}.wasm"
+         command([compiler, "--package", "core", args.core, "-wasi-system-api", "-o", artifact, source])
+         mo, lines = native_motoko(artifact)
+@@ -165,22 +163,14 @@
+     report = {"recorded_utc": datetime.now(timezone.utc).isoformat(), "label": args.label,
+         "platform": platform.platform(), "machine": platform.machine(), "method": "7 trials; median wall time; Rust optimized; TS warmed V8; Wasm fuel instrumentation; no hashes timed",
+         "source_fingerprints": {str(f.relative_to(ROOT)): sha256(f.read_bytes()).hexdigest()
+-            for base in ["rust/src", "rust/examples", "ts/src", "ts/test", "ocaml", "motoko/src", "motoko/test", "wasm/src"]
+-            for f in (ROOT / base).rglob("*.*")
+-            if f.is_file() and f.suffix not in {".install", ".pyc", ".pyo"}
+-            and f.name != ".DS_Store" and not f.name.endswith("~")
+-            and not any(part in {"_build", "target", "dist", "node_modules", "__pycache__"} for part in f.relative_to(ROOT).parts)}
+-            | {str(f.relative_to(ROOT)): sha256(f.read_bytes()).hexdigest() for f in [Path(__file__), ROOT / "benchmarks/runtime_sources.py", ROOT / "wasm/motoko-compiler.patch",
+-                ROOT / "rust/Cargo.toml", ROOT / "rust/Cargo.lock", ROOT / "ts/package.json", ROOT / "ts/package-lock.json", ROOT / "wasm/artifacts/manifest.json"]},
++            for base in ["rust/src", "ts/src", "ocaml", "motoko/src", "wasm/src"] for f in (ROOT / base).glob("*.*")},
+         "results": results}
+     path = OUT / f"benchmarks-{args.label}.json"
+     path.write_text(json.dumps(report, indent=2) + "\n")
+     for lang, result in results.items():
+         for case in result["cases"]:
+-            primary = "canonical_encode_direct" if "canonical_encode_direct" in case else "canonical_encode_pipeline"
+             print(lang, case["name"], "canonicalize_us", round(case["canonicalize_preencoded"]["median_us"], 2),
+-                primary, round(case[primary]["median_us"], 2),
+-                "canonical/ordinary", round(case[primary]["median_us"] / case["ordinary_encode"]["median_us"], 2) if "ordinary_encode" in case else "n/a", flush=True)
++                "pipeline/ordinary", round(case["canonical_encode_pipeline"]["median_us"] / case["ordinary_encode"]["median_us"], 2) if "ordinary_encode" in case else "n/a", flush=True)
+     print(path)
+ 
+ 
+--- a/rust/Cargo.lock
++++ b/rust/Cargo.lock
+@@ -120,6 +120,8 @@
+ dependencies = [
+  "candid",
+  "hex",
++ "num-bigint",
++ "num-traits",
+  "serde",
+  "serde_json",
+ ]
+--- a/rust/Cargo.toml
++++ b/rust/Cargo.toml
+@@ -8,12 +8,14 @@
+ 
+ [features]
+ default = ["std", "candid"]
+-std = []
++std = ["num-bigint/std", "num-traits/std"]
+ candid = ["std", "dep:candid"]
+ fuzz = ["candid", "candid/value"]
+ 
+ [dependencies]
+-candid = { version = "0.10.37", optional = true }
++num-bigint = { version = "0.4", default-features = false }
++num-traits = { version = "0.2", default-features = false }
++candid = { version = "0.10", optional = true }
+ 
+ [dev-dependencies]
+ serde = { version = "1", features = ["derive"] }
+@@ -31,7 +33,3 @@
+ [[example]]
+ name = "bench"
+ required-features = ["candid"]
+-
+-[[example]]
+-name = "profile"
+-required-features = ["candid"]
+--- a/rust/examples/bench.rs
++++ b/rust/examples/bench.rs
+@@ -1,7 +1,21 @@
+-mod support;
++use candid::{CandidType, Deserialize, Nat, Principal};
+ use serde_json::json;
+ use std::{hint::black_box, time::Instant};
+-use support::{Block, WORKLOADS};
++
++#[derive(CandidType, Deserialize, Clone, PartialEq, Debug)]
++struct Tx {
++    owner: Principal,
++    amount: Nat,
++    memo: Option<Vec<u8>>,
++}
++#[derive(CandidType, Deserialize, Clone, PartialEq, Debug)]
++#[allow(non_snake_case)]
++struct Block {
++    timestamp: u64,
++    parentHash: Option<Vec<u8>>,
++    tx: Vec<Tx>,
++    note: Option<String>,
++}
+ 
+ fn sample(mut f: impl FnMut() -> usize) -> serde_json::Value {
+     for _ in 0..3 {
+@@ -24,11 +38,33 @@
+ }
+ fn main() {
+     let mut cases = Vec::new();
+-    for (name, count, memo_size) in WORKLOADS {
+-        let block = support::block(count, memo_size);
++    for (name, count, memo_size) in [
++        ("small", 4, 32),
++        ("records-128", 128, 32),
++        ("blob-64k", 1, 65536),
++        ("records-1024", 1024, 0),
++    ] {
++        let memo: Vec<u8> = (0..memo_size).map(|i| (i % 256) as u8).collect();
++        let huge =
++            Nat::parse(b"1606938044258990275541962092341162602522202993782792835301376").unwrap();
++        let block = Block {
++            timestamp: 1234567890,
++            parentHash: Some(vec![7; 32]),
++            note: None,
++            tx: (0..count)
++                .map(|i| Tx {
++                    owner: Principal::from_slice(&[1, 2]),
++                    amount: Nat(&huge.0 + i as u32),
++                    memo: if i % 3 == 0 || memo_size == 65536 {
++                        Some(memo.clone())
++                    } else {
++                        None
++                    },
++                })
++                .collect(),
++        };
++        let raw = candid::encode_one(&block).unwrap();
+         let canonical = candidx::encode_one(&block).unwrap();
+-        let raw = candid::encode_one(&block).unwrap();
+-        assert_eq!(candidx::canonicalize(&raw).unwrap(), canonical);
+         assert_eq!(candid::decode_one::<Block>(&raw).unwrap(), block);
+         assert_eq!(candid::decode_one::<Block>(&canonical).unwrap(), block);
+         cases.push(json!({"name":name, "transactions":count, "memo_bytes":memo_size,
+@@ -36,11 +72,7 @@
+             "raw_hex": hex::encode(&raw), "canonical_hex": hex::encode(&canonical),
+             "ordinary_encode":sample(|| candid::encode_one(black_box(&block)).unwrap().len()),
+             "canonicalize_preencoded":sample(|| candidx::canonicalize(black_box(&raw)).unwrap().len()),
+-            "canonical_encode_direct":sample(|| candidx::encode_one(black_box(&block)).unwrap().len()),
+-            "canonical_encode_pipeline":sample(|| {
+-                let ordinary = candid::encode_one(black_box(&block)).unwrap();
+-                candidx::canonicalize(&ordinary).unwrap().len()
+-            }),
++            "canonical_encode_pipeline":sample(|| candidx::encode_one(black_box(&block)).unwrap().len()),
+             "ordinary_decode":sample(|| candid::decode_one::<Block>(black_box(&raw)).unwrap().tx.len()),
+             "canonical_decode":sample(|| candid::decode_one::<Block>(black_box(&canonical)).unwrap().tx.len())}));
+     }
+--- a/rust/examples/profile.rs
++++ b/rust/examples/profile.rs
+@@ -1,5 +1,4 @@
+ //! Host-side allocator measurements; this example never hashes values.
+-mod support;
+ use serde_json::{json, Value};
+ use std::alloc::{GlobalAlloc, Layout, System};
+ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed};
+@@ -50,69 +49,23 @@
+     for case in fixture["cases"].as_array().unwrap() {
+         let raw = hex::decode(case["raw_hex"].as_str().unwrap()).unwrap();
+         let expected = hex::decode(case["canonical_hex"].as_str().unwrap()).unwrap();
+-        let name = case["name"].as_str().unwrap();
+-        let (_, count, memo_size) = support::WORKLOADS
+-            .iter()
+-            .find(|(candidate, _, _)| *candidate == name)
+-            .unwrap();
+-        let block = support::block(*count, *memo_size);
+-        // Initialize shared type caches and all application fixtures outside
+-        // the counters. Each measured typed encoder still derives its schema
+-        // exactly as its real public entry point does.
+-        assert_eq!(candidx::encode_one(&block).unwrap(), expected);
+-        assert_eq!(candid::encode_one(&block).unwrap(), raw);
+-        let mut stats = json!({"name":name});
+-        for phase in [
+-            "ordinary_encode",
+-            "canonical_encode_direct",
+-            "canonical_encode_pipeline",
+-            "canonicalize_preencoded",
+-        ] {
+-            // Remove prior per-operation schema values before counting; their
+-            // allocations belong to the preceding operation, not this one.
+-            candid::types::internal::env_clear();
+-            ALLOCATED.store(0, Relaxed);
+-            ALLOCATIONS.store(0, Relaxed);
+-            LIVE.store(0, Relaxed);
+-            PEAK.store(0, Relaxed);
+-            ENABLED.store(true, Relaxed);
+-            let output = match phase {
+-                "ordinary_encode" => candid::encode_one(&block).unwrap(),
+-                "canonical_encode_direct" => candidx::encode_one(&block).unwrap(),
+-                "canonical_encode_pipeline" => {
+-                    let ordinary = candid::encode_one(&block).unwrap();
+-                    candidx::canonicalize(&ordinary).unwrap()
+-                }
+-                "canonicalize_preencoded" => candidx::canonicalize(&raw).unwrap(),
+-                _ => unreachable!(),
+-            };
+-            ENABLED.store(false, Relaxed);
+-            let live = LIVE.load(Relaxed);
+-            let peak = PEAK.load(Relaxed);
+-            assert!(
+-                live <= peak && peak <= ALLOCATED.load(Relaxed),
+-                "allocator accounting underflow"
+-            );
+-            stats[phase] = json!({
+-                "allocated_bytes":ALLOCATED.load(Relaxed),
+-                "allocation_requests":ALLOCATIONS.load(Relaxed),
+-                "peak_live_allocation_bytes":peak,
+-                "operation_end_measured_allocation_bytes":live,
+-                "retained_output_capacity_bytes":output.capacity(),
+-            });
+-            assert_eq!(
+-                output.as_slice(),
+-                if phase == "ordinary_encode" {
+-                    raw.as_slice()
+-                } else {
+-                    expected.as_slice()
+-                }
+-            );
+-        }
++        ALLOCATED.store(0, Relaxed);
++        ALLOCATIONS.store(0, Relaxed);
++        LIVE.store(0, Relaxed);
++        PEAK.store(0, Relaxed);
++        ENABLED.store(true, Relaxed);
++        let output = candidx::canonicalize(&raw).unwrap();
++        ENABLED.store(false, Relaxed);
++        let stats = json!({"name":case["name"],
++            "allocated_bytes":ALLOCATED.load(Relaxed),
++            "allocation_requests":ALLOCATIONS.load(Relaxed),
++            "peak_live_allocation_bytes":PEAK.load(Relaxed),
++            "retained_output_capacity_bytes":LIVE.load(Relaxed)});
++        assert_eq!(output, expected);
+         cases.push(stats);
+     }
+     println!(
+         "{}",
+-        json!({"language":"Rust", "method":"System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input", "cases":cases})
++        json!({"language":"Rust", "method":"System allocator requested bytes, counting whole realloc requests; excludes allocator metadata, input, and host fixtures", "cases":cases})
+     );
+ }
+--- a/rust/src/lib.rs
++++ b/rust/src/lib.rs
+@@ -1,24 +1,16 @@
+-//! `cx`: value-based Candid bytes, without hashing.
++//! `cx` (experimental): value-based Candid bytes, without hashing.
+ #![cfg_attr(not(feature = "std"), no_std)]
+ extern crate alloc;
+ 
+-use alloc::borrow::Cow;
+ use alloc::boxed::Box;
+-use alloc::collections::BTreeMap;
++use alloc::collections::{BTreeMap, BTreeSet};
+ use alloc::string::String;
++#[cfg(feature = "candid")]
++use alloc::string::ToString;
+ use alloc::{vec, vec::Vec};
+ use core::fmt;
+-
+-mod tree;
+-pub use tree::{encode_direct_args, DirectField, DirectValue};
+-mod visitor;
+-pub use visitor::{encode_source_args, DirectSource, SourceField};
+-#[cfg(feature = "candid")]
+-mod typed;
+-#[cfg(feature = "candid")]
+-pub use typed::{
+-    encode_args, encode_args_with_types, encode_one, encode_one_with_type, ArgumentEncoder,
+-};
++use num_bigint::BigInt;
++use num_traits::{One, ToPrimitive, Zero};
+ 
+ pub const PROFILE: &str = "cx";
+ const MAX_BYTES: usize = 32 * 1024 * 1024;
+@@ -46,20 +38,18 @@
+     edges: Vec<i32>,
+ }
+ #[derive(Clone, Debug)]
+-enum Value<'a> {
+-    Scalar(i32, Cow<'a, [u8]>),
+-    Some(Box<Value<'a>>),
+-    Vec(Vec<Value<'a>>),
+-    Blob(&'a [u8]),
+-    Text(&'a [u8]),
+-    Principal(&'a [u8]),
+-    Record(Vec<(u32, Value<'a>)>),
+-    Variant(u32, Box<Value<'a>>),
+-}
+-fn null<'a>() -> Value<'a> {
+-    Value::Scalar(-1, Cow::Borrowed(&[]))
+-}
+-fn is_null(v: &Value<'_>) -> bool {
++enum Value {
++    Scalar(i32, Vec<u8>),
++    Some(Box<Value>),
++    Vec(Vec<Value>),
++    Blob(Vec<u8>),
++    Record(BTreeMap<u32, Value>),
++    Variant(u32, Box<Value>),
++}
++fn null() -> Value {
++    Value::Scalar(-1, vec![])
++}
++fn is_null(v: &Value) -> bool {
+     matches!(v, Value::Scalar(-1, _))
+ }
+ #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+@@ -83,6 +73,22 @@
+     }
+ }
+ 
++fn leb(mut value: BigInt, signed: bool) -> Vec<u8> {
++    let mut out = Vec::new();
++    loop {
++        let byte = (&value & BigInt::from(127u8)).to_u8().unwrap_or(0);
++        value >>= 7;
++        let done = if signed {
++            (value.is_zero() && byte < 64) || (value == BigInt::from(-1) && byte >= 64)
++        } else {
++            value.is_zero()
++        };
++        out.push(byte | if done { 0 } else { 128 });
++        if done {
++            return out;
++        }
++    }
++}
+ struct Reader<'a> {
+     data: &'a [u8],
+     pos: usize,
+@@ -99,16 +105,14 @@
+     fn byte(&mut self) -> Result<u8> {
+         Ok(self.take(1)?[0])
+     }
+-    // Only type references, labels, and lengths use this reader (at most ten
+-    // groups = 70 bits). Arbitrarily large Nat/Int values use scalar_integer.
+-    fn integer(&mut self, signed: bool, max: usize) -> Result<i128> {
+-        let mut value = 0i128;
++    fn integer(&mut self, signed: bool, max: usize) -> Result<BigInt> {
++        let mut value = BigInt::zero();
+         for i in 0..max {
+             let byte = self.byte()?;
+-            value |= i128::from(byte & 127) << (7 * i);
++            value |= BigInt::from(byte & 127) << (7 * i);
+             if byte < 128 {
+                 if signed && byte & 64 != 0 {
+-                    value -= 1i128 << (7 * (i + 1));
++                    value -= BigInt::one() << (7 * (i + 1));
+                 }
+                 return Ok(value);
+             }
+@@ -117,46 +121,46 @@
+     }
+     // Normalize a scalar LEB directly. Constructing a BigInt only to encode it
+     // again is unnecessary; leading zero/sign groups determine minimality.
+-    fn scalar_integer(&mut self, signed: bool) -> Result<Cow<'a, [u8]>> {
++    fn scalar_integer(&mut self, signed: bool) -> Result<Vec<u8>> {
+         let start = self.pos;
+         for _ in 0..4096 {
+             if self.byte()? < 128 {
+-                let mut end = self.pos;
+-                while end - start > 1 {
+-                    let last = self.data[end - 1] & 127;
+-                    let previous = self.data[end - 2];
++                let mut bytes = self.data[start..self.pos].to_vec();
++                while bytes.len() > 1 {
++                    let last = bytes[bytes.len() - 1] & 127;
++                    let previous = bytes[bytes.len() - 2];
+                     if (!signed && last == 0)
+                         || (signed
+                             && ((last == 0 && previous & 64 == 0)
+                                 || (last == 127 && previous & 64 != 0)))
+                     {
+-                        end -= 1;
++                        bytes.pop();
+                     } else {
+                         break;
+                     }
+                 }
+-                if end == self.pos {
+-                    return Ok(Cow::Borrowed(&self.data[start..end]));
+-                }
+-                let mut bytes = self.data[start..end].to_vec();
+                 if let Some(last) = bytes.last_mut() {
+                     *last &= 127;
+                 }
+-                return Ok(Cow::Owned(bytes));
++                return Ok(bytes);
+             }
+         }
+         bad("integer length limit")
+     }
+     fn length(&mut self) -> Result<usize> {
+-        let n =
+-            usize::try_from(self.integer(false, 10)?).map_err(|_| Error("index range".into()))?;
++        let n = self
++            .integer(false, 10)?
++            .to_usize()
++            .ok_or_else(|| Error("index range".into()))?;
+         if n > MAX_ITEMS {
+             return bad("collection length limit");
+         }
+         Ok(n)
+     }
+     fn reference(&mut self) -> Result<i32> {
+-        i32::try_from(self.integer(true, 10)?).map_err(|_| Error("type index range".into()))
++        self.integer(true, 10)?
++            .to_i32()
++            .ok_or_else(|| Error("type index range".into()))
+     }
+     fn refs(&mut self) -> Result<Vec<i32>> {
+         let n = self.length()?;
+@@ -188,8 +192,10 @@
+             -20 | -21 => {
+                 let count = r.length()?;
+                 for _ in 0..count {
+-                    let id = u32::try_from(r.integer(false, 10)?)
+-                        .map_err(|_| Error("field ID range".into()))?;
++                    let id = r
++                        .integer(false, 10)?
++                        .to_u32()
++                        .ok_or_else(|| Error("field ID range".into()))?;
+                     if labels.last().is_some_and(|last| *last >= id) {
+                         return bad("unordered field IDs");
+                     }
+@@ -248,13 +254,13 @@
+     Ok((nodes, roots))
+ }
+ 
+-fn read_value<'a>(
+-    r: &mut Reader<'a>,
++fn read_value(
++    r: &mut Reader<'_>,
+     nodes: &[Node],
+     reference: i32,
+     depth: usize,
+     steps: &mut usize,
+-) -> Result<Value<'a>> {
++) -> Result<Value> {
+     *steps += 1;
+     if *steps > MAX_ITEMS || depth > MAX_DEPTH {
+         return bad("value traversal limit");
+@@ -280,24 +286,20 @@
+                     if *steps > MAX_ITEMS || (n != 0 && depth + 1 > MAX_DEPTH) {
+                         return bad("value traversal limit");
+                     }
+-                    return Ok(Value::Blob(r.take(n)?));
+-                }
+-                // Exact reservation for ordinary workloads, bounded eager
+-                // allocation for truncated or very large input declarations.
+-                let mut items = Vec::with_capacity(n.min(4096));
+-                for _ in 0..n {
+-                    items.push(read_value(r, nodes, node.edges[0], depth + 1, steps)?);
+-                }
++                    return Ok(Value::Blob(r.take(n)?.to_vec()));
++                }
++                let items = (0..n)
++                    .map(|_| read_value(r, nodes, node.edges[0], depth + 1, steps))
++                    .collect::<Result<Vec<_>>>()?;
+                 Ok(Value::Vec(items))
+             }
+             -20 => {
+-                let mut fields = Vec::new();
++                let mut fields = BTreeMap::new();
+                 for (&label, &edge) in node.labels.iter().zip(&node.edges) {
+                     let child = read_value(r, nodes, edge, depth + 1, steps)?;
+                     let absent = edge >= 0 && nodes[edge as usize].op == -18 && is_null(&child);
+                     if !absent {
+-                        // The validated type table already sorts record labels.
+-                        fields.push((label, child));
++                        fields.insert(label, child);
+                     }
+                 }
+                 Ok(Value::Record(fields))
+@@ -317,17 +319,17 @@
+     }
+     let raw = match reference {
+         -1 => return Ok(null()),
+-        -16 => Cow::Borrowed(&[][..]),
++        -16 => vec![],
+         -17 => return bad("empty has no values"),
+         -2 => {
+             let bytes = r.take(1)?;
+             if bytes[0] > 1 {
+                 return bad("invalid bool");
+             }
+-            Cow::Borrowed(bytes)
++            bytes.to_vec()
+         }
+         -3 | -4 => r.scalar_integer(reference == -4)?,
+-        -12..=-5 => Cow::Borrowed(r.take(1 << ((-reference - 5) % 4))?),
++        -12..=-5 => r.take(1 << ((-reference - 5) % 4))?.to_vec(),
+         -13 | -14 => {
+             let size = if reference == -13 { 4 } else { 8 };
+             let bytes = r.take(size)?;
+@@ -344,12 +346,17 @@
+                 } else {
+                     0x7ff8000000000000
+                 };
+-                Cow::Owned(canonical.to_le_bytes()[..size].to_vec())
++                canonical.to_le_bytes()[..size].to_vec()
+             } else {
+-                Cow::Borrowed(bytes)
+-            }
+-        }
+-        -15 => return Ok(Value::Text(r.text()?)),
++                bytes.to_vec()
++            }
++        }
++        -15 => {
++            let bytes = r.text()?;
++            let mut raw = leb(BigInt::from(bytes.len()), false);
++            raw.extend(bytes);
++            raw
++        }
+         -24 => {
+             if r.byte()? != 1 {
+                 return bad("opaque principal");
+@@ -358,166 +365,84 @@
+             if n > 29 {
+                 return bad("principal length exceeds 29");
+             }
+-            return Ok(Value::Principal(r.take(n)?));
++            let mut raw = vec![1, n as u8];
++            raw.extend(r.take(n)?);
++            raw
+         }
+         _ => return bad("unsupported primitive"),
+     };
+     Ok(Value::Scalar(reference, raw))
+ }
+ 
+-// Consume each newly derived shape and extend the accumulated array shape.
+-// Equal shapes need no clone; sorted label vectors permit a linear union.
+-fn join(a: &mut Shape, mut b: Shape, depth: usize) -> Result<()> {
++fn join(a: &Shape, b: &Shape, depth: usize) -> Result<Shape> {
+     if depth > MAX_DEPTH {
+         return bad("type nesting limit");
+     }
+-    if *a == b || b.op == -17 {
+-        return Ok(());
++    if a == b || b.op == -17 {
++        return Ok(a.clone());
+     }
+     if a.op == -17 {
+-        *a = b;
+-        return Ok(());
++        return Ok(b.clone());
+     }
+     if a.op == -1 {
+-        *a = if b.op == -18 { b } else { unary(-18, b) };
+-        return Ok(());
++        return Ok(if b.op == -18 {
++            b.clone()
++        } else {
++            unary(-18, b.clone())
++        });
+     }
+     if b.op == -1 {
+-        if a.op != -18 {
+-            let child = core::mem::replace(a, scalar(-17));
+-            *a = unary(-18, child);
+-        }
+-        return Ok(());
++        return Ok(if a.op == -18 {
++            a.clone()
++        } else {
++            unary(-18, a.clone())
++        });
+     }
+     if a.op == -18 || b.op == -18 {
+-        if b.op == -18 {
+-            b = b
+-                .children
+-                .pop()
+-                .ok_or_else(|| Error("missing option shape".into()))?;
+-        }
+-        if a.op != -18 {
+-            let child = core::mem::replace(a, scalar(-17));
+-            *a = unary(-18, child);
+-        }
+-        return join(&mut a.children[0], b, depth + 1);
++        return Ok(unary(
++            -18,
++            join(
++                if a.op == -18 { &a.children[0] } else { a },
++                if b.op == -18 { &b.children[0] } else { b },
++                depth + 1,
++            )?,
++        ));
+     }
+     if a.op != b.op || ![-19, -20, -21].contains(&a.op) {
+         return bad("incompatible value shapes");
+     }
+     if a.op == -19 {
+-        let child = b
+-            .children
+-            .pop()
+-            .ok_or_else(|| Error("missing vector shape".into()))?;
+-        return join(&mut a.children[0], child, depth + 1);
+-    }
+-    if a.labels == b.labels {
+-        for (left, right) in a.children.iter_mut().zip(b.children) {
+-            join(left, right, depth + 1)?;
+-        }
+-        return Ok(());
+-    }
+-    let capacity = a.labels.len().max(b.labels.len());
+-    let mut left = core::mem::take(&mut a.labels)
++        return Ok(unary(-19, join(&a.children[0], &b.children[0], depth + 1)?));
++    }
++    let aa: BTreeMap<_, _> = a.labels.iter().copied().zip(&a.children).collect();
++    let bb: BTreeMap<_, _> = b.labels.iter().copied().zip(&b.children).collect();
++    let labels: Vec<_> = aa
++        .keys()
++        .chain(bb.keys())
++        .copied()
++        .collect::<BTreeSet<_>>()
+         .into_iter()
+-        .zip(core::mem::take(&mut a.children))
+-        .peekable();
+-    let mut right = b.labels.into_iter().zip(b.children).peekable();
+-    let mut labels = Vec::with_capacity(capacity);
+-    let mut children = Vec::with_capacity(capacity);
+-    while left.peek().is_some() || right.peek().is_some() {
+-        let take_left = match (left.peek(), right.peek()) {
+-            (Some((x, _)), Some((y, _))) => x <= y,
+-            (Some(_), None) => true,
+-            _ => false,
+-        };
+-        let (id, mut child) = if take_left {
+-            left.next()
+-                .ok_or_else(|| Error("missing left shape".into()))?
+-        } else {
+-            let (id, child) = right
+-                .next()
+-                .ok_or_else(|| Error("missing right shape".into()))?;
+-            let child = if a.op == -21 {
+-                child
+-            } else {
+-                let mut absent = scalar(-1);
+-                join(&mut absent, child, depth + 1)?;
+-                absent
+-            };
+-            labels.push(id);
+-            children.push(child);
+-            continue;
+-        };
+-        if right.peek().is_some_and(|(label, _)| *label == id) {
+-            let (_, other) = right
+-                .next()
+-                .ok_or_else(|| Error("missing joined shape".into()))?;
+-            join(&mut child, other, depth + 1)?;
+-        } else if a.op == -20 {
+-            join(&mut child, scalar(-1), depth + 1)?;
+-        }
+-        labels.push(id);
+-        children.push(child);
+-    }
+-    a.labels = labels;
+-    a.children = children;
+-    Ok(())
+-}
+-// This predicate is exactly the no-widening case of J(t, N(value)): a present
+-// option consumes one option layer, an absent field can keep null/opt, and a
+-// variant must already contain its selected case. It avoids constructing and
+-// immediately discarding a new shape for each homogeneous array element.
+-fn fits_shape(value: &Value<'_>, typ: &Shape, depth: usize) -> bool {
+-    if depth > MAX_DEPTH {
+-        return false;
+-    }
+-    if typ.op == -18 {
+-        return is_null(value)
+-            || fits_shape(
+-                if let Value::Some(child) = value {
+-                    child
+-                } else {
+-                    value
+-                },
+-                &typ.children[0],
++        .collect();
++    let absent = scalar(-1);
++    let mut children = Vec::new();
++    for id in &labels {
++        children.push(match (aa.get(id), bb.get(id)) {
++            (None, Some(b)) if a.op == -21 => (*b).clone(),
++            (Some(child), None) if a.op == -21 => (*child).clone(),
++            (x, y) => join(
++                x.copied().unwrap_or(&absent),
++                y.copied().unwrap_or(&absent),
+                 depth + 1,
+-            );
+-    }
+-    match value {
+-        Value::Scalar(op, _) => *op == typ.op,
+-        Value::Text(_) => typ.op == -15,
+-        Value::Principal(_) => typ.op == -24,
+-        Value::Blob(_) => typ.op == -19 && typ.children[0].op == -5,
+-        Value::Vec(items) if typ.op == -19 => items
+-            .iter()
+-            .all(|child| fits_shape(child, &typ.children[0], depth + 1)),
+-        Value::Record(fields) if typ.op == -20 => {
+-            let mut next = fields.iter().peekable();
+-            for (id, child_typ) in typ.labels.iter().zip(&typ.children) {
+-                if next.peek().is_some_and(|(label, _)| label == id) {
+-                    let Some((_, child)) = next.next() else {
+-                        return false;
+-                    };
+-                    if !fits_shape(child, child_typ, depth + 1) {
+-                        return false;
+-                    }
+-                } else if ![-1, -18].contains(&child_typ.op) {
+-                    return false;
+-                }
+-            }
+-            next.next().is_none()
+-        }
+-        Value::Variant(id, child) if typ.op == -21 => typ
+-            .labels
+-            .binary_search(id)
+-            .is_ok_and(|index| fits_shape(child, &typ.children[index], depth + 1)),
+-        _ => false,
+-    }
+-}
+-
+-fn shape(value: &Value<'_>, depth: usize) -> Result<Shape> {
++            )?,
++        });
++    }
++    Ok(Shape {
++        op: a.op,
++        labels,
++        children,
++    })
++}
++fn shape(value: &Value, depth: usize) -> Result<Shape> {
+     if depth > MAX_DEPTH {
+         return bad("type nesting limit");
+     }
+@@ -525,23 +450,19 @@
+         Value::Scalar(op, _) => Ok(scalar(*op)),
+         Value::Some(child) => Ok(unary(-18, shape(child, depth + 1)?)),
+         Value::Blob(_) => Ok(unary(-19, scalar(-5))),
+-        Value::Text(_) => Ok(scalar(-15)),
+-        Value::Principal(_) => Ok(scalar(-24)),
+         Value::Vec(items) => {
+             let mut element = scalar(-17);
+             for child in items {
+-                if !fits_shape(child, &element, depth + 1) {
+-                    join(&mut element, shape(child, depth + 1)?, 0)?;
+-                }
++                element = join(&element, &shape(child, depth + 1)?, 0)?;
+             }
+             Ok(unary(-19, element))
+         }
+         Value::Record(fields) => Ok(Shape {
+             op: -20,
+-            labels: fields.iter().map(|(id, _)| *id).collect(),
++            labels: fields.keys().copied().collect(),
+             children: fields
+-                .iter()
+-                .map(|(_, v)| shape(v, depth + 1))
++                .values()
++                .map(|v| shape(v, depth + 1))
+                 .collect::<Result<_>>()?,
+         }),
+         Value::Variant(id, child) => Ok(Shape {
+@@ -551,43 +472,20 @@
+         }),
+     }
+ }
+-struct Writer(Vec<u8>, bool);
++struct Writer(Vec<u8>);
+ impl Writer {
+     fn add(&mut self, bytes: &[u8]) -> Result<()> {
+         if bytes.len() > MAX_BYTES - self.0.len() {
+-            self.1 = true;
+             return bad("output byte limit");
+         }
+         self.0.extend(bytes);
+         Ok(())
+     }
+-    fn integer(&mut self, n: impl TryInto<i64>, signed: bool) -> Result<()> {
+-        let mut value = n.try_into().map_err(|_| Error("index range".into()))?;
+-        // Wire metadata is bounded to u32 labels, 32 MiB payload lengths, and
+-        // 1024 type-table entries. A stack buffer avoids a heap Vec per index.
+-        let mut bytes = [0u8; 10];
+-        let mut length = 0;
+-        loop {
+-            let byte = (value & 127) as u8;
+-            value >>= 7;
+-            let done = if signed {
+-                (value == 0 && byte < 64) || (value == -1 && byte >= 64)
+-            } else {
+-                value == 0
+-            };
+-            bytes[length] = byte | if done { 0 } else { 128 };
+-            length += 1;
+-            if done {
+-                return self.add(&bytes[..length]);
+-            }
+-        }
+-    }
+-}
+-fn intern<'a>(
+-    t: &'a Shape,
+-    table: &mut Vec<&'a Shape>,
+-    indices: &mut BTreeMap<&'a Shape, i32>,
+-) -> Result<i32> {
++    fn integer(&mut self, n: impl Into<BigInt>, signed: bool) -> Result<()> {
++        self.add(&leb(n.into(), signed))
++    }
++}
++fn intern(t: &Shape, table: &mut Vec<Shape>, indices: &mut BTreeMap<Shape, i32>) -> Result<i32> {
+     if ![-18, -19, -20, -21].contains(&t.op) {
+         return Ok(t.op);
+     }
+@@ -598,32 +496,97 @@
+         return bad("output type-table limit");
+     }
+     let id = table.len() as i32;
+-    indices.insert(t, id);
+-    table.push(t);
++    indices.insert(t.clone(), id);
++    table.push(t.clone());
+     for child in &t.children {
+         intern(child, table, indices)?;
+     }
+     Ok(id)
+ }
+-
+-fn write_header(w: &mut Writer, types: &[Shape]) -> Result<()> {
+-    if types.len() > MAX_ITEMS {
+-        return bad("collection length limit");
+-    }
++fn emit(w: &mut Writer, v: &Value, t: &Shape, depth: usize) -> Result<()> {
++    if depth > MAX_DEPTH {
++        return bad("emitted value nesting limit");
++    }
++    if t.op == -18 {
++        if is_null(v) {
++            return w.add(&[0]);
++        }
++        w.add(&[1])?;
++        return emit(
++            w,
++            if let Value::Some(child) = v { child } else { v },
++            &t.children[0],
++            depth + 1,
++        );
++    }
++    match v {
++        Value::Scalar(op, raw) if *op == t.op => w.add(raw),
++        Value::Blob(bytes) if t.op == -19 && t.children[0].op == -5 => {
++            w.integer(bytes.len(), false)?;
++            w.add(bytes)
++        }
++        Value::Vec(items) if t.op == -19 => {
++            w.integer(items.len(), false)?;
++            for child in items {
++                emit(w, child, &t.children[0], depth + 1)?;
++            }
++            Ok(())
++        }
++        Value::Record(fields) if t.op == -20 => {
++            let absent = null();
++            for (id, typ) in t.labels.iter().zip(&t.children) {
++                emit(w, fields.get(id).unwrap_or(&absent), typ, depth + 1)?;
++            }
++            Ok(())
++        }
++        Value::Variant(id, child) if t.op == -21 => {
++            let index = t
++                .labels
++                .binary_search(id)
++                .map_err(|_| Error("missing derived variant".into()))?;
++            w.integer(index, false)?;
++            emit(w, child, &t.children[index], depth + 1)
++        }
++        _ => bad("cannot emit at derived type"),
++    }
++}
++
++/// Normalize the complete received message before any typed projection.
++pub fn canonicalize(bytes: &[u8]) -> Result<Vec<u8>> {
++    if bytes.len() > MAX_BYTES {
++        return bad("input byte limit");
++    }
++    let mut r = Reader {
++        data: bytes,
++        pos: 0,
++    };
++    let (nodes, roots) = parse(&mut r)?;
++    let mut steps = 0;
++    let values = roots
++        .iter()
++        .map(|r0| read_value(&mut r, &nodes, *r0, 0, &mut steps))
++        .collect::<Result<Vec<_>>>()?;
++    if r.pos != bytes.len() {
++        return bad("trailing payload");
++    }
++    let types = values
++        .iter()
++        .map(|v| shape(v, 0))
++        .collect::<Result<Vec<_>>>()?;
+     let mut table = Vec::new();
+     let mut indices = BTreeMap::new();
+     let roots = types
+         .iter()
+         .map(|t| intern(t, &mut table, &mut indices))
+         .collect::<Result<Vec<_>>>()?;
+-    w.add(b"DIDL")?;
++    let mut w = Writer(b"DIDL".to_vec());
+     w.integer(table.len(), false)?;
+     for t in &table {
+         w.integer(t.op, true)?;
+         if t.op == -18 || t.op == -19 {
+             let child = &t.children[0];
+             w.integer(
+-                if [-18, -19, -20, -21].contains(&child.op) {
++                if child.op <= -18 && child.op >= -21 {
+                     indices[child]
+                 } else {
+                     child.op
+@@ -649,181 +612,21 @@
+     for root in roots {
+         w.integer(root, true)?;
+     }
+-    Ok(())
+-}
+-fn emit(w: &mut Writer, v: &Value<'_>, t: &Shape, depth: usize) -> Result<()> {
+-    if depth > MAX_DEPTH {
+-        return bad("emitted value nesting limit");
+-    }
+-    if t.op == -18 {
+-        if is_null(v) {
+-            return w.add(&[0]);
+-        }
+-        w.add(&[1])?;
+-        return emit(
+-            w,
+-            if let Value::Some(child) = v { child } else { v },
+-            &t.children[0],
+-            depth + 1,
+-        );
+-    }
+-    match v {
+-        Value::Scalar(op, raw) if *op == t.op => w.add(raw),
+-        Value::Text(bytes) if t.op == -15 => {
+-            w.integer(bytes.len(), false)?;
+-            w.add(bytes)
+-        }
+-        Value::Principal(bytes) if t.op == -24 => {
+-            w.add(&[1, bytes.len() as u8])?;
+-            w.add(bytes)
+-        }
+-        Value::Blob(bytes) if t.op == -19 && t.children[0].op == -5 => {
+-            w.integer(bytes.len(), false)?;
+-            w.add(bytes)
+-        }
+-        Value::Vec(items) if t.op == -19 => {
+-            w.integer(items.len(), false)?;
+-            for child in items {
+-                emit(w, child, &t.children[0], depth + 1)?;
+-            }
+-            Ok(())
+-        }
+-        Value::Record(fields) if t.op == -20 => {
+-            let absent = null();
+-            let mut next = fields.iter().peekable();
+-            for (id, typ) in t.labels.iter().zip(&t.children) {
+-                let child = if next.peek().is_some_and(|(label, _)| label == id) {
+-                    &next
+-                        .next()
+-                        .ok_or_else(|| Error("missing record field".into()))?
+-                        .1
+-                } else {
+-                    &absent
+-                };
+-                emit(w, child, typ, depth + 1)?;
+-            }
+-            Ok(())
+-        }
+-        Value::Variant(id, child) if t.op == -21 => {
+-            let index = t
+-                .labels
+-                .binary_search(id)
+-                .map_err(|_| Error("missing derived variant".into()))?;
+-            w.integer(index, false)?;
+-            emit(w, child, &t.children[index], depth + 1)
+-        }
+-        _ => bad("cannot emit at derived type"),
+-    }
+-}
+-
+-/// Normalize the complete received message before any typed projection.
+-pub fn canonicalize(bytes: &[u8]) -> Result<Vec<u8>> {
+-    if bytes.len() > MAX_BYTES {
+-        return bad("input byte limit");
+-    }
+-    let mut r = Reader {
+-        data: bytes,
+-        pos: 0,
+-    };
+-    let (nodes, roots) = parse(&mut r)?;
+-    let payload_size = bytes.len() - r.pos;
+-    let mut steps = 0;
+-    let values = roots
+-        .iter()
+-        .map(|r0| read_value(&mut r, &nodes, *r0, 0, &mut steps))
+-        .collect::<Result<Vec<_>>>()?;
+-    if r.pos != bytes.len() {
+-        return bad("trailing payload");
+-    }
+-    let types = values
+-        .iter()
+-        .map(|v| shape(v, 0))
+-        .collect::<Result<Vec<_>>>()?;
+-    // Reserve the existing payload and a small header, avoiding a second full
+-    // payload allocation when a large Blob/Text is followed by small fields.
+-    // Ignored type declarations do not influence this reservation.
+-    let mut w = Writer(
+-        Vec::with_capacity(payload_size.saturating_add(128).min(MAX_BYTES)),
+-        false,
+-    );
+-    write_header(&mut w, &types)?;
+     for (v, t) in values.iter().zip(&types) {
+         emit(&mut w, v, t, 0)?;
+     }
+     Ok(w.0)
+ }
+ 
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-    use alloc::collections::BTreeSet;
+-
+-    #[test]
+-    fn no_widening_fast_path_agrees_with_join_for_nested_values() {
+-        let number = Value::Scalar(-3, Cow::Borrowed(&[1]));
+-        let seeds = vec![
+-            null(),
+-            number.clone(),
+-            Value::Scalar(-5, Cow::Borrowed(&[1])),
+-            Value::Some(Box::new(null())),
+-            Value::Some(Box::new(number)),
+-            Value::Some(Box::new(Value::Some(Box::new(null())))),
+-            Value::Blob(&[]),
+-            Value::Text(&[]),
+-            Value::Vec(vec![]),
+-            Value::Record(vec![]),
+-            Value::Record(vec![(0, null())]),
+-            Value::Record(vec![(1, Value::Some(Box::new(null())))]),
+-            Value::Variant(0, Box::new(null())),
+-            Value::Variant(1, Box::new(Value::Some(Box::new(null())))),
+-        ];
+-        let mut values = seeds.clone();
+-        for a in &seeds {
+-            values.push(Value::Some(Box::new(a.clone())));
+-            for b in &seeds {
+-                values.push(Value::Vec(vec![a.clone(), b.clone()]));
+-                values.push(Value::Record(vec![(0, a.clone()), (1, b.clone())]));
+-            }
+-        }
+-        let mut types: BTreeSet<_> = values.iter().filter_map(|v| shape(v, 0).ok()).collect();
+-        let seed_types: Vec<_> = seeds.iter().map(|v| shape(v, 0).unwrap()).collect();
+-        for a in &seed_types {
+-            for b in &seed_types {
+-                let mut joined = a.clone();
+-                if join(&mut joined, b.clone(), 0).is_ok() {
+-                    types.insert(joined);
+-                }
+-            }
+-        }
+-        for typ in types {
+-            for value in &values {
+-                if fits_shape(value, &typ, 0) {
+-                    let mut joined = typ.clone();
+-                    join(&mut joined, shape(value, 0).unwrap(), 0).unwrap();
+-                    assert_eq!(joined, typ, "value {value:?}");
+-                }
+-            }
+-        }
+-    }
+-
+-    #[test]
+-    fn metadata_indices_keep_full_width_and_reject_overflow() {
+-        let max_label = b"DIDL\x01\x6c\x01\xff\xff\xff\xff\x0f\x7b\x01\0\xff";
+-        assert_eq!(canonicalize(max_label).unwrap(), max_label);
+-        let overflowing_label = b"DIDL\x01\x6c\x01\x80\x80\x80\x80\x10\x7b\x01\0\xff";
+-        assert_eq!(
+-            canonicalize(overflowing_label).unwrap_err().0,
+-            "field ID range"
+-        );
+-        let overlong_reference = b"DIDL\0\x01\xfe\xff\xff\xff\xff\xff\xff\xff\xff\x7f\0";
+-        assert_eq!(
+-            canonicalize(overlong_reference).unwrap(),
+-            b"DIDL\0\x01\x7e\0"
+-        );
+-        let overflowing_reference = b"DIDL\0\x01\x80\x80\x80\x80\x08";
+-        assert_eq!(
+-            canonicalize(overflowing_reference).unwrap_err().0,
+-            "type index range"
+-        );
+-    }
+-}
++/// Typed integration with the existing `candid` crate; decoding remains ordinary Candid.
++#[cfg(feature = "candid")]
++pub fn encode_one<T: candid::CandidType>(value: T) -> Result<Vec<u8>> {
++    let ordinary = candid::encode_one(value).map_err(|e| Error(e.to_string()))?;
++    canonicalize(&ordinary)
++}
++
++#[cfg(feature = "candid")]
++pub fn encode_args<T: candid::utils::ArgumentEncoder>(args: T) -> Result<Vec<u8>> {
++    let ordinary = candid::encode_args(args).map_err(|e| Error(e.to_string()))?;
++    canonicalize(&ordinary)
++}

@@ -1,0 +1,6 @@
+opam-version: "2.0"
+synopsis: "Value-based canonical Candid encoding"
+description: "Directly encodes native typed values as canonical Candid and normalizes complete inbound ordinary Candid messages without hashing."
+license: "MIT"
+build: [["dune" "build" "-p" name "-j" jobs]]
+depends: ["ocaml" {>= "4.14"} "dune" {>= "3.10"} "zarith" {>= "1.12"}]

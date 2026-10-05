@@ -1,0 +1,50 @@
+{
+  "profile": "cx",
+  "recorded_utc": "2026-10-04T22:38:26.875217+00:00",
+  "phase": "canonical_encode_direct_typed_abi",
+  "method": "Fresh standalone memory32 instance per workload; arena high-water includes input and temporary allocations until reset; linear memory capacity is retained, not live heap or process RSS",
+  "input": "Typed ABI nodes and native integer magnitudes; byte vectors use compact Blob spans; host preparation/marshalling allocations excluded; no ordinary message is encoded or decoded",
+  "wasmtime": "49.0.0",
+  "artifact_sha256": "8789214dae6638840c021ab9f5730aa7f64baadb9a086b0af415672bb57f2cec",
+  "fixture_sha256": "cf425460012cbf5c50828625dd27aff888fe2efcfcf4fe30371bbb84f5a5436b",
+  "source_fingerprints": {
+    "benchmarks/wasm_memory.py": "27c79e47bcb2ef99892f201c4b08bfd5a8c207503033cb023846ed0c35b7d7b3",
+    "wasm/runtime.py": "9986027fbe5728160bb52ffb3ecedd30334501708452617a5c8442f24db93884",
+    "wasm/src/lib.rs": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514"
+  },
+  "rows": [
+    {
+      "name": "small",
+      "ordinary_message_bytes_for_comparison": 305,
+      "output_bytes": 296,
+      "scratch_bytes_including_input": 3220,
+      "linear_memory_capacity_bytes": 1114112,
+      "reused_calls": 100
+    },
+    {
+      "name": "records-128",
+      "ordinary_message_bytes_for_comparison": 5875,
+      "output_bytes": 5866,
+      "scratch_bytes_including_input": 69412,
+      "linear_memory_capacity_bytes": 1179648,
+      "reused_calls": 100
+    },
+    {
+      "name": "blob-64k",
+      "ordinary_message_bytes_for_comparison": 65676,
+      "output_bytes": 65667,
+      "scratch_bytes_including_input": 132624,
+      "linear_memory_capacity_bytes": 1245184,
+      "reused_calls": 100
+    },
+    {
+      "name": "records-1024",
+      "ordinary_message_bytes_for_comparison": 35262,
+      "output_bytes": 35253,
+      "scratch_bytes_including_input": 526012,
+      "linear_memory_capacity_bytes": 1638400,
+      "reused_calls": 100
+    }
+  ]
+}

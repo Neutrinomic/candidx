@@ -1,0 +1,3063 @@
+--- a/benchmarks/run.py
++++ b/benchmarks/run.py
+@@ -13,7 +13,6 @@
+ import subprocess
+ import sys
+ import time
+-from runtime_sources import runtime_source
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+ OUT = ROOT / "_out"
+@@ -132,13 +131,6 @@
+         for case in rust["cases"]:
+             timing = json.loads(command([ROOT / "ocaml/_build/default/bench.exe"], input_text=case["raw_hex"] + "\n"))
+             results["ocaml"]["cases"].append({"name": case["name"], "ordinary_bytes": case["ordinary_bytes"], "canonical_bytes": case["canonical_bytes"], "canonicalize_preencoded": timing})
+-        direct = json.loads(command([ROOT / "ocaml/_build/default/direct_bench.exe"]))
+-        for case in results["ocaml"]["cases"]:
+-            typed = next(c for c in direct["cases"] if c["name"] == case["name"])
+-            expected = next(c for c in rust["cases"] if c["name"] == case["name"])
+-            assert typed["canonical_hex"] == expected["canonical_hex"], f"OCaml direct: {case['name']}"
+-            case["canonical_hex"] = typed["canonical_hex"]
+-            case["canonical_encode_direct"] = typed["canonical_encode_direct"]
+         (OUT / f"bench-ocaml-{args.label}.json").write_text(json.dumps(results["ocaml"], indent=2) + "\n")
+     for lang in ("motoko", "motoko-wasm"):
+         if lang not in args.languages:
+@@ -147,8 +139,14 @@
+         compiler = args.moc
+         if lang == "motoko-wasm":
+             compiler = args.wasm_moc
++            text = source.read_text().replace('import CandidX "../src/lib";\n', '')
++            old = '''func canonical(raw : Blob) : Blob = switch (CandidX.canonicalize(raw)) {
++  case (#ok bytes) bytes;
++  case (#err e) Prim.trap(e);
++};'''
++            assert old in text, "benchmark adapter source changed"
+             source = OUT / "benchmark-rts.mo"
+-            source.write_text(runtime_source("benchmark"))
++            source.write_text(text.replace(old, 'func canonical(raw : Blob) : Blob { Prim.canonicalizeCandid(raw) };'))
+         artifact = OUT / f"benchmark-{lang}.wasm"
+         command([compiler, "--package", "core", args.core, "-wasi-system-api", "-o", artifact, source])
+         mo, lines = native_motoko(artifact)
+@@ -165,22 +163,14 @@
+     report = {"recorded_utc": datetime.now(timezone.utc).isoformat(), "label": args.label,
+         "platform": platform.platform(), "machine": platform.machine(), "method": "7 trials; median wall time; Rust optimized; TS warmed V8; Wasm fuel instrumentation; no hashes timed",
+         "source_fingerprints": {str(f.relative_to(ROOT)): sha256(f.read_bytes()).hexdigest()
+-            for base in ["rust/src", "rust/examples", "ts/src", "ts/test", "ocaml", "motoko/src", "motoko/test", "wasm/src"]
+-            for f in (ROOT / base).rglob("*.*")
+-            if f.is_file() and f.suffix not in {".install", ".pyc", ".pyo"}
+-            and f.name != ".DS_Store" and not f.name.endswith("~")
+-            and not any(part in {"_build", "target", "dist", "node_modules", "__pycache__"} for part in f.relative_to(ROOT).parts)}
+-            | {str(f.relative_to(ROOT)): sha256(f.read_bytes()).hexdigest() for f in [Path(__file__), ROOT / "benchmarks/runtime_sources.py", ROOT / "wasm/motoko-compiler.patch",
+-                ROOT / "rust/Cargo.toml", ROOT / "rust/Cargo.lock", ROOT / "ts/package.json", ROOT / "ts/package-lock.json", ROOT / "wasm/artifacts/manifest.json"]},
++            for base in ["rust/src", "ts/src", "ocaml", "motoko/src", "wasm/src"] for f in (ROOT / base).glob("*.*")},
+         "results": results}
+     path = OUT / f"benchmarks-{args.label}.json"
+     path.write_text(json.dumps(report, indent=2) + "\n")
+     for lang, result in results.items():
+         for case in result["cases"]:
+-            primary = "canonical_encode_direct" if "canonical_encode_direct" in case else "canonical_encode_pipeline"
+             print(lang, case["name"], "canonicalize_us", round(case["canonicalize_preencoded"]["median_us"], 2),
+-                primary, round(case[primary]["median_us"], 2),
+-                "canonical/ordinary", round(case[primary]["median_us"] / case["ordinary_encode"]["median_us"], 2) if "ordinary_encode" in case else "n/a", flush=True)
++                "pipeline/ordinary", round(case["canonical_encode_pipeline"]["median_us"] / case["ordinary_encode"]["median_us"], 2) if "ordinary_encode" in case else "n/a", flush=True)
+     print(path)
+ 
+ 
+--- a/motoko/src/lib.mo
++++ b/motoko/src/lib.mo
+@@ -1,4 +1,4 @@
+-// CandidX canonical values. Native Motoko; no hashing or generic block Value API.
++// cx. Native Motoko; no hashing or generic block Value API.
+ import Prim "mo:⛔";
+ import Array "mo:core/Array";
+ import List "mo:core/List";
+@@ -8,130 +8,21 @@
+   public type Result = { #ok : Blob; #err : Text };
+   type Node = { op : Int; labels : [Nat]; edges : [Int] };
+   type Value = {
+-    op : Int; raw : Blob; labels : [Nat]; items : [Value];
+-    // A negative element kind stores a fixed-width vector as an input span;
+-    // zero stores its elements in items. raw only replaces NaN scalar bytes.
+-    element : Int;
+-    offset : Nat; length : Nat
++    op : Int; raw : Blob; labels : [Nat]; items : [Value]; binary : Bool
+   };
+   type Shape = { op : Int; labels : [Nat]; children : [Shape] };
+   let maxBytes = 33_554_432;
+   let maxItems = 2_000_000;
+   let maxTypes = 1024;
+   let maxDepth = 256;
+-  let nullValue : Value = { op = -1; raw = ""; labels = []; items = []; element = 0; offset = 0; length = 0 };
+-  let reservedValue : Value = { op = -16; raw = ""; labels = []; items = []; element = 0; offset = 0; length = 0 };
+-  let emptyRecord : Value = { op = -20; raw = ""; labels = []; items = []; element = 0; offset = 0; length = 0 };
+-  // Build each value directly rather than copying a prototype record.
+-  func groupValue(op : Int, labels : [Nat], items : [Value]) : Value = {
+-    op; raw = ""; labels; items; element = 0; offset = 0; length = 0
++  func value(op : Int) : Value = {
++    op; raw = ""; labels = []; items = []; binary = false
+   };
+-  func fixedValue(element : Int, offset : Nat, length : Nat) : Value = {
+-    op = -19; raw = ""; labels = []; items = []; element; offset; length
+-  };
+-  func scalarValue(op : Int, raw : Blob, offset : Nat, length : Nat) : Value = {
+-    op; raw; labels = []; items = []; element = 0; offset; length
+-  };
+-  // Immutable primitive shapes are shared across record/vector elements.
+-  let scalars : [Shape] = [
+-    { op = 0; labels = []; children = [] },
+-    { op = -1; labels = []; children = [] },
+-    { op = -2; labels = []; children = [] },
+-    { op = -3; labels = []; children = [] },
+-    { op = -4; labels = []; children = [] },
+-    { op = -5; labels = []; children = [] },
+-    { op = -6; labels = []; children = [] },
+-    { op = -7; labels = []; children = [] },
+-    { op = -8; labels = []; children = [] },
+-    { op = -9; labels = []; children = [] },
+-    { op = -10; labels = []; children = [] },
+-    { op = -11; labels = []; children = [] },
+-    { op = -12; labels = []; children = [] },
+-    { op = -13; labels = []; children = [] },
+-    { op = -14; labels = []; children = [] },
+-    { op = -15; labels = []; children = [] },
+-    { op = -16; labels = []; children = [] },
+-    { op = -17; labels = []; children = [] },
+-    { op = -18; labels = []; children = [] },
+-    { op = -19; labels = []; children = [] },
+-    { op = -20; labels = []; children = [] },
+-    { op = -21; labels = []; children = [] },
+-    { op = -22; labels = []; children = [] },
+-    { op = -23; labels = []; children = [] },
+-    { op = -24; labels = []; children = [] }
+-  ];
+-  func scalar(op : Int) : Shape = scalars[Prim.abs(op)];
++  func scalar(op : Int) : Shape = { op; labels = []; children = [] };
+   func unary(op : Int, child : Shape) : Shape = {
+     op; labels = []; children = [child]
+   };
+-  let blobShape : Shape = { op = -19; labels = []; children = [{ op = -5; labels = []; children = [] }] };
+-  let someBlobShape : Shape = { op = -18; labels = []; children = [blobShape] };
+-  func absent(nodes : [Node], edge : Int, child : Value) : Bool =
+-    edge >= 0 and nodes[Prim.abs(edge)].op == -18 and child.op == -1;
+   func compound(op : Int) : Bool = op >= -21 and op <= -18;
+-  func fixedPrimitive(op : Int) : Bool =
+-    (op >= -14 and op <= -5) or op == -2 or op == -1 or op == -16;
+-  func fixedWidth(op : Int) : Nat {
+-    if (op == -1 or op == -16) 0
+-    else if (op == -2) 1
+-    else if (op == -13) 4
+-    else if (op == -14) 8
+-    else 2 ** (Prim.abs((Prim.abs(op) : Int) - 5) % 4)
+-  };
+-  func isNaN(data : Blob, offset : Nat, size : Nat) : Bool {
+-    if (size == 4) {
+-      Prim.nat8ToNat(data[offset + 3]) % 128 == 127 and
+-      data[offset + 2] >= 128 and
+-      (Prim.nat8ToNat(data[offset + 2]) % 128 != 0 or
+-        data[offset + 1] != 0 or data[offset] != 0)
+-    } else {
+-      if (Prim.nat8ToNat(data[offset + 7]) % 128 != 127 or
+-        data[offset + 6] < 240) return false;
+-      if (Prim.nat8ToNat(data[offset + 6]) % 16 != 0) return true;
+-      var i = 0;
+-      while (i < 6) {
+-        if (data[offset + i] != 0) return true;
+-        i += 1
+-      };
+-      false
+-    }
+-  };
+-
+-  func validUtf8(data : Blob, offset : Nat, size : Nat) : Bool {
+-    var i = offset;
+-    let end = offset + size;
+-    while (i < end) {
+-      let first = data[i];
+-      if (first < 128) i += 1
+-      else {
+-        var width = 2;
+-        var low : Nat8 = 128;
+-        var high : Nat8 = 191;
+-        if (first >= 194 and first <= 223) {}
+-        else if (first >= 224 and first <= 239) {
+-          width := 3;
+-          if (first == 224) low := 160;
+-          if (first == 237) high := 159
+-        } else if (first >= 240 and first <= 244) {
+-          width := 4;
+-          if (first == 240) low := 144;
+-          if (first == 244) high := 143
+-        } else return false;
+-        if (width > Prim.abs((end : Int) - i)) return false;
+-        let second = data[i + 1];
+-        if (second < low or second > high) return false;
+-        var j = 2;
+-        while (j < width) {
+-          let next = data[i + j];
+-          if (next < 128 or next > 191) return false;
+-          j += 1
+-        };
+-        i += width
+-      }
+-    };
+-    true
+-  };
+-
+ 
+   /// Normalize a complete ordinary Candid message before typed projection.
+   /// Call with `to_candid(block)`; existing `from_candid` decodes the result.
+@@ -141,20 +32,16 @@
+     var failure : ?Text = null;
+     func fail(message : Text) { if (failure == null) failure := ?message };
+     func failed() : Bool = failure != null;
+-    let data = input;
++    let data = Prim.blobToArray(input);
+     var pos = 0;
+-    func skip(n : Nat) : Nat {
+-      let offset = pos;
+-      if (not failed()) {
+-        if (n > Prim.abs((data.size() : Int) - pos)) fail("truncated message")
+-        else pos += n
+-      };
+-      offset
+-    };
+     func take(n : Nat) : Blob {
+-      let offset = skip(n);
+       if (failed()) return "";
+-      Prim.arrayToBlob(Array.tabulate<Nat8>(n, func(i) { data[offset + i] }))
++      if (n > Prim.abs((data.size() : Int) - pos)) { fail("truncated message"); return "" };
++      let result = Prim.arrayToBlob(Array.tabulate<Nat8>(n, func(i) {
++        data[pos + i]
++      }));
++      pos += n;
++      result
+     };
+     func byte() : Nat {
+       if (failed()) return 0;
+@@ -175,24 +62,6 @@
+       if (not failed()) fail("integer length limit");
+       0
+     };
+-    func scalarInteger(signed : Bool) : Nat {
+-      let start = pos; var i = 0; var done = false;
+-      while (i < 4096 and not failed() and not done) {
+-        done := byte() < 128; i += 1
+-      };
+-      if (failed()) return 0;
+-      if (not done) { fail("integer length limit"); return 0 };
+-      var end = pos;
+-      label trim while (Prim.abs((end : Int) - start) > 1) {
+-        let last = Prim.nat8ToNat(data[end - 1]) % 128;
+-        let previous = Prim.nat8ToNat(data[end - 2]);
+-        if ((not signed and last == 0) or (signed and
+-          ((last == 0 and previous % 128 < 64) or
+-           (last == 127 and previous % 128 >= 64)))) end -= 1
+-        else break trim
+-      };
+-      Prim.abs((end : Int) - start)
+-    };
+     func length() : Nat {
+       let n = Prim.abs(integer(false, 10));
+       if (n > maxItems) { fail("collection length limit"); return 0 };
+@@ -205,6 +74,20 @@
+       let bytes = take(length());
+       if (Prim.decodeUtf8(bytes) == null) fail("invalid UTF-8");
+       bytes
++    };
++    func leb(n : Int, signed : Bool) : Blob {
++      let out = List.empty<Nat8>(); var rest = n;
++      label write loop {
++        let rem = rest % 128;
++        let b = Prim.abs(if (rem < 0) rem + 128 else rem);
++        rest := (rest - b) / 128;
++        let done = if (signed) {
++          (rest == 0 and b < 64) or (rest == -1 and b >= 64)
++        } else rest == 0;
++        List.add(out, Prim.natToNat8(b + (if (done) 0 else 128)));
++        if (done) break write;
++      };
++      Prim.arrayToBlob(List.toArray(out))
+     };
+     if (take(4) != "DIDL") fail("missing DIDL magic");
+     let count = length();
+@@ -269,127 +152,88 @@
+     };
+     var steps = 0;
+     func read(ref_ : Int, depth : Nat) : Value {
+-      if (failed()) return nullValue;
++      if (failed()) return value(-1);
+       steps += 1;
+       if (steps > maxItems or depth > maxDepth) {
+-        fail("value traversal limit"); return nullValue
++        fail("value traversal limit"); return value(-1)
+       };
+       if (ref_ >= 0) {
+         let node = nodes[Prim.abs(ref_)];
+         if (node.op == -18) {
+           let tag = byte();
+-          if (tag == 0) return nullValue;
+-          if (tag != 1) { fail("invalid option tag"); return nullValue };
+-          return groupValue(-18, [], [read(node.edges[0], depth + 1)])
+-        };
+-        if (node.op == -19) {
+-          let n = length();
+-          let element = node.edges[0];
+-          if (fixedPrimitive(element) and (n != 0 or element == -5)) {
+-            steps += n;
+-            if (steps > maxItems or (n != 0 and depth + 1 > maxDepth)) {
+-              fail("value traversal limit"); return nullValue
+-            };
+-            let offset = skip(n * fixedWidth(element));
+-            if (element == -2 and not failed()) {
+-              var i = 0;
+-              while (i < n and not failed()) {
+-                if (data[offset + i] > 1) fail("invalid bool");
+-                i += 1
+-              }
+-            };
+-            return fixedValue(element, offset, n)
+-          };
+-          return groupValue(-19, [], Array.tabulate<Value>(n, func(_) {
++          if (tag == 0) return value(-1);
++          if (tag != 1) { fail("invalid option tag"); return value(-1) };
++          return { value(-18) with items = [read(node.edges[0], depth + 1)] }
++        };
++        if (node.op == -19) return {
++          value(-19) with
++          binary = node.edges[0] == -5;
++          items = Array.tabulate<Value>(length(), func(_) {
+             read(node.edges[0], depth + 1)
+-          }))
++          })
+         };
+         if (node.op == -20) {
+-          let n = node.edges.size();
+-          // Small records use exact arrays; wide optional records keep the
+-          // growable List path so all-absent input does not allocate n slots.
+-          if (n <= 16) {
+-            var kept = 0;
+-            let all = Array.tabulate<Value>(n, func(i) {
+-              let child = read(node.edges[i], depth + 1);
+-              if (not absent(nodes, node.edges[i], child)) kept += 1;
+-              child
+-            });
+-            if (failed()) return nullValue;
+-            if (kept == n) return groupValue(-20, node.labels, all);
+-            if (kept == 0) return emptyRecord;
+-            var index = 0;
+-            let labels = Array.tabulate<Nat>(kept, func(_) {
+-              while (absent(nodes, node.edges[index], all[index])) index += 1;
+-              let id = node.labels[index]; index += 1; id
+-            });
+-            index := 0;
+-            let items = Array.tabulate<Value>(kept, func(_) {
+-              while (absent(nodes, node.edges[index], all[index])) index += 1;
+-              let child = all[index]; index += 1; child
+-            });
+-            return groupValue(-20, labels, items)
+-          };
+-          var optional = false;
+-          label check for (edge in node.edges.values()) {
+-            if (edge >= 0 and nodes[Prim.abs(edge)].op == -18) {
+-              optional := true; break check
+-            }
+-          };
+-          if (not optional) return groupValue(-20, node.labels,
+-            Array.map<Int, Value>(node.edges, func(e) { read(e, depth + 1) }));
+           let fields = List.empty<Nat>(); let items = List.empty<Value>();
+           var i = 0;
+           while (i < node.edges.size() and not failed()) {
+             let child = read(node.edges[i], depth + 1);
+             let edge = node.edges[i];
+-            let missing = absent(nodes, edge, child);
+-            if (not missing) {
++            let absent = edge >= 0 and nodes[Prim.abs(edge)].op == -18 and child.op == -1;
++            if (not absent) {
+               List.add(fields, node.labels[i]); List.add(items, child)
+             };
+             i += 1;
+           };
+-          return groupValue(-20, List.toArray(fields), List.toArray(items))
++          return { value(-20) with
++            labels = List.toArray(fields); items = List.toArray(items) }
+         };
+         if (node.op == -21) {
+           let index = length();
+           if (index >= node.edges.size()) {
+-            fail("invalid variant index"); return nullValue
++            fail("invalid variant index"); return value(-1)
+           };
+-          return groupValue(-21, [node.labels[index]], [read(node.edges[index], depth + 1)])
+-        };
+-        fail("function/service values outside data profile"); return nullValue
+-      };
+-      if (ref_ == -1) return nullValue;
+-      if (ref_ == -16) return reservedValue;
+-      if (ref_ == -17) { fail("empty has no values"); return nullValue };
+-      var raw : Blob = "";
+-      var offset = pos;
+-      var size = 0;
+-      if (ref_ == -2) {
+-        let b = byte(); if (b > 1) fail("invalid bool"); size := 1
++          return { value(-21) with labels = [node.labels[index]];
++            items = [read(node.edges[index], depth + 1)] }
++        };
++        fail("function/service values outside data profile"); return value(-1)
++      };
++      if (ref_ == -1 or ref_ == -16) return value(ref_);
++      if (ref_ == -17) { fail("empty has no values"); return value(-1) };
++      let raw : Blob = if (ref_ == -2) {
++        let b = byte(); if (b > 1) fail("invalid bool");
++        Prim.arrayToBlob([Prim.natToNat8(b)])
+       } else if (ref_ == -3 or ref_ == -4) {
+-        size := scalarInteger(ref_ == -4)
++        leb(integer(ref_ == -4, 4096), ref_ == -4)
+       } else if (ref_ >= -12 and ref_ <= -5) {
+-        size := 2 ** (Prim.abs((Prim.abs(ref_) : Int) - 5) % 4);
+-        ignore skip(size)
++        take(2 ** (Prim.abs((Prim.abs(ref_) : Int) - 5) % 4))
+       } else if (ref_ == -13 or ref_ == -14) {
+-        size := fixedWidth(ref_);
+-        ignore skip(size);
+-        if (not failed() and isNaN(data, offset, size)) {
+-          raw := if (size == 4) "\00\00\c0\7f"
+-          else "\00\00\00\00\00\00\f8\7f"
++        let size = if (ref_ == -13) 4 else 8;
++        let bytes = Prim.blobToArray(take(size));
++        if (bytes.size() != size) ""
++        else {
++          var bits = 0; var factor = 1;
++          for (b in bytes.values()) { bits += Prim.nat8ToNat(b) * factor;
++            factor *= 256 };
++          let frac = if (size == 4) 23 else 52;
++          let exp = if (size == 4) 8 else 11;
++          if ((bits / 2 ** frac) % 2 ** exp == (2 ** exp : Int) - 1 and
++            bits % 2 ** frac != 0) {
++            if (size == 4) "\00\00\c0\7f"
++            else "\00\00\00\00\00\00\f8\7f"
++          } else Prim.arrayToBlob(bytes)
+         }
+       } else if (ref_ == -15) {
+-        size := length(); offset := skip(size);
+-        if (not failed() and not validUtf8(data, offset, size)) fail("invalid UTF-8")
++        let bytes = text();
++        Prim.arrayToBlob(Array.concat<Nat8>(
++          Prim.blobToArray(leb(bytes.size(), false)), Prim.blobToArray(bytes)))
+       } else if (ref_ == -24) {
+         if (byte() != 1) fail("opaque principal");
+-        size := length(); offset := pos;
+-        if (size > 29) fail("principal length exceeds 29")
+-        else ignore skip(size)
+-      } else fail("unsupported primitive");
+-      scalarValue(ref_, raw, offset, size)
++        let n = length();
++        if (n > 29) { fail("principal length exceeds 29"); "" }
++        else Prim.arrayToBlob(Array.concat<Nat8>([1, Prim.natToNat8(n)],
++          Prim.blobToArray(take(n))))
++      } else { fail("unsupported primitive"); "" };
++      { value(ref_) with raw }
+     };
+     let values = Array.map<Int, Value>(roots, func(e) { read(e, 0) });
+     if (pos != data.size()) fail("trailing payload");
+@@ -432,19 +276,13 @@
+     func shape(v : Value, depth : Nat) : Shape {
+       if (failed()) return scalar(-1);
+       if (depth > maxDepth) { fail("type nesting limit"); return scalar(-1) };
+-      if (v.op == -18) {
+-        if (v.items[0].op == -19 and v.items[0].element == -5) return someBlobShape;
+-        return unary(-18, shape(v.items[0], depth + 1))
+-      };
++      if (v.op == -18) return unary(-18, shape(v.items[0], depth + 1));
+       if (v.op == -19) {
+-        if (v.element == -5) return blobShape;
+-        if (v.element != 0) return unary(-19, scalar(v.element));
+-        var element = scalar(-17);
++        var element = scalar(if (v.binary) -5 else -17);
+         for (item in v.items.values()) element := join(element,
+           shape(item, depth + 1), 0);
+         return unary(-19, element)
+       };
+-      if ((v.op == -20 or v.op == -21) and v.items.size() == 0) return scalar(v.op);
+       if (v.op == -20 or v.op == -21) return { op = v.op; labels = v.labels;
+         children = Array.map<Value, Shape>(v.items, func(c) {
+           shape(c, depth + 1)
+@@ -458,7 +296,7 @@
+       if (failed()) return 0;
+       var i = 0;
+       while (i < List.size(table)) {
+-        if (List.at(table, i) == t) return i; i += 1
++        if (List.get(table, i) == ?t) return i; i += 1
+       };
+       if (i >= maxTypes) { fail("output type-table limit"); return 0 };
+       List.add(table, t);
+@@ -466,151 +304,43 @@
+       i
+     };
+     let args = Array.map<Shape, Int>(types, intern);
+-    // Count first, then write once into an exactly sized buffer. No byte chunks
+-    // or temporary LEB blobs are retained alongside the output.
+-    var outputSize = 0;
+-    var bytes : [var Nat8] = [var];
+-    var writing = false;
+-    var matching = true;
+-    func reserve(length : Nat) : Nat {
+-      let start = outputSize;
+-      if (not failed()) {
+-        if (length > Prim.abs((maxBytes : Int) - outputSize))
+-          fail("output byte limit")
+-        else outputSize += length
+-      };
+-      start
+-    };
+-    func add(source : Blob) {
+-      let start = reserve(source.size());
+-      if (not writing and matching and not failed()) {
+-        if (start > data.size() or source.size() > Prim.abs((data.size() : Int) - start)) matching := false
+-        else {
+-          var i = 0;
+-          while (i < source.size() and matching) {
+-            if (source[i] != data[start + i]) matching := false;
+-            i += 1
+-          }
+-        }
+-      };
+-      if (writing and not failed()) {
+-        var i = 0;
+-        while (i < source.size()) { bytes[start + i] := source[i]; i += 1 }
++    let out = List.empty<Nat8>();
++    func add(bytes : Blob) {
++      if (failed()) return;
++      if (bytes.size() > Prim.abs((maxBytes : Int) - List.size(out))) {
++        fail("output byte limit"); return
++      };
++      for (b in bytes.values()) List.add(out, b)
++    };
++    func num(n : Int, signed : Bool) { add(leb(n, signed)) };
++    add("DIDL"); num(List.size(table), false);
++    for (t in List.toArray(table).values()) {
++      num(t.op, true);
++      if (t.op == -18 or t.op == -19) num(intern(t.children[0]), true)
++      else {
++        num(t.labels.size(), false); var i = 0;
++        while (i < t.labels.size()) {
++          num(t.labels[i], false); num(intern(t.children[i]), true); i += 1
++        }
+       }
+     };
+-    func span(offset : Nat, length : Nat) {
+-      let start = reserve(length);
+-      // Aligned input spans are identical without reading their bytes. Once
+-      // output shifts, use the writer; do not scan large shifted payloads.
+-      if (not writing and matching and length != 0 and offset != start) matching := false;
+-      if (writing and not failed()) {
+-        var i = 0;
+-        while (i < length) { bytes[start + i] := data[offset + i]; i += 1 }
+-      }
+-    };
+-    func floats(offset : Nat, count : Nat, size : Nat) {
+-      let start = reserve(count * size);
+-      if (not writing and matching and count != 0 and not failed()) {
+-        if (offset != start) matching := false
+-        else {
+-          let canonical : Blob = if (size == 4) "\00\00\c0\7f"
+-            else "\00\00\00\00\00\00\f8\7f";
+-          var i = 0;
+-          while (i < count and matching) {
+-            let source = offset + i * size;
+-            if (isNaN(data, source, size)) {
+-              var j = 0;
+-              while (j < size and matching) {
+-                if (data[source + j] != canonical[j]) matching := false;
+-                j += 1
+-              }
+-            };
+-            i += 1
+-          }
+-        }
+-      };
+-      if (writing and not failed()) {
+-        var i = 0;
+-        while (i < count) {
+-          let source = offset + i * size;
+-          let target = start + i * size;
+-          let nan = isNaN(data, source, size);
+-          var j = 0;
+-          while (j < size) {
+-            bytes[target + j] := if (nan) {
+-              if (size == 4) ("\00\00\c0\7f" : Blob)[j]
+-              else ("\00\00\00\00\00\00\f8\7f" : Blob)[j]
+-            } else data[source + j];
+-            j += 1
+-          };
+-          i += 1
+-        }
+-      }
+-    };
+-    func octet(b : Nat8) {
+-      let start = reserve(1);
+-      if (not writing and matching and not failed()) {
+-        if (start >= data.size() or data[start] != b) matching := false
+-      };
+-      if (writing and not failed()) bytes[start] := b
+-    };
+-    func num(n : Int, signed : Bool) {
+-      var rest = n;
+-      label write loop {
+-        let rem = rest % 128;
+-        let b = Prim.abs(if (rem < 0) rem + 128 else rem);
+-        rest := (rest - b) / 128;
+-        let done = if (signed) {
+-          (rest == 0 and b < 64) or (rest == -1 and b >= 64)
+-        } else rest == 0;
+-        octet(Prim.natToNat8(b + (if (done) 0 else 128)));
+-        if (done or failed()) break write;
+-      }
+-    };
+-    func header() {
+-      add("DIDL"); num(List.size(table), false);
+-      var i = 0;
+-      while (i < List.size(table) and not failed()) {
+-        let t = List.at(table, i);
+-        num(t.op, true);
+-        if (t.op == -18 or t.op == -19) num(intern(t.children[0]), true)
+-        else {
+-          num(t.labels.size(), false); var j = 0;
+-          while (j < t.labels.size()) {
+-            num(t.labels[j], false); num(intern(t.children[j]), true); j += 1
+-          }
+-        };
+-        i += 1
+-      };
+-      num(args.size(), false); for (a in args.values()) num(a, true)
+-    };
++    num(args.size(), false); for (a in args.values()) num(a, true);
+     func emit(v : Value, t : Shape, depth : Nat) {
+       if (failed()) return;
+       if (depth > maxDepth) { fail("emitted value nesting limit"); return };
+       if (t.op == -18) {
+-        if (v.op == -1) octet(0)
+-        else { octet(1); emit(if (v.op == -18) v.items[0] else v,
++        if (v.op == -1) add("\00")
++        else { add("\01"); emit(if (v.op == -18) v.items[0] else v,
+           t.children[0], depth + 1) }
+       } else if (t.op == -19 and v.op == -19) {
+-        if (v.element != 0) {
+-          if (t.children[0].op != v.element) { fail("invalid compact vector shape"); return };
+-          if (v.element != -5 and v.length != 0 and depth >= maxDepth) {
+-            fail("emitted value nesting limit"); return
+-          };
+-          num(v.length, false);
+-          if (v.element == -13 or v.element == -14)
+-            floats(v.offset, v.length, fixedWidth(v.element))
+-          else span(v.offset, v.length * fixedWidth(v.element))
+-        } else {
+-          num(v.items.size(), false);
+-          for (c in v.items.values()) emit(c, t.children[0], depth + 1)
+-        }
++        num(v.items.size(), false);
++        for (c in v.items.values()) emit(c, t.children[0], depth + 1)
+       } else if (t.op == -20 and v.op == -20) {
+         var i = 0; var j = 0;
+         while (i < t.labels.size() and not failed()) {
+           while (j < v.labels.size() and v.labels[j] < t.labels[i]) j += 1;
+           let child = if (j < v.labels.size() and v.labels[j] == t.labels[i])
+-            v.items[j] else nullValue;
++            v.items[j] else value(-1);
+           emit(child, t.children[i], depth + 1); i += 1
+         }
+       } else if (t.op == -21 and v.op == -21) {
+@@ -618,38 +348,17 @@
+         while (i < t.labels.size() and t.labels[i] != v.labels[0]) i += 1;
+         if (i >= t.labels.size()) { fail("missing derived variant"); return };
+         num(i, false); emit(v.items[0], t.children[i], depth + 1)
+-      } else if (v.op == t.op and not compound(t.op) and t.op != -17) {
+-        if (v.op == -3 or v.op == -4) {
+-          if (v.length == 0) { fail("invalid scalar integer"); return };
+-          let prefix = Prim.abs((v.length : Int) - 1);
+-          span(v.offset, prefix);
+-          octet(Prim.natToNat8(Prim.nat8ToNat(data[v.offset + prefix]) % 128))
+-        } else if (v.op == -15) {
+-          num(v.length, false); span(v.offset, v.length)
+-        } else if (v.op == -24) {
+-          octet(1); num(v.length, false); span(v.offset, v.length)
+-        } else if (v.raw.size() != 0) add(v.raw)
+-        else span(v.offset, v.length)
+-      } else fail("cannot emit at derived type")
+-    };
+-    func message() {
+-      header();
+-      var i = 0;
+-      while (i < values.size() and not failed()) {
+-        emit(values[i], types[i], 0); i += 1
+-      }
+-    };
+-    message();
+-    if (not failed() and matching and outputSize == data.size()) return #ok(input);
+-    if (not failed()) {
+-      bytes := Prim.Array_init<Nat8>(outputSize, 0);
+-      outputSize := 0;
+-      writing := true;
+-      message()
++      } else if (v.op == t.op and not compound(t.op) and t.op != -17)
++        add(v.raw)
++      else fail("cannot emit at derived type")
++    };
++    var i = 0;
++    while (i < values.size() and not failed()) {
++      emit(values[i], types[i], 0); i += 1
+     };
+     switch failure {
+       case (?e) #err(e);
+-      case null #ok(Prim.arrayMutToBlob(bytes));
++      case null #ok(Prim.arrayToBlob(List.toArray(out)));
+     }
+   };
+ }
+--- a/ocaml/candidx.ml
++++ b/ocaml/candidx.ml
+@@ -10,14 +10,13 @@
+ type value =
+   | Scalar of int * bytes
+   | Some_value of value
+-  | Vector of value list
+-  | Blob of bytes
++  | Vector of value list * bool
+   | Record of (int * value) list
+   | Variant of int * value
+ type shape = { kind : int; fields : int list; children : shape list }
+ let scalar kind = { kind; fields = []; children = [] }
+ let unary kind child = { kind; fields = []; children = [child] }
+-let null_value = Scalar (-1, Bytes.empty)
++let null = Scalar (-1, Bytes.empty)
+ let is_null = function Scalar (-1, _) -> true | _ -> false
+ 
+ type reader = { data : bytes; mutable pos : int }
+@@ -26,11 +25,7 @@
+   let bytes = Bytes.sub r.data r.pos n in
+   r.pos <- r.pos + n;
+   bytes
+-let byte r =
+-  if r.pos = Bytes.length r.data then fail "truncated message";
+-  let b = Char.code (Bytes.get r.data r.pos) in
+-  r.pos <- r.pos + 1;
+-  b
++let byte r = Char.code (Bytes.get (take r 1) 0)
+ let integer r signed limit =
+   let rec loop i acc =
+     if i >= limit then fail "integer length limit";
+@@ -43,29 +38,6 @@
+     else loop (i + 1) acc
+   in
+   loop 0 Z.zero
+-let scalar_integer r signed =
+-  let start = r.pos in
+-  let rec scan i =
+-    if i = 4096 then fail "integer length limit";
+-    if byte r >= 128 then scan (i + 1)
+-  in
+-  scan 0;
+-  let end_ = ref r.pos in
+-  let rec trim () =
+-    if !end_ - start > 1 then begin
+-      let last = Char.code (Bytes.get r.data (!end_ - 1)) land 127 in
+-      let previous = Char.code (Bytes.get r.data (!end_ - 2)) in
+-      if (not signed && last = 0) || (signed &&
+-        ((last = 0 && previous land 64 = 0) ||
+-         (last = 127 && previous land 64 <> 0)))
+-      then begin decr end_; trim () end
+-    end
+-  in
+-  trim ();
+-  let b = Bytes.sub r.data start (!end_ - start) in
+-  let last = Bytes.length b - 1 in
+-  Bytes.set b last (Char.chr (Char.code (Bytes.get b last) land 127));
+-  b
+ let number r signed =
+   let n = integer r signed 10 in
+   if not (Z.fits_int n) then fail "index range";
+@@ -101,7 +73,7 @@
+         scan (i + width)
+   in
+   scan 0
+-let read_text r =
++let text r =
+   let bytes = take r (length r) in
+   if not (valid_utf8 bytes) then fail "invalid UTF-8";
+   bytes
+@@ -154,7 +126,7 @@
+         let n = length r in
+         let previous = ref None in
+         let edges = Array.init n (fun _ ->
+-          let name = read_text r in
++          let name = text r in
+           (match !previous with
+           | Some p when Bytes.compare p name >= 0 ->
+             fail "unordered service methods"
+@@ -191,17 +163,13 @@
+       let node = nodes.(ref_) in
+       match node.op with
+       | -18 -> (match byte r with
+-        | 0 -> null_value
++        | 0 -> null
+         | 1 -> Some_value (read node.edges.(0) (depth + 1))
+         | _ -> fail "invalid option tag")
+       | -19 ->
+         let n = length r in
+-        if node.edges.(0) = -5 then begin
+-          steps := !steps + n;
+-          if !steps > max_items || (n <> 0 && depth + 1 > max_depth) then
+-            fail "value traversal limit";
+-          Blob (take r n)
+-        end else Vector (List.init n (fun _ -> read node.edges.(0) (depth + 1)))
++        Vector (List.init n (fun _ -> read node.edges.(0) (depth + 1)),
++          node.edges.(0) = -5)
+       | -20 ->
+         let fields = Array.to_list (Array.mapi (fun i edge ->
+           let v = read edge (depth + 1) in
+@@ -221,7 +189,7 @@
+         | -17 -> fail "empty has no values"
+         | -2 -> let b = take r 1 in
+           if Char.code (Bytes.get b 0) > 1 then fail "invalid bool"; b
+-        | -3 | -4 -> scalar_integer r (ref_ = -4)
++        | -3 | -4 -> leb (integer r (ref_ = -4) 4096) (ref_ = -4)
+         | n when n >= -12 && n <= -5 -> take r (1 lsl ((-n - 5) mod 4))
+         | -13 | -14 ->
+           let size, frac, exp = if ref_ = -13 then 4, 23, 8 else 8, 52, 11 in
+@@ -234,7 +202,7 @@
+             not (Z.equal (Z.logand !bits (Z.pred (Z.shift_left Z.one frac))) Z.zero)
+           then Bytes.of_string (if size = 4 then "\000\000\192\127"
+             else "\000\000\000\000\000\000\248\127") else b
+-        | -15 -> let b = read_text r in
++        | -15 -> let b = text r in
+           Bytes.cat (leb (Z.of_int (Bytes.length b)) false) b
+         | -24 ->
+           if byte r <> 1 then fail "opaque principal";
+@@ -279,24 +247,16 @@
+   match value with
+   | Scalar (kind, _) -> scalar kind
+   | Some_value v -> unary (-18) (shape v (depth + 1))
+-  | Blob _ -> unary (-19) (scalar (-5))
+-  | Vector vs -> unary (-19) (List.fold_left (fun a v ->
+-    join a (shape v (depth + 1)) 0) (scalar (-17)) vs)
++  | Vector (vs, binary) -> unary (-19) (List.fold_left (fun a v ->
++    join a (shape v (depth + 1)) 0) (scalar (if binary then -5 else -17)) vs)
+   | Record fields ->
+     { kind = -20; fields = List.map fst fields;
+       children = List.map (fun (_, v) -> shape v (depth + 1)) fields }
+   | Variant (k, v) ->
+     { kind = -21; fields = [k]; children = [shape v (depth + 1)] }
+ 
+-type output = {
+-  buffer : Buffer.t;
+-  add : bytes -> unit;
+-  add_string : string -> unit;
+-  put : int -> unit;
+-  num : int -> bool -> unit;
+-}
+-
+-let make_output types =
++let encode values =
++  let types = List.map (fun v -> shape v 0) values in
+   let indices = Hashtbl.create 32 in
+   let table = ref [] in
+   let rec intern t =
+@@ -318,15 +278,6 @@
+       fail "output byte limit";
+     Buffer.add_bytes out b
+   in
+-  let add_string s =
+-    if String.length s > max_bytes - Buffer.length out then
+-      fail "output byte limit";
+-    Buffer.add_string out s
+-  in
+-  let put b =
+-    if Buffer.length out = max_bytes then fail "output byte limit";
+-    Buffer.add_char out (Char.chr b)
+-  in
+   let num n signed = add (leb (Z.of_int n) signed) in
+   add (Bytes.of_string "DIDL"); num (Hashtbl.length indices) false;
+   List.iter (fun t ->
+@@ -339,12 +290,6 @@
+     end) (List.rev !table);
+   num (List.length roots) false;
+   List.iter (fun i -> num i true) roots;
+-  { buffer = out; add; add_string; put; num }
+-
+-let encode_values values =
+-  let types = List.map (fun v -> shape v 0) values in
+-  let out = make_output types in
+-  let add = out.add and num = out.num in
+   let rec emit v t depth =
+     if depth > max_depth then fail "emitted value nesting limit";
+     if t.kind = -18 then
+@@ -356,14 +301,12 @@
+       end
+     else match v with
+     | Scalar (op, b) when op = t.kind -> add b
+-    | Blob bytes when t.kind = -19 && (only t.children).kind = -5 ->
+-      num (Bytes.length bytes) false; add bytes
+-    | Vector vs when t.kind = -19 ->
++    | Vector (vs, _) when t.kind = -19 ->
+       num (List.length vs) false;
+       List.iter (fun c -> emit c (only t.children) (depth + 1)) vs
+     | Record fields when t.kind = -20 ->
+       List.iter2 (fun k c -> emit
+-        (Option.value (List.assoc_opt k fields) ~default:null_value) c (depth + 1))
++        (Option.value (List.assoc_opt k fields) ~default:null) c (depth + 1))
+         t.fields t.children
+     | Variant (k, v) when t.kind = -21 ->
+       let rec find i fields children = match fields, children with
+@@ -376,7 +319,7 @@
+     | _ -> fail "cannot emit at derived type"
+   in
+   List.iter2 (fun v t -> emit v t 0) values types;
+-  Bytes.of_string (Buffer.contents out.buffer)
++  Bytes.of_string (Buffer.contents out)
+ 
+ let canonicalize bytes =
+   try
+@@ -385,347 +328,5 @@
+     let nodes, roots = parse r in
+     let values = read_values r nodes roots in
+     if r.pos <> Bytes.length bytes then fail "trailing payload";
+-    Ok (encode_values values)
++    Ok (encode values)
+   with Invalid message -> Error message
+-
+-(* The typed path carries native values and their witnesses through both
+-   passes. Only finite shapes are retained between passes, never an erased
+-   value tree or an ordinary serialized message. *)
+-type empty = |
+-type 'a primitive = {
+-  opcode : int;
+-  validate : 'a -> unit;
+-  write : output -> 'a -> unit;
+-}
+-type _ typ =
+-  | Primitive : 'a primitive -> 'a typ
+-  | Empty : empty typ
+-  | Option : 'a typ -> 'a option typ
+-  | Array : 'a typ -> 'a array typ
+-  | List : 'a typ -> 'a list typ
+-  | Bytes : bytes typ
+-  | Record_type : 'r field array -> 'r typ
+-  | Variant_type : 'v case array -> 'v typ
+-  | Recursive : 'a typ Lazy.t -> 'a typ
+-  | View : ('a -> 'b) * 'b typ -> 'a typ
+-and 'r field = Field : int * 'a typ * ('r -> 'a) -> 'r field
+-and 'v case = Case : int * 'a typ * ('v -> 'a option) -> 'v case
+-type argument = Argument : 'a typ * 'a -> argument
+-type selected = Selected : int * 'a typ * 'a -> selected
+-
+-let primitive opcode validate write = Primitive { opcode; validate; write }
+-let ignore_value _ = ()
+-let null = primitive (-1) ignore_value (fun _ () -> ())
+-let reserved = Primitive {
+-  opcode = -16; validate = ignore_value; write = (fun _ _ -> ()) }
+-let empty = Empty
+-let bool = primitive (-2) ignore_value (fun out b -> out.put (if b then 1 else 0))
+-
+-let check_integer signed n =
+-  if not signed && Z.sign n < 0 then fail "negative nat";
+-  let bits = Z.numbits (if signed && Z.sign n < 0 then Z.lognot n else n) in
+-  let bits = if signed then bits + 1 else bits in
+-  if max 1 ((bits + 6) / 7) > 4096 then fail "integer length limit"
+-let write_integer out signed n =
+-  let rec loop n =
+-    let b = Z.to_int (Z.logand n (Z.of_int 127)) in
+-    let next = Z.shift_right n 7 in
+-    let done_ = if signed then
+-      (Z.equal next Z.zero && b < 64) ||
+-      (Z.equal next Z.minus_one && b >= 64)
+-      else Z.equal next Z.zero
+-    in
+-    out.put (b lor if done_ then 0 else 128);
+-    if not done_ then loop next
+-  in
+-  loop n
+-let nat = primitive (-3) (check_integer false) (fun o n -> write_integer o false n)
+-let int = primitive (-4) (check_integer true) (fun o n -> write_integer o true n)
+-
+-let write_int64 out width n =
+-  for i = 0 to width - 1 do
+-    out.put (Int64.to_int (Int64.logand
+-      (Int64.shift_right_logical n (8 * i)) 255L))
+-  done
+-let small_int opcode low high width =
+-  primitive opcode (fun n ->
+-    if n < low || n > high then fail "fixed integer range")
+-    (fun out n -> write_int64 out width (Int64.of_int n))
+-let nat8 = small_int (-5) 0 255 1
+-let nat16 = small_int (-6) 0 65535 2
+-let nat32 = primitive (-7) (fun n ->
+-  if Int64.compare n 0L < 0 || Int64.compare n 0xffff_ffffL > 0 then
+-    fail "fixed integer range") (fun out n -> write_int64 out 4 n)
+-let nat64 = primitive (-8) (fun n ->
+-  if Z.sign n < 0 || Z.numbits n > 64 then fail "fixed integer range")
+-  (fun out n ->
+-    for i = 0 to 7 do
+-      out.put (Z.to_int (Z.extract n (8 * i) 8))
+-    done)
+-let int8 = small_int (-9) (-128) 127 1
+-let int16 = small_int (-10) (-32768) 32767 2
+-let int32 = primitive (-11) ignore_value
+-  (fun out n -> write_int64 out 4 (Int64.of_int32 n))
+-let int64 = primitive (-12) ignore_value (fun out n -> write_int64 out 8 n)
+-
+-let canonical_float32 bits =
+-  if Int32.logand bits 0x7f80_0000l = 0x7f80_0000l &&
+-    Int32.logand bits 0x007f_ffffl <> 0l
+-  then 0x7fc0_0000l else bits
+-let canonical_float64 bits =
+-  if Int64.logand bits 0x7ff0_0000_0000_0000L = 0x7ff0_0000_0000_0000L &&
+-    Int64.logand bits 0x000f_ffff_ffff_ffffL <> 0L
+-  then 0x7ff8_0000_0000_0000L else bits
+-let float32_bits = primitive (-13) ignore_value
+-  (fun out bits -> write_int64 out 4 (Int64.of_int32 (canonical_float32 bits)))
+-let float64_bits = primitive (-14) ignore_value
+-  (fun out bits -> write_int64 out 8 (canonical_float64 bits))
+-let contramap f typ = View (f, typ)
+-let float32 = contramap Int32.bits_of_float float32_bits
+-let float64 = contramap Int64.bits_of_float float64_bits
+-
+-let check_length n = if n > max_items then fail "collection length limit"
+-let bounded_list_length values =
+-  List.fold_left (fun n _ -> let n = n + 1 in check_length n; n) 0 values
+-let text = primitive (-15) (fun s ->
+-  check_length (String.length s);
+-  if not (valid_utf8 (Bytes.unsafe_of_string s)) then fail "invalid UTF-8")
+-  (fun out s -> out.num (String.length s) false; out.add_string s)
+-let principal = primitive (-24) (fun b ->
+-  if Bytes.length b > 29 then fail "principal length exceeds 29")
+-  (fun out b -> out.put 1; out.num (Bytes.length b) false; out.add b)
+-let blob = Bytes
+-let option typ = Option typ
+-let array typ = Array typ
+-let list typ = List typ
+-let recursive f =
+-  let rec self = Recursive (lazy (f self)) in
+-  self
+-let arg typ value = Argument (typ, value)
+-
+-let label_id label =
+-  if not (valid_utf8 (Bytes.unsafe_of_string label)) then
+-    invalid_arg "Candidx: invalid UTF-8 label";
+-  let id = ref 0L in
+-  String.iter (fun c -> id := Int64.logand 0xffff_ffffL
+-    (Int64.add (Int64.mul !id 223L) (Int64.of_int (Char.code c)))) label;
+-  !id
+-let numeric_id id =
+-  if Int64.compare id 0L < 0 || Int64.compare id 0xffff_ffffL > 0 ||
+-    Int64.compare id (Int64.of_int max_int) > 0 then
+-    invalid_arg "Candidx: field ID range";
+-  Int64.to_int id
+-let field_num id typ get = Field (numeric_id id, typ, get)
+-let field label typ get = field_num (label_id label) typ get
+-let case_num id typ select = Case (numeric_id id, typ, select)
+-let case label typ select = case_num (label_id label) typ select
+-let sorted_unique kind id xs =
+-  (try ignore (bounded_list_length xs) with Invalid _ ->
+-    invalid_arg ("Candidx: too many " ^ kind));
+-  let xs = Array.of_list xs in
+-  if Array.length xs > max_items then
+-    invalid_arg ("Candidx: too many " ^ kind);
+-  Array.sort (fun a b -> Int.compare (id a) (id b)) xs;
+-  Array.iteri (fun i x ->
+-    if i > 0 && id xs.(i - 1) = id x then
+-      invalid_arg ("Candidx: duplicate or colliding " ^ kind ^ " ID")) xs;
+-  xs
+-let record fields = Record_type (sorted_unique "field"
+-  (fun (Field (id, _, _)) -> id) fields)
+-let variant cases = Variant_type (sorted_unique "case"
+-  (fun (Case (id, _, _)) -> id) cases)
+-
+-let select_case cases value =
+-  let found = ref None in
+-  Array.iter (fun (Case (id, typ, select)) ->
+-    match select value with
+-    | None -> ()
+-    | Some payload ->
+-      if Option.is_some !found then fail "multiple selected variant cases";
+-      found := Some (Selected (id, typ, payload))) cases;
+-  match !found with
+-  | Some selected -> selected
+-  | None -> fail "no selected variant case"
+-
+-let check_aliases aliases =
+-  if aliases > max_depth then fail "unproductive or excessive witness indirection"
+-let rec is_nat8 : type a. a typ -> int -> bool = fun typ aliases ->
+-  check_aliases aliases;
+-  match typ with
+-  | Primitive p -> p.opcode = -5
+-  | View (_, child) -> is_nat8 child (aliases + 1)
+-  | Recursive child -> is_nat8 (Lazy.force child) (aliases + 1)
+-  | _ -> false
+-
+-let tick steps depth =
+-  incr steps;
+-  if !steps > max_items || depth > max_depth then fail "value traversal limit"
+-let count_blob steps depth bytes =
+-  let n = Bytes.length bytes in
+-  check_length n;
+-  steps := !steps + n;
+-  if !steps > max_items || (n <> 0 && depth + 1 > max_depth) then
+-    fail "value traversal limit"
+-
+-type observation = { actual : shape; absent_optional : bool }
+-let observed actual = { actual; absent_optional = false }
+-let observed_absent = { actual = scalar (-1); absent_optional = true }
+-
+-let observe_native steps typ value depth =
+-  let rec walk : type a. a typ -> a -> int -> observation = fun typ value depth ->
+-    tick steps depth;
+-    at typ value depth 0
+-  and at : type a. a typ -> a -> int -> int -> observation =
+-    fun typ value depth aliases ->
+-    check_aliases aliases;
+-    match typ with
+-    | View (f, child) -> at child (f value) depth (aliases + 1)
+-    | Recursive child -> at (Lazy.force child) value depth (aliases + 1)
+-    | Primitive p -> p.validate value; observed (scalar p.opcode)
+-    | Empty -> (match value with _ -> .)
+-    | Option child -> (match value with
+-      | None -> observed_absent
+-      | Some v -> observed (unary (-18) (walk child v (depth + 1)).actual))
+-    | Bytes -> count_blob steps depth value; observed (unary (-19) (scalar (-5)))
+-    | Array child ->
+-      check_length (Array.length value);
+-      let element = Array.fold_left (fun acc v ->
+-        join acc (walk child v (depth + 1)).actual 0) (scalar (-17)) value in
+-      let element = if Array.length value = 0 && is_nat8 child 0
+-        then scalar (-5) else element in
+-      observed (unary (-19) element)
+-    | List child ->
+-      let n = ref 0 in
+-      let element = List.fold_left (fun acc v ->
+-        incr n; check_length !n;
+-        join acc (walk child v (depth + 1)).actual 0) (scalar (-17)) value in
+-      let element = if !n = 0 && is_nat8 child 0 then scalar (-5) else element in
+-      observed (unary (-19) element)
+-    | Record_type fields ->
+-      let used = Array.fold_right (fun (Field (id, child, get)) acc ->
+-        let observation = walk child (get value) (depth + 1) in
+-        if observation.absent_optional then acc
+-        else (id, observation.actual) :: acc) fields [] in
+-      observed { kind = -20; fields = List.map fst used; children = List.map snd used }
+-    | Variant_type cases ->
+-      let Selected (id, child, v) = select_case cases value in
+-      observed { kind = -21; fields = [id]; children = [(walk child v (depth + 1)).actual] }
+-  in
+-  walk typ value depth
+-
+-let emit_native out steps typ value wire depth =
+-  let rec emit : type a. a typ -> a -> shape -> int -> observation =
+-    fun typ value wire depth ->
+-    tick steps depth;
+-    at typ value wire depth 0
+-  and at : type a. a typ -> a -> shape -> int -> int -> observation =
+-    fun typ value wire depth aliases ->
+-    check_aliases aliases;
+-    if depth > max_depth then fail "emitted value nesting limit";
+-    match typ with
+-    | View (f, child) -> at child (f value) wire depth (aliases + 1)
+-    | Recursive child -> at (Lazy.force child) value wire depth (aliases + 1)
+-    | Option child -> (match value with
+-      | None -> absent wire; observed_absent
+-      | Some v ->
+-        if wire.kind <> -18 then fail "changed option value during encoding";
+-        out.put 1;
+-        let child = emit child v (only wire.children) (depth + 1) in
+-        observed (unary (-18) child.actual))
+-    | _ when wire.kind = -18 ->
+-      (match typ with
+-      | Primitive p when p.opcode = -1 -> out.put 0; observed (scalar (-1))
+-      | _ ->
+-        out.put 1;
+-        at typ value (only wire.children) (depth + 1) aliases)
+-    | Primitive p ->
+-      if p.opcode <> wire.kind then fail "cannot emit scalar at derived type";
+-      p.validate value;
+-      p.write out value;
+-      observed (scalar p.opcode)
+-    | Empty -> (match value with _ -> .)
+-    | Bytes ->
+-      count_blob steps depth value;
+-      if wire.kind <> -19 || (only wire.children).kind <> -5 then
+-        fail "cannot emit blob at derived type";
+-      out.num (Bytes.length value) false;
+-      out.add value;
+-      observed (unary (-19) (scalar (-5)))
+-    | Array child ->
+-      if wire.kind <> -19 then fail "cannot emit array at derived type";
+-      check_length (Array.length value);
+-      out.num (Array.length value) false;
+-      let element = Array.fold_left (fun acc v ->
+-        join acc (emit child v (only wire.children) (depth + 1)).actual 0)
+-        (scalar (-17)) value in
+-      let element = if Array.length value = 0 && is_nat8 child 0 then scalar (-5) else element in
+-      observed (unary (-19) element)
+-    | List child ->
+-      if wire.kind <> -19 then fail "cannot emit list at derived type";
+-      let n = bounded_list_length value in
+-      out.num n false;
+-      let element = List.fold_left (fun acc v ->
+-        join acc (emit child v (only wire.children) (depth + 1)).actual 0)
+-        (scalar (-17)) value in
+-      let element = if n = 0 && is_nat8 child 0 then scalar (-5) else element in
+-      observed (unary (-19) element)
+-    | Record_type fields ->
+-      if wire.kind <> -20 then fail "cannot emit record at derived type";
+-      let remaining = ref (List.combine wire.fields wire.children) in
+-      let used = Array.fold_left (fun acc (Field (id, typ, get)) ->
+-        let rec skip_missing () = match !remaining with
+-          | (candidate, child) :: rest when candidate < id ->
+-            absent child; remaining := rest; skip_missing ()
+-          | _ -> ()
+-        in
+-        skip_missing ();
+-        let v = get value in
+-        let observation = match !remaining with
+-          | (candidate, child) :: rest when candidate = id ->
+-            remaining := rest; emit typ v child (depth + 1)
+-          | _ ->
+-            let observation = observe_native steps typ v (depth + 1) in
+-            if not observation.absent_optional then
+-              fail "changed record fields during encoding";
+-            observation
+-        in
+-        if observation.absent_optional then acc
+-        else (id, observation.actual) :: acc) [] fields in
+-      List.iter (fun (_, child) -> absent child) !remaining;
+-      let used = List.rev used in
+-      observed { kind = -20; fields = List.map fst used; children = List.map snd used }
+-    | Variant_type cases ->
+-      if wire.kind <> -21 then fail "cannot emit variant at derived type";
+-      let Selected (id, child, v) = select_case cases value in
+-      let rec find index fields children = match fields, children with
+-        | candidate :: _, shape :: _ when candidate = id -> index, shape
+-        | _ :: ids, _ :: shapes -> find (index + 1) ids shapes
+-        | _ -> fail "changed selected variant during encoding"
+-      in
+-      let index, payload = find 0 wire.fields wire.children in
+-      out.num index false;
+-      let payload = emit child v payload (depth + 1) in
+-      observed { kind = -21; fields = [id]; children = [payload.actual] }
+-  and absent wire =
+-    if wire.kind = -18 then out.put 0
+-    else if wire.kind <> -1 then fail "cannot emit absence at derived type"
+-  in
+-  emit typ value wire depth
+-
+-let encode_args arguments =
+-  try
+-    ignore (bounded_list_length arguments);
+-    let steps = ref 0 in
+-    let derive typ value depth = (observe_native steps typ value depth).actual in
+-    let types = List.map (fun (Argument (typ, value)) -> derive typ value 0) arguments in
+-    let out = make_output types in
+-    let steps = ref 0 in
+-    let emit typ value wire depth = emit_native out steps typ value wire depth in
+-    List.iter2 (fun (Argument (typ, value)) wire ->
+-      if (emit typ value wire 0).actual <> wire then
+-        fail "value shape changed during encoding")
+-      arguments types;
+-    Ok (Bytes.of_string (Buffer.contents out.buffer))
+-  with Invalid message -> Error message
+-
+-let encode typ value = encode_args [arg typ value]
+--- a/ocaml/candidx.mli
++++ b/ocaml/candidx.mli
+@@ -1,80 +1,7 @@
+-(** Typed value-based canonical Candid encoding; no hashing. *)
++(** Experimental value-based canonical Candid encoding; no hashing. *)
+ val profile : string
+ 
+-(** A witness describes the Candid kind of an existing OCaml value. The
+-    encoder derives its finite wire type from the value, not from all of the
+-    declarations in its witness. *)
+-type 'a typ
+-type empty
++(** Normalize a complete ordinary Candid message before receiver projection.
++    Malformed, unsupported, or resource-limited messages return [Error]. *)
++val canonicalize : bytes -> (bytes, string) result
+ 
+-val null : unit typ
+-val reserved : 'a typ
+-val empty : empty typ
+-val bool : bool typ
+-val nat : Z.t typ
+-val int : Z.t typ
+-val nat8 : int typ
+-val nat16 : int typ
+-val nat32 : int64 typ
+-val nat64 : Z.t typ
+-val int8 : int typ
+-val int16 : int typ
+-val int32 : int32 typ
+-val int64 : int64 typ
+-val float32 : float typ
+-val float64 : float typ
+-
+-(** Bit-pattern witnesses retain every non-NaN bit, including negative zero.
+-    All NaNs are replaced by the profile's positive quiet NaN. [float32]
+-    rounds the OCaml float to IEEE binary32 first. *)
+-val float32_bits : int32 typ
+-val float64_bits : int64 typ
+-val text : string typ
+-
+-(** A public principal is its raw bytes, of length at most 29. *)
+-val principal : bytes typ
+-val blob : bytes typ
+-val option : 'a typ -> 'a option typ
+-val array : 'a typ -> 'a array typ
+-val list : 'a typ -> 'a list typ
+-
+-(** Adapt a native application representation without building a generic
+-    Candid value tree. The conversion, getters and selectors must be pure,
+-    and the value must remain unchanged during encoding. *)
+-val contramap : ('a -> 'b) -> 'b typ -> 'a typ
+-
+-type 'r field
+-val field : string -> 'a typ -> ('r -> 'a) -> 'r field
+-val field_num : int64 -> 'a typ -> ('r -> 'a) -> 'r field
+-val record : 'r field list -> 'r typ
+-
+-(** A selector returns [Some payload] precisely when its case is selected.
+-    Exactly one selector must select a case for each encoded variant value. *)
+-type 'v case
+-val case : string -> 'a typ -> ('v -> 'a option) -> 'v case
+-val case_num : int64 -> 'a typ -> ('v -> 'a option) -> 'v case
+-val variant : 'v case list -> 'v typ
+-
+-(** Candid's UTF-8 label hash, modulo 2^32. Record/variant construction checks
+-    numeric labels, duplicate IDs and collisions, including named/numeric
+-    collisions. Invalid schema construction raises [Invalid_argument]. *)
+-val label_id : string -> int64
+-
+-(** Tie a recursive declaration. Only actual finite values are traversed;
+-    unused cases and absent children need not unfold their witness. *)
+-val recursive : ('a typ -> 'a typ) -> 'a typ
+-
+-type argument
+-val arg : 'a typ -> 'a -> argument
+-
+-(** Derive used shapes and directly emit a canonical DIDL message from native
+-    values. No ordinary serialization or binary parsing occurs on this path.
+-    Invalid scalar data, selectors, resource limits, or a used shape that
+-    changes between the two passes return [Error]. *)
+-val encode : 'a typ -> 'a -> (bytes, string) result
+-val encode_args : argument list -> (bytes, string) result
+-
+-(** Normalize a complete inbound ordinary Candid message before receiver
+-    projection. Malformed, unsupported, or resource-limited messages return
+-    [Error]. This utility is separate from the typed encoding path. *)
+-val canonicalize : bytes -> (bytes, string) result
+--- a/ocaml/dune
++++ b/ocaml/dune
+@@ -16,21 +16,3 @@
+  (modules bench)
+  (libraries candidx unix)
+  (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+-
+-(executable
+- (name direct_probe)
+- (modules direct_probe test_json)
+- (libraries candidx zarith)
+- (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+-
+-(executable
+- (name direct_bench)
+- (modules direct_bench)
+- (libraries candidx zarith unix)
+- (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+-
+-(test
+- (name direct_tests)
+- (modules direct_tests)
+- (libraries candidx zarith)
+- (flags (:standard -w +a-4-42-44-45-48-70 -warn-error +a)))
+--- a/rust/Cargo.lock
++++ b/rust/Cargo.lock
+@@ -120,6 +120,8 @@
+ dependencies = [
+  "candid",
+  "hex",
++ "num-bigint",
++ "num-traits",
+  "serde",
+  "serde_json",
+ ]
+--- a/rust/Cargo.toml
++++ b/rust/Cargo.toml
+@@ -8,12 +8,14 @@
+ 
+ [features]
+ default = ["std", "candid"]
+-std = []
++std = ["num-bigint/std", "num-traits/std"]
+ candid = ["std", "dep:candid"]
+ fuzz = ["candid", "candid/value"]
+ 
+ [dependencies]
+-candid = { version = "0.10.37", optional = true }
++num-bigint = { version = "0.4", default-features = false }
++num-traits = { version = "0.2", default-features = false }
++candid = { version = "0.10", optional = true }
+ 
+ [dev-dependencies]
+ serde = { version = "1", features = ["derive"] }
+@@ -31,7 +33,3 @@
+ [[example]]
+ name = "bench"
+ required-features = ["candid"]
+-
+-[[example]]
+-name = "profile"
+-required-features = ["candid"]
+--- a/rust/examples/bench.rs
++++ b/rust/examples/bench.rs
+@@ -1,7 +1,21 @@
+-mod support;
++use candid::{CandidType, Deserialize, Nat, Principal};
+ use serde_json::json;
+ use std::{hint::black_box, time::Instant};
+-use support::{Block, WORKLOADS};
++
++#[derive(CandidType, Deserialize, Clone, PartialEq, Debug)]
++struct Tx {
++    owner: Principal,
++    amount: Nat,
++    memo: Option<Vec<u8>>,
++}
++#[derive(CandidType, Deserialize, Clone, PartialEq, Debug)]
++#[allow(non_snake_case)]
++struct Block {
++    timestamp: u64,
++    parentHash: Option<Vec<u8>>,
++    tx: Vec<Tx>,
++    note: Option<String>,
++}
+ 
+ fn sample(mut f: impl FnMut() -> usize) -> serde_json::Value {
+     for _ in 0..3 {
+@@ -24,11 +38,33 @@
+ }
+ fn main() {
+     let mut cases = Vec::new();
+-    for (name, count, memo_size) in WORKLOADS {
+-        let block = support::block(count, memo_size);
++    for (name, count, memo_size) in [
++        ("small", 4, 32),
++        ("records-128", 128, 32),
++        ("blob-64k", 1, 65536),
++        ("records-1024", 1024, 0),
++    ] {
++        let memo: Vec<u8> = (0..memo_size).map(|i| (i % 256) as u8).collect();
++        let huge =
++            Nat::parse(b"1606938044258990275541962092341162602522202993782792835301376").unwrap();
++        let block = Block {
++            timestamp: 1234567890,
++            parentHash: Some(vec![7; 32]),
++            note: None,
++            tx: (0..count)
++                .map(|i| Tx {
++                    owner: Principal::from_slice(&[1, 2]),
++                    amount: Nat(&huge.0 + i as u32),
++                    memo: if i % 3 == 0 || memo_size == 65536 {
++                        Some(memo.clone())
++                    } else {
++                        None
++                    },
++                })
++                .collect(),
++        };
++        let raw = candid::encode_one(&block).unwrap();
+         let canonical = candidx::encode_one(&block).unwrap();
+-        let raw = candid::encode_one(&block).unwrap();
+-        assert_eq!(candidx::canonicalize(&raw).unwrap(), canonical);
+         assert_eq!(candid::decode_one::<Block>(&raw).unwrap(), block);
+         assert_eq!(candid::decode_one::<Block>(&canonical).unwrap(), block);
+         cases.push(json!({"name":name, "transactions":count, "memo_bytes":memo_size,
+@@ -36,11 +72,7 @@
+             "raw_hex": hex::encode(&raw), "canonical_hex": hex::encode(&canonical),
+             "ordinary_encode":sample(|| candid::encode_one(black_box(&block)).unwrap().len()),
+             "canonicalize_preencoded":sample(|| candidx::canonicalize(black_box(&raw)).unwrap().len()),
+-            "canonical_encode_direct":sample(|| candidx::encode_one(black_box(&block)).unwrap().len()),
+-            "canonical_encode_pipeline":sample(|| {
+-                let ordinary = candid::encode_one(black_box(&block)).unwrap();
+-                candidx::canonicalize(&ordinary).unwrap().len()
+-            }),
++            "canonical_encode_pipeline":sample(|| candidx::encode_one(black_box(&block)).unwrap().len()),
+             "ordinary_decode":sample(|| candid::decode_one::<Block>(black_box(&raw)).unwrap().tx.len()),
+             "canonical_decode":sample(|| candid::decode_one::<Block>(black_box(&canonical)).unwrap().tx.len())}));
+     }
+--- a/rust/examples/profile.rs
++++ b/rust/examples/profile.rs
+@@ -1,5 +1,4 @@
+ //! Host-side allocator measurements; this example never hashes values.
+-mod support;
+ use serde_json::{json, Value};
+ use std::alloc::{GlobalAlloc, Layout, System};
+ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed};
+@@ -50,69 +49,23 @@
+     for case in fixture["cases"].as_array().unwrap() {
+         let raw = hex::decode(case["raw_hex"].as_str().unwrap()).unwrap();
+         let expected = hex::decode(case["canonical_hex"].as_str().unwrap()).unwrap();
+-        let name = case["name"].as_str().unwrap();
+-        let (_, count, memo_size) = support::WORKLOADS
+-            .iter()
+-            .find(|(candidate, _, _)| *candidate == name)
+-            .unwrap();
+-        let block = support::block(*count, *memo_size);
+-        // Initialize shared type caches and all application fixtures outside
+-        // the counters. Each measured typed encoder still derives its schema
+-        // exactly as its real public entry point does.
+-        assert_eq!(candidx::encode_one(&block).unwrap(), expected);
+-        assert_eq!(candid::encode_one(&block).unwrap(), raw);
+-        let mut stats = json!({"name":name});
+-        for phase in [
+-            "ordinary_encode",
+-            "canonical_encode_direct",
+-            "canonical_encode_pipeline",
+-            "canonicalize_preencoded",
+-        ] {
+-            // Remove prior per-operation schema values before counting; their
+-            // allocations belong to the preceding operation, not this one.
+-            candid::types::internal::env_clear();
+-            ALLOCATED.store(0, Relaxed);
+-            ALLOCATIONS.store(0, Relaxed);
+-            LIVE.store(0, Relaxed);
+-            PEAK.store(0, Relaxed);
+-            ENABLED.store(true, Relaxed);
+-            let output = match phase {
+-                "ordinary_encode" => candid::encode_one(&block).unwrap(),
+-                "canonical_encode_direct" => candidx::encode_one(&block).unwrap(),
+-                "canonical_encode_pipeline" => {
+-                    let ordinary = candid::encode_one(&block).unwrap();
+-                    candidx::canonicalize(&ordinary).unwrap()
+-                }
+-                "canonicalize_preencoded" => candidx::canonicalize(&raw).unwrap(),
+-                _ => unreachable!(),
+-            };
+-            ENABLED.store(false, Relaxed);
+-            let live = LIVE.load(Relaxed);
+-            let peak = PEAK.load(Relaxed);
+-            assert!(
+-                live <= peak && peak <= ALLOCATED.load(Relaxed),
+-                "allocator accounting underflow"
+-            );
+-            stats[phase] = json!({
+-                "allocated_bytes":ALLOCATED.load(Relaxed),
+-                "allocation_requests":ALLOCATIONS.load(Relaxed),
+-                "peak_live_allocation_bytes":peak,
+-                "operation_end_measured_allocation_bytes":live,
+-                "retained_output_capacity_bytes":output.capacity(),
+-            });
+-            assert_eq!(
+-                output.as_slice(),
+-                if phase == "ordinary_encode" {
+-                    raw.as_slice()
+-                } else {
+-                    expected.as_slice()
+-                }
+-            );
+-        }
++        ALLOCATED.store(0, Relaxed);
++        ALLOCATIONS.store(0, Relaxed);
++        LIVE.store(0, Relaxed);
++        PEAK.store(0, Relaxed);
++        ENABLED.store(true, Relaxed);
++        let output = candidx::canonicalize(&raw).unwrap();
++        ENABLED.store(false, Relaxed);
++        let stats = json!({"name":case["name"],
++            "allocated_bytes":ALLOCATED.load(Relaxed),
++            "allocation_requests":ALLOCATIONS.load(Relaxed),
++            "peak_live_allocation_bytes":PEAK.load(Relaxed),
++            "retained_output_capacity_bytes":LIVE.load(Relaxed)});
++        assert_eq!(output, expected);
+         cases.push(stats);
+     }
+     println!(
+         "{}",
+-        json!({"language":"Rust", "method":"System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input", "cases":cases})
++        json!({"language":"Rust", "method":"System allocator requested bytes, counting whole realloc requests; excludes allocator metadata, input, and host fixtures", "cases":cases})
+     );
+ }
+--- a/rust/src/lib.rs
++++ b/rust/src/lib.rs
+@@ -1,24 +1,8 @@
+ //! `cx`: value-based Candid bytes, without hashing.
+-#![cfg_attr(not(feature = "std"), no_std)]
+-extern crate alloc;
+-
+-use alloc::borrow::Cow;
+-use alloc::boxed::Box;
+-use alloc::collections::BTreeMap;
+-use alloc::string::String;
+-use alloc::{vec, vec::Vec};
+-use core::fmt;
+-
+-mod tree;
+-pub use tree::{encode_direct_args, DirectField, DirectValue};
+-mod visitor;
+-pub use visitor::{encode_source_args, DirectSource, SourceField};
+-#[cfg(feature = "candid")]
+-mod typed;
+-#[cfg(feature = "candid")]
+-pub use typed::{
+-    encode_args, encode_args_with_types, encode_one, encode_one_with_type, ArgumentEncoder,
+-};
++use num_bigint::BigInt;
++use num_traits::{One, ToPrimitive, Zero};
++use std::collections::{BTreeMap, BTreeSet};
++use std::fmt;
+ 
+ pub const PROFILE: &str = "cx";
+ const MAX_BYTES: usize = 32 * 1024 * 1024;
+@@ -33,8 +17,8 @@
+         self.0.fmt(f)
+     }
+ }
+-impl core::error::Error for Error {}
+-type Result<T> = core::result::Result<T, Error>;
++impl std::error::Error for Error {}
++type Result<T> = std::result::Result<T, Error>;
+ fn bad<T>(message: &str) -> Result<T> {
+     Err(Error(message.into()))
+ }
+@@ -46,20 +30,17 @@
+     edges: Vec<i32>,
+ }
+ #[derive(Clone, Debug)]
+-enum Value<'a> {
+-    Scalar(i32, Cow<'a, [u8]>),
+-    Some(Box<Value<'a>>),
+-    Vec(Vec<Value<'a>>),
+-    Blob(&'a [u8]),
+-    Text(&'a [u8]),
+-    Principal(&'a [u8]),
+-    Record(Vec<(u32, Value<'a>)>),
+-    Variant(u32, Box<Value<'a>>),
+-}
+-fn null<'a>() -> Value<'a> {
+-    Value::Scalar(-1, Cow::Borrowed(&[]))
+-}
+-fn is_null(v: &Value<'_>) -> bool {
++enum Value {
++    Scalar(i32, Vec<u8>),
++    Some(Box<Value>),
++    Vec(Vec<Value>, bool),
++    Record(BTreeMap<u32, Value>),
++    Variant(u32, Box<Value>),
++}
++fn null() -> Value {
++    Value::Scalar(-1, vec![])
++}
++fn is_null(v: &Value) -> bool {
+     matches!(v, Value::Scalar(-1, _))
+ }
+ #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+@@ -83,6 +64,22 @@
+     }
+ }
+ 
++fn leb(mut value: BigInt, signed: bool) -> Vec<u8> {
++    let mut out = Vec::new();
++    loop {
++        let byte = (&value & BigInt::from(127u8)).to_u8().unwrap_or(0);
++        value >>= 7;
++        let done = if signed {
++            (value.is_zero() && byte < 64) || (value == BigInt::from(-1) && byte >= 64)
++        } else {
++            value.is_zero()
++        };
++        out.push(byte | if done { 0 } else { 128 });
++        if done {
++            return out;
++        }
++    }
++}
+ struct Reader<'a> {
+     data: &'a [u8],
+     pos: usize,
+@@ -99,64 +96,34 @@
+     fn byte(&mut self) -> Result<u8> {
+         Ok(self.take(1)?[0])
+     }
+-    // Only type references, labels, and lengths use this reader (at most ten
+-    // groups = 70 bits). Arbitrarily large Nat/Int values use scalar_integer.
+-    fn integer(&mut self, signed: bool, max: usize) -> Result<i128> {
+-        let mut value = 0i128;
++    fn integer(&mut self, signed: bool, max: usize) -> Result<BigInt> {
++        let mut value = BigInt::zero();
+         for i in 0..max {
+             let byte = self.byte()?;
+-            value |= i128::from(byte & 127) << (7 * i);
++            value |= BigInt::from(byte & 127) << (7 * i);
+             if byte < 128 {
+                 if signed && byte & 64 != 0 {
+-                    value -= 1i128 << (7 * (i + 1));
++                    value -= BigInt::one() << (7 * (i + 1));
+                 }
+                 return Ok(value);
+             }
+         }
+         bad("integer length limit")
+     }
+-    // Normalize a scalar LEB directly. Constructing a BigInt only to encode it
+-    // again is unnecessary; leading zero/sign groups determine minimality.
+-    fn scalar_integer(&mut self, signed: bool) -> Result<Cow<'a, [u8]>> {
+-        let start = self.pos;
+-        for _ in 0..4096 {
+-            if self.byte()? < 128 {
+-                let mut end = self.pos;
+-                while end - start > 1 {
+-                    let last = self.data[end - 1] & 127;
+-                    let previous = self.data[end - 2];
+-                    if (!signed && last == 0)
+-                        || (signed
+-                            && ((last == 0 && previous & 64 == 0)
+-                                || (last == 127 && previous & 64 != 0)))
+-                    {
+-                        end -= 1;
+-                    } else {
+-                        break;
+-                    }
+-                }
+-                if end == self.pos {
+-                    return Ok(Cow::Borrowed(&self.data[start..end]));
+-                }
+-                let mut bytes = self.data[start..end].to_vec();
+-                if let Some(last) = bytes.last_mut() {
+-                    *last &= 127;
+-                }
+-                return Ok(Cow::Owned(bytes));
+-            }
+-        }
+-        bad("integer length limit")
+-    }
+     fn length(&mut self) -> Result<usize> {
+-        let n =
+-            usize::try_from(self.integer(false, 10)?).map_err(|_| Error("index range".into()))?;
++        let n = self
++            .integer(false, 10)?
++            .to_usize()
++            .ok_or_else(|| Error("index range".into()))?;
+         if n > MAX_ITEMS {
+             return bad("collection length limit");
+         }
+         Ok(n)
+     }
+     fn reference(&mut self) -> Result<i32> {
+-        i32::try_from(self.integer(true, 10)?).map_err(|_| Error("type index range".into()))
++        self.integer(true, 10)?
++            .to_i32()
++            .ok_or_else(|| Error("type index range".into()))
+     }
+     fn refs(&mut self) -> Result<Vec<i32>> {
+         let n = self.length()?;
+@@ -165,7 +132,7 @@
+     fn text(&mut self) -> Result<&'a [u8]> {
+         let n = self.length()?;
+         let bytes = self.take(n)?;
+-        core::str::from_utf8(bytes).map_err(|_| Error("invalid UTF-8".into()))?;
++        std::str::from_utf8(bytes).map_err(|_| Error("invalid UTF-8".into()))?;
+         Ok(bytes)
+     }
+ }
+@@ -188,8 +155,10 @@
+             -20 | -21 => {
+                 let count = r.length()?;
+                 for _ in 0..count {
+-                    let id = u32::try_from(r.integer(false, 10)?)
+-                        .map_err(|_| Error("field ID range".into()))?;
++                    let id = r
++                        .integer(false, 10)?
++                        .to_u32()
++                        .ok_or_else(|| Error("field ID range".into()))?;
+                     if labels.last().is_some_and(|last| *last >= id) {
+                         return bad("unordered field IDs");
+                     }
+@@ -248,13 +217,13 @@
+     Ok((nodes, roots))
+ }
+ 
+-fn read_value<'a>(
+-    r: &mut Reader<'a>,
++fn read_value(
++    r: &mut Reader<'_>,
+     nodes: &[Node],
+     reference: i32,
+     depth: usize,
+     steps: &mut usize,
+-) -> Result<Value<'a>> {
++) -> Result<Value> {
+     *steps += 1;
+     if *steps > MAX_ITEMS || depth > MAX_DEPTH {
+         return bad("value traversal limit");
+@@ -275,29 +244,18 @@
+             },
+             -19 => {
+                 let n = r.length()?;
+-                if node.edges[0] == -5 {
+-                    *steps += n;
+-                    if *steps > MAX_ITEMS || (n != 0 && depth + 1 > MAX_DEPTH) {
+-                        return bad("value traversal limit");
+-                    }
+-                    return Ok(Value::Blob(r.take(n)?));
+-                }
+-                // Exact reservation for ordinary workloads, bounded eager
+-                // allocation for truncated or very large input declarations.
+-                let mut items = Vec::with_capacity(n.min(4096));
+-                for _ in 0..n {
+-                    items.push(read_value(r, nodes, node.edges[0], depth + 1, steps)?);
+-                }
+-                Ok(Value::Vec(items))
++                let items = (0..n)
++                    .map(|_| read_value(r, nodes, node.edges[0], depth + 1, steps))
++                    .collect::<Result<Vec<_>>>()?;
++                Ok(Value::Vec(items, node.edges[0] == -5))
+             }
+             -20 => {
+-                let mut fields = Vec::new();
++                let mut fields = BTreeMap::new();
+                 for (&label, &edge) in node.labels.iter().zip(&node.edges) {
+                     let child = read_value(r, nodes, edge, depth + 1, steps)?;
+                     let absent = edge >= 0 && nodes[edge as usize].op == -18 && is_null(&child);
+                     if !absent {
+-                        // The validated type table already sorts record labels.
+-                        fields.push((label, child));
++                        fields.insert(label, child);
+                     }
+                 }
+                 Ok(Value::Record(fields))
+@@ -317,17 +275,17 @@
+     }
+     let raw = match reference {
+         -1 => return Ok(null()),
+-        -16 => Cow::Borrowed(&[][..]),
++        -16 => vec![],
+         -17 => return bad("empty has no values"),
+         -2 => {
+             let bytes = r.take(1)?;
+             if bytes[0] > 1 {
+                 return bad("invalid bool");
+             }
+-            Cow::Borrowed(bytes)
+-        }
+-        -3 | -4 => r.scalar_integer(reference == -4)?,
+-        -12..=-5 => Cow::Borrowed(r.take(1 << ((-reference - 5) % 4))?),
++            bytes.to_vec()
++        }
++        -3 | -4 => leb(r.integer(reference == -4, 4096)?, reference == -4),
++        -12..=-5 => r.take(1 << ((-reference - 5) % 4))?.to_vec(),
+         -13 | -14 => {
+             let size = if reference == -13 { 4 } else { 8 };
+             let bytes = r.take(size)?;
+@@ -344,12 +302,17 @@
+                 } else {
+                     0x7ff8000000000000
+                 };
+-                Cow::Owned(canonical.to_le_bytes()[..size].to_vec())
++                canonical.to_le_bytes()[..size].to_vec()
+             } else {
+-                Cow::Borrowed(bytes)
+-            }
+-        }
+-        -15 => return Ok(Value::Text(r.text()?)),
++                bytes.to_vec()
++            }
++        }
++        -15 => {
++            let bytes = r.text()?;
++            let mut raw = leb(BigInt::from(bytes.len()), false);
++            raw.extend(bytes);
++            raw
++        }
+         -24 => {
+             if r.byte()? != 1 {
+                 return bad("opaque principal");
+@@ -358,190 +321,103 @@
+             if n > 29 {
+                 return bad("principal length exceeds 29");
+             }
+-            return Ok(Value::Principal(r.take(n)?));
++            let mut raw = vec![1, n as u8];
++            raw.extend(r.take(n)?);
++            raw
+         }
+         _ => return bad("unsupported primitive"),
+     };
+     Ok(Value::Scalar(reference, raw))
+ }
+ 
+-// Consume each newly derived shape and extend the accumulated array shape.
+-// Equal shapes need no clone; sorted label vectors permit a linear union.
+-fn join(a: &mut Shape, mut b: Shape, depth: usize) -> Result<()> {
++fn join(a: &Shape, b: &Shape, depth: usize) -> Result<Shape> {
+     if depth > MAX_DEPTH {
+         return bad("type nesting limit");
+     }
+-    if *a == b || b.op == -17 {
+-        return Ok(());
++    if a == b || b.op == -17 {
++        return Ok(a.clone());
+     }
+     if a.op == -17 {
+-        *a = b;
+-        return Ok(());
++        return Ok(b.clone());
+     }
+     if a.op == -1 {
+-        *a = if b.op == -18 { b } else { unary(-18, b) };
+-        return Ok(());
++        return Ok(if b.op == -18 {
++            b.clone()
++        } else {
++            unary(-18, b.clone())
++        });
+     }
+     if b.op == -1 {
+-        if a.op != -18 {
+-            let child = core::mem::replace(a, scalar(-17));
+-            *a = unary(-18, child);
+-        }
+-        return Ok(());
++        return Ok(if a.op == -18 {
++            a.clone()
++        } else {
++            unary(-18, a.clone())
++        });
+     }
+     if a.op == -18 || b.op == -18 {
+-        if b.op == -18 {
+-            b = b
+-                .children
+-                .pop()
+-                .ok_or_else(|| Error("missing option shape".into()))?;
+-        }
+-        if a.op != -18 {
+-            let child = core::mem::replace(a, scalar(-17));
+-            *a = unary(-18, child);
+-        }
+-        return join(&mut a.children[0], b, depth + 1);
++        return Ok(unary(
++            -18,
++            join(
++                if a.op == -18 { &a.children[0] } else { a },
++                if b.op == -18 { &b.children[0] } else { b },
++                depth + 1,
++            )?,
++        ));
+     }
+     if a.op != b.op || ![-19, -20, -21].contains(&a.op) {
+         return bad("incompatible value shapes");
+     }
+     if a.op == -19 {
+-        let child = b
+-            .children
+-            .pop()
+-            .ok_or_else(|| Error("missing vector shape".into()))?;
+-        return join(&mut a.children[0], child, depth + 1);
+-    }
+-    if a.labels == b.labels {
+-        for (left, right) in a.children.iter_mut().zip(b.children) {
+-            join(left, right, depth + 1)?;
+-        }
+-        return Ok(());
+-    }
+-    let capacity = a.labels.len().max(b.labels.len());
+-    let mut left = core::mem::take(&mut a.labels)
++        return Ok(unary(-19, join(&a.children[0], &b.children[0], depth + 1)?));
++    }
++    let aa: BTreeMap<_, _> = a.labels.iter().copied().zip(&a.children).collect();
++    let bb: BTreeMap<_, _> = b.labels.iter().copied().zip(&b.children).collect();
++    let labels: Vec<_> = aa
++        .keys()
++        .chain(bb.keys())
++        .copied()
++        .collect::<BTreeSet<_>>()
+         .into_iter()
+-        .zip(core::mem::take(&mut a.children))
+-        .peekable();
+-    let mut right = b.labels.into_iter().zip(b.children).peekable();
+-    let mut labels = Vec::with_capacity(capacity);
+-    let mut children = Vec::with_capacity(capacity);
+-    while left.peek().is_some() || right.peek().is_some() {
+-        let take_left = match (left.peek(), right.peek()) {
+-            (Some((x, _)), Some((y, _))) => x <= y,
+-            (Some(_), None) => true,
+-            _ => false,
+-        };
+-        let (id, mut child) = if take_left {
+-            left.next()
+-                .ok_or_else(|| Error("missing left shape".into()))?
+-        } else {
+-            let (id, child) = right
+-                .next()
+-                .ok_or_else(|| Error("missing right shape".into()))?;
+-            let child = if a.op == -21 {
+-                child
+-            } else {
+-                let mut absent = scalar(-1);
+-                join(&mut absent, child, depth + 1)?;
+-                absent
+-            };
+-            labels.push(id);
+-            children.push(child);
+-            continue;
+-        };
+-        if right.peek().is_some_and(|(label, _)| *label == id) {
+-            let (_, other) = right
+-                .next()
+-                .ok_or_else(|| Error("missing joined shape".into()))?;
+-            join(&mut child, other, depth + 1)?;
+-        } else if a.op == -20 {
+-            join(&mut child, scalar(-1), depth + 1)?;
+-        }
+-        labels.push(id);
+-        children.push(child);
+-    }
+-    a.labels = labels;
+-    a.children = children;
+-    Ok(())
+-}
+-// This predicate is exactly the no-widening case of J(t, N(value)): a present
+-// option consumes one option layer, an absent field can keep null/opt, and a
+-// variant must already contain its selected case. It avoids constructing and
+-// immediately discarding a new shape for each homogeneous array element.
+-fn fits_shape(value: &Value<'_>, typ: &Shape, depth: usize) -> bool {
+-    if depth > MAX_DEPTH {
+-        return false;
+-    }
+-    if typ.op == -18 {
+-        return is_null(value)
+-            || fits_shape(
+-                if let Value::Some(child) = value {
+-                    child
+-                } else {
+-                    value
+-                },
+-                &typ.children[0],
++        .collect();
++    let absent = scalar(-1);
++    let mut children = Vec::new();
++    for id in &labels {
++        children.push(match (aa.get(id), bb.get(id)) {
++            (None, Some(b)) if a.op == -21 => (*b).clone(),
++            (Some(child), None) if a.op == -21 => (*child).clone(),
++            (x, y) => join(
++                x.copied().unwrap_or(&absent),
++                y.copied().unwrap_or(&absent),
+                 depth + 1,
+-            );
+-    }
+-    match value {
+-        Value::Scalar(op, _) => *op == typ.op,
+-        Value::Text(_) => typ.op == -15,
+-        Value::Principal(_) => typ.op == -24,
+-        Value::Blob(_) => typ.op == -19 && typ.children[0].op == -5,
+-        Value::Vec(items) if typ.op == -19 => items
+-            .iter()
+-            .all(|child| fits_shape(child, &typ.children[0], depth + 1)),
+-        Value::Record(fields) if typ.op == -20 => {
+-            let mut next = fields.iter().peekable();
+-            for (id, child_typ) in typ.labels.iter().zip(&typ.children) {
+-                if next.peek().is_some_and(|(label, _)| label == id) {
+-                    let Some((_, child)) = next.next() else {
+-                        return false;
+-                    };
+-                    if !fits_shape(child, child_typ, depth + 1) {
+-                        return false;
+-                    }
+-                } else if ![-1, -18].contains(&child_typ.op) {
+-                    return false;
+-                }
+-            }
+-            next.next().is_none()
+-        }
+-        Value::Variant(id, child) if typ.op == -21 => typ
+-            .labels
+-            .binary_search(id)
+-            .is_ok_and(|index| fits_shape(child, &typ.children[index], depth + 1)),
+-        _ => false,
+-    }
+-}
+-
+-fn shape(value: &Value<'_>, depth: usize) -> Result<Shape> {
++            )?,
++        });
++    }
++    Ok(Shape {
++        op: a.op,
++        labels,
++        children,
++    })
++}
++fn shape(value: &Value, depth: usize) -> Result<Shape> {
+     if depth > MAX_DEPTH {
+         return bad("type nesting limit");
+     }
+     match value {
+         Value::Scalar(op, _) => Ok(scalar(*op)),
+         Value::Some(child) => Ok(unary(-18, shape(child, depth + 1)?)),
+-        Value::Blob(_) => Ok(unary(-19, scalar(-5))),
+-        Value::Text(_) => Ok(scalar(-15)),
+-        Value::Principal(_) => Ok(scalar(-24)),
+-        Value::Vec(items) => {
+-            let mut element = scalar(-17);
++        Value::Vec(items, binary) => {
++            let mut element = scalar(if *binary { -5 } else { -17 });
+             for child in items {
+-                if !fits_shape(child, &element, depth + 1) {
+-                    join(&mut element, shape(child, depth + 1)?, 0)?;
+-                }
++                element = join(&element, &shape(child, depth + 1)?, 0)?;
+             }
+             Ok(unary(-19, element))
+         }
+         Value::Record(fields) => Ok(Shape {
+             op: -20,
+-            labels: fields.iter().map(|(id, _)| *id).collect(),
++            labels: fields.keys().copied().collect(),
+             children: fields
+-                .iter()
+-                .map(|(_, v)| shape(v, depth + 1))
++                .values()
++                .map(|v| shape(v, depth + 1))
+                 .collect::<Result<_>>()?,
+         }),
+         Value::Variant(id, child) => Ok(Shape {
+@@ -551,43 +427,20 @@
+         }),
+     }
+ }
+-struct Writer(Vec<u8>, bool);
++struct Writer(Vec<u8>);
+ impl Writer {
+     fn add(&mut self, bytes: &[u8]) -> Result<()> {
+         if bytes.len() > MAX_BYTES - self.0.len() {
+-            self.1 = true;
+             return bad("output byte limit");
+         }
+         self.0.extend(bytes);
+         Ok(())
+     }
+-    fn integer(&mut self, n: impl TryInto<i64>, signed: bool) -> Result<()> {
+-        let mut value = n.try_into().map_err(|_| Error("index range".into()))?;
+-        // Wire metadata is bounded to u32 labels, 32 MiB payload lengths, and
+-        // 1024 type-table entries. A stack buffer avoids a heap Vec per index.
+-        let mut bytes = [0u8; 10];
+-        let mut length = 0;
+-        loop {
+-            let byte = (value & 127) as u8;
+-            value >>= 7;
+-            let done = if signed {
+-                (value == 0 && byte < 64) || (value == -1 && byte >= 64)
+-            } else {
+-                value == 0
+-            };
+-            bytes[length] = byte | if done { 0 } else { 128 };
+-            length += 1;
+-            if done {
+-                return self.add(&bytes[..length]);
+-            }
+-        }
+-    }
+-}
+-fn intern<'a>(
+-    t: &'a Shape,
+-    table: &mut Vec<&'a Shape>,
+-    indices: &mut BTreeMap<&'a Shape, i32>,
+-) -> Result<i32> {
++    fn integer(&mut self, n: impl Into<BigInt>, signed: bool) -> Result<()> {
++        self.add(&leb(n.into(), signed))
++    }
++}
++fn intern(t: &Shape, table: &mut Vec<Shape>, indices: &mut BTreeMap<Shape, i32>) -> Result<i32> {
+     if ![-18, -19, -20, -21].contains(&t.op) {
+         return Ok(t.op);
+     }
+@@ -598,32 +451,93 @@
+         return bad("output type-table limit");
+     }
+     let id = table.len() as i32;
+-    indices.insert(t, id);
+-    table.push(t);
++    indices.insert(t.clone(), id);
++    table.push(t.clone());
+     for child in &t.children {
+         intern(child, table, indices)?;
+     }
+     Ok(id)
+ }
+-
+-fn write_header(w: &mut Writer, types: &[Shape]) -> Result<()> {
+-    if types.len() > MAX_ITEMS {
+-        return bad("collection length limit");
+-    }
++fn emit(w: &mut Writer, v: &Value, t: &Shape, depth: usize) -> Result<()> {
++    if depth > MAX_DEPTH {
++        return bad("emitted value nesting limit");
++    }
++    if t.op == -18 {
++        if is_null(v) {
++            return w.add(&[0]);
++        }
++        w.add(&[1])?;
++        return emit(
++            w,
++            if let Value::Some(child) = v { child } else { v },
++            &t.children[0],
++            depth + 1,
++        );
++    }
++    match v {
++        Value::Scalar(op, raw) if *op == t.op => w.add(raw),
++        Value::Vec(items, _) if t.op == -19 => {
++            w.integer(items.len(), false)?;
++            for child in items {
++                emit(w, child, &t.children[0], depth + 1)?;
++            }
++            Ok(())
++        }
++        Value::Record(fields) if t.op == -20 => {
++            let absent = null();
++            for (id, typ) in t.labels.iter().zip(&t.children) {
++                emit(w, fields.get(id).unwrap_or(&absent), typ, depth + 1)?;
++            }
++            Ok(())
++        }
++        Value::Variant(id, child) if t.op == -21 => {
++            let index = t
++                .labels
++                .binary_search(id)
++                .map_err(|_| Error("missing derived variant".into()))?;
++            w.integer(index, false)?;
++            emit(w, child, &t.children[index], depth + 1)
++        }
++        _ => bad("cannot emit at derived type"),
++    }
++}
++
++/// Normalize the complete received message before any typed projection.
++pub fn canonicalize(bytes: &[u8]) -> Result<Vec<u8>> {
++    if bytes.len() > MAX_BYTES {
++        return bad("input byte limit");
++    }
++    let mut r = Reader {
++        data: bytes,
++        pos: 0,
++    };
++    let (nodes, roots) = parse(&mut r)?;
++    let mut steps = 0;
++    let values = roots
++        .iter()
++        .map(|r0| read_value(&mut r, &nodes, *r0, 0, &mut steps))
++        .collect::<Result<Vec<_>>>()?;
++    if r.pos != bytes.len() {
++        return bad("trailing payload");
++    }
++    let types = values
++        .iter()
++        .map(|v| shape(v, 0))
++        .collect::<Result<Vec<_>>>()?;
+     let mut table = Vec::new();
+     let mut indices = BTreeMap::new();
+     let roots = types
+         .iter()
+         .map(|t| intern(t, &mut table, &mut indices))
+         .collect::<Result<Vec<_>>>()?;
+-    w.add(b"DIDL")?;
++    let mut w = Writer(b"DIDL".to_vec());
+     w.integer(table.len(), false)?;
+     for t in &table {
+         w.integer(t.op, true)?;
+         if t.op == -18 || t.op == -19 {
+             let child = &t.children[0];
+             w.integer(
+-                if [-18, -19, -20, -21].contains(&child.op) {
++                if child.op <= -18 && child.op >= -21 {
+                     indices[child]
+                 } else {
+                     child.op
+@@ -649,181 +563,21 @@
+     for root in roots {
+         w.integer(root, true)?;
+     }
+-    Ok(())
+-}
+-fn emit(w: &mut Writer, v: &Value<'_>, t: &Shape, depth: usize) -> Result<()> {
+-    if depth > MAX_DEPTH {
+-        return bad("emitted value nesting limit");
+-    }
+-    if t.op == -18 {
+-        if is_null(v) {
+-            return w.add(&[0]);
+-        }
+-        w.add(&[1])?;
+-        return emit(
+-            w,
+-            if let Value::Some(child) = v { child } else { v },
+-            &t.children[0],
+-            depth + 1,
+-        );
+-    }
+-    match v {
+-        Value::Scalar(op, raw) if *op == t.op => w.add(raw),
+-        Value::Text(bytes) if t.op == -15 => {
+-            w.integer(bytes.len(), false)?;
+-            w.add(bytes)
+-        }
+-        Value::Principal(bytes) if t.op == -24 => {
+-            w.add(&[1, bytes.len() as u8])?;
+-            w.add(bytes)
+-        }
+-        Value::Blob(bytes) if t.op == -19 && t.children[0].op == -5 => {
+-            w.integer(bytes.len(), false)?;
+-            w.add(bytes)
+-        }
+-        Value::Vec(items) if t.op == -19 => {
+-            w.integer(items.len(), false)?;
+-            for child in items {
+-                emit(w, child, &t.children[0], depth + 1)?;
+-            }
+-            Ok(())
+-        }
+-        Value::Record(fields) if t.op == -20 => {
+-            let absent = null();
+-            let mut next = fields.iter().peekable();
+-            for (id, typ) in t.labels.iter().zip(&t.children) {
+-                let child = if next.peek().is_some_and(|(label, _)| label == id) {
+-                    &next
+-                        .next()
+-                        .ok_or_else(|| Error("missing record field".into()))?
+-                        .1
+-                } else {
+-                    &absent
+-                };
+-                emit(w, child, typ, depth + 1)?;
+-            }
+-            Ok(())
+-        }
+-        Value::Variant(id, child) if t.op == -21 => {
+-            let index = t
+-                .labels
+-                .binary_search(id)
+-                .map_err(|_| Error("missing derived variant".into()))?;
+-            w.integer(index, false)?;
+-            emit(w, child, &t.children[index], depth + 1)
+-        }
+-        _ => bad("cannot emit at derived type"),
+-    }
+-}
+-
+-/// Normalize the complete received message before any typed projection.
+-pub fn canonicalize(bytes: &[u8]) -> Result<Vec<u8>> {
+-    if bytes.len() > MAX_BYTES {
+-        return bad("input byte limit");
+-    }
+-    let mut r = Reader {
+-        data: bytes,
+-        pos: 0,
+-    };
+-    let (nodes, roots) = parse(&mut r)?;
+-    let payload_size = bytes.len() - r.pos;
+-    let mut steps = 0;
+-    let values = roots
+-        .iter()
+-        .map(|r0| read_value(&mut r, &nodes, *r0, 0, &mut steps))
+-        .collect::<Result<Vec<_>>>()?;
+-    if r.pos != bytes.len() {
+-        return bad("trailing payload");
+-    }
+-    let types = values
+-        .iter()
+-        .map(|v| shape(v, 0))
+-        .collect::<Result<Vec<_>>>()?;
+-    // Reserve the existing payload and a small header, avoiding a second full
+-    // payload allocation when a large Blob/Text is followed by small fields.
+-    // Ignored type declarations do not influence this reservation.
+-    let mut w = Writer(
+-        Vec::with_capacity(payload_size.saturating_add(128).min(MAX_BYTES)),
+-        false,
+-    );
+-    write_header(&mut w, &types)?;
+     for (v, t) in values.iter().zip(&types) {
+         emit(&mut w, v, t, 0)?;
+     }
+     Ok(w.0)
+ }
+ 
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-    use alloc::collections::BTreeSet;
+-
+-    #[test]
+-    fn no_widening_fast_path_agrees_with_join_for_nested_values() {
+-        let number = Value::Scalar(-3, Cow::Borrowed(&[1]));
+-        let seeds = vec![
+-            null(),
+-            number.clone(),
+-            Value::Scalar(-5, Cow::Borrowed(&[1])),
+-            Value::Some(Box::new(null())),
+-            Value::Some(Box::new(number)),
+-            Value::Some(Box::new(Value::Some(Box::new(null())))),
+-            Value::Blob(&[]),
+-            Value::Text(&[]),
+-            Value::Vec(vec![]),
+-            Value::Record(vec![]),
+-            Value::Record(vec![(0, null())]),
+-            Value::Record(vec![(1, Value::Some(Box::new(null())))]),
+-            Value::Variant(0, Box::new(null())),
+-            Value::Variant(1, Box::new(Value::Some(Box::new(null())))),
+-        ];
+-        let mut values = seeds.clone();
+-        for a in &seeds {
+-            values.push(Value::Some(Box::new(a.clone())));
+-            for b in &seeds {
+-                values.push(Value::Vec(vec![a.clone(), b.clone()]));
+-                values.push(Value::Record(vec![(0, a.clone()), (1, b.clone())]));
+-            }
+-        }
+-        let mut types: BTreeSet<_> = values.iter().filter_map(|v| shape(v, 0).ok()).collect();
+-        let seed_types: Vec<_> = seeds.iter().map(|v| shape(v, 0).unwrap()).collect();
+-        for a in &seed_types {
+-            for b in &seed_types {
+-                let mut joined = a.clone();
+-                if join(&mut joined, b.clone(), 0).is_ok() {
+-                    types.insert(joined);
+-                }
+-            }
+-        }
+-        for typ in types {
+-            for value in &values {
+-                if fits_shape(value, &typ, 0) {
+-                    let mut joined = typ.clone();
+-                    join(&mut joined, shape(value, 0).unwrap(), 0).unwrap();
+-                    assert_eq!(joined, typ, "value {value:?}");
+-                }
+-            }
+-        }
+-    }
+-
+-    #[test]
+-    fn metadata_indices_keep_full_width_and_reject_overflow() {
+-        let max_label = b"DIDL\x01\x6c\x01\xff\xff\xff\xff\x0f\x7b\x01\0\xff";
+-        assert_eq!(canonicalize(max_label).unwrap(), max_label);
+-        let overflowing_label = b"DIDL\x01\x6c\x01\x80\x80\x80\x80\x10\x7b\x01\0\xff";
+-        assert_eq!(
+-            canonicalize(overflowing_label).unwrap_err().0,
+-            "field ID range"
+-        );
+-        let overlong_reference = b"DIDL\0\x01\xfe\xff\xff\xff\xff\xff\xff\xff\xff\x7f\0";
+-        assert_eq!(
+-            canonicalize(overlong_reference).unwrap(),
+-            b"DIDL\0\x01\x7e\0"
+-        );
+-        let overflowing_reference = b"DIDL\0\x01\x80\x80\x80\x80\x08";
+-        assert_eq!(
+-            canonicalize(overflowing_reference).unwrap_err().0,
+-            "type index range"
+-        );
+-    }
+-}
++/// Typed integration with the existing `candid` crate; decoding remains ordinary Candid.
++#[cfg(feature = "candid")]
++pub fn encode_one<T: candid::CandidType>(value: T) -> Result<Vec<u8>> {
++    let ordinary = candid::encode_one(value).map_err(|e| Error(e.to_string()))?;
++    canonicalize(&ordinary)
++}
++
++#[cfg(feature = "candid")]
++pub fn encode_args<T: candid::utils::ArgumentEncoder>(args: T) -> Result<Vec<u8>> {
++    let ordinary = candid::encode_args(args).map_err(|e| Error(e.to_string()))?;
++    canonicalize(&ordinary)
++}
+--- a/ts/src/candid.ts
++++ b/ts/src/candid.ts
+@@ -1,383 +1,8 @@
+-import { IDL, idlLabelToId } from '@icp-sdk/core/candid';
+-import { MAX_DEPTH, MAX_INTEGER_BYTES, MAX_ITEMS, Shape, Shapes, Writer, fail, textLength, writeHeader } from './codec.js';
++import { IDL } from '@icp-sdk/core/candid';
++import { canonicalize } from './index.js';
+ export { decodeCompatible } from './decode.js';
+ 
+-class Kinds extends IDL.Visitor<void, number> {
+-  visitType<T>(_type: IDL.Type<T>): number { return fail('unsupported or decoding-only schema'); }
+-  visitEmpty(): number { return -17; }
+-  visitBool(): number { return -2; }
+-  visitNull(): number { return -1; }
+-  visitReserved(): number { return -16; }
+-  visitText(): number { return -15; }
+-  visitInt(): number { return -4; }
+-  visitNat(): number { return -3; }
+-  visitFloat(type: IDL.FloatClass): number {
+-    if (type._bits !== 32 && type._bits !== 64) fail('invalid float width');
+-    return type._bits === 32 ? -13 : -14;
+-  }
+-  visitFixedInt(type: IDL.FixedIntClass): number { return this.fixed(type._bits, -9); }
+-  visitFixedNat(type: IDL.FixedNatClass): number { return this.fixed(type._bits, -5); }
+-  private fixed(bits: number, base: number): number {
+-    if (![8, 16, 32, 64].includes(bits)) fail('invalid integer width');
+-    return base - (Math.log2(bits) - 3);
+-  }
+-  visitPrincipal(): number { return -24; }
+-  visitOpt<T>(_type: IDL.OptClass<T>): number { return -18; }
+-  visitVec<T>(_type: IDL.VecClass<T>): number { return -19; }
+-  visitRecord(): number { return -20; }
+-  visitTuple<T extends unknown[]>(_type: IDL.TupleClass<T>): number { return -20; }
+-  visitVariant(): number { return -21; }
+-  visitFunc(): number { return -22; }
+-  visitService(): number { return -23; }
++/** Uses the existing typed encoder, then normalizes the complete message. */
++export function encodeCanonical(types: IDL.Type[], values: unknown[]): Uint8Array {
++  return canonicalize(IDL.encode(types, values));
+ }
+-
+-type Field = { key: string | number; id: number; type: IDL.Type; optional: boolean };
+-const kinds = new Kinds();
+-const natLimit = 1n << BigInt(MAX_INTEGER_BYTES * 7);
+-const intLimit = natLimit >> 1n;
+-const fixedLimits = [8, 16, 32, 64].map(bits => ({
+-  unsigned: 1n << BigInt(bits), signed: 1n << BigInt(bits - 1),
+-}));
+-type Vector = ArrayLike<unknown>;
+-type IntegerView = { bytes: number; create(buffer: ArrayBufferLike, offset: number, length: number): Vector };
+-const integerViews: Record<string, IntegerView> = {
+-  Int8Array: { bytes: 1, create: (b, o, n) => new Int8Array(b, o, n) },
+-  Uint8Array: { bytes: 1, create: (b, o, n) => new Uint8Array(b, o, n) },
+-  Uint8ClampedArray: { bytes: 1, create: (b, o, n) => new Uint8ClampedArray(b, o, n) },
+-  Int16Array: { bytes: 2, create: (b, o, n) => new Int16Array(b, o, n) },
+-  Uint16Array: { bytes: 2, create: (b, o, n) => new Uint16Array(b, o, n) },
+-  Int32Array: { bytes: 4, create: (b, o, n) => new Int32Array(b, o, n) },
+-  Uint32Array: { bytes: 4, create: (b, o, n) => new Uint32Array(b, o, n) },
+-  BigInt64Array: { bytes: 8, create: (b, o, n) => new BigInt64Array(b, o, n) },
+-  BigUint64Array: { bytes: 8, create: (b, o, n) => new BigUint64Array(b, o, n) },
+-};
+-// These native getters identify the actual storage even when an instance's
+-// prototype, Symbol.toStringTag, length, or BYTES_PER_ELEMENT has been spoofed.
+-const typedArrayPrototype = Object.getPrototypeOf(Uint8Array.prototype);
+-const nativeTag = Object.getOwnPropertyDescriptor(typedArrayPrototype, Symbol.toStringTag)!.get!;
+-const nativeLength = Object.getOwnPropertyDescriptor(typedArrayPrototype, 'length')!.get!;
+-const nativeBuffer = Object.getOwnPropertyDescriptor(typedArrayPrototype, 'buffer')!.get!;
+-const nativeOffset = Object.getOwnPropertyDescriptor(typedArrayPrototype, 'byteOffset')!.get!;
+-const nativeBytes = Object.getOwnPropertyDescriptor(typedArrayPrototype, 'byteLength')!.get!;
+-type NativeSpan = { name: string; type: IntegerView; buffer: ArrayBufferLike; offset: number; length: number; bytes: number };
+-
+-function nativeSpan(value: unknown): NativeSpan {
+-  if (!ArrayBuffer.isView(value)) fail('native vector must be an integer typed array');
+-  const name: string | undefined = nativeTag.call(value), type = name && integerViews[name];
+-  if (!name || !type) fail('native vector must be an integer typed array');
+-  return { name, type, buffer: nativeBuffer.call(value), offset: nativeOffset.call(value),
+-    length: nativeLength.call(value), bytes: nativeBytes.call(value) };
+-}
+-
+-function trustedView(span: NativeSpan): Vector {
+-  try { return span.type.create(span.buffer, span.offset, span.length); }
+-  catch { return fail('invalid or detached native vector'); }
+-}
+-
+-/** Metadata comes from the public Type visitor; recursive aliases have no wire constructor. */
+-class Schemas {
+-  private readonly aliases = new Map<IDL.Type, IDL.Type>();
+-  private readonly kinds = new Map<IDL.Type, number>();
+-  private readonly fieldCache = new Map<IDL.Type, readonly Field[]>();
+-  unwrap(type: IDL.Type): IDL.Type {
+-    if (!(type instanceof IDL.RecClass)) return type;
+-    const old = this.aliases.get(type);
+-    if (old) return old;
+-    const path: IDL.Type[] = [];
+-    let actual: IDL.Type = type;
+-    while (actual instanceof IDL.RecClass) {
+-      if (path.includes(actual) || path.length > MAX_DEPTH) fail('recursive alias cycle or nesting limit');
+-      path.push(actual);
+-      const next = actual.getType();
+-      if (!next) fail('uninitialized recursive schema');
+-      actual = next;
+-    }
+-    for (const alias of path) this.aliases.set(alias, actual);
+-    return actual;
+-  }
+-  kind(type: IDL.Type): number {
+-    const actual = this.unwrap(type), old = this.kinds.get(actual);
+-    if (old !== undefined) return old;
+-    const op = actual.accept(kinds, undefined);
+-    this.kinds.set(actual, op);
+-    return op;
+-  }
+-  fields(type: IDL.Type, fields: Array<[string, IDL.Type]>): readonly Field[] {
+-    const old = this.fieldCache.get(type);
+-    if (old) return old;
+-    if (fields.length > MAX_ITEMS) fail('collection length limit');
+-    const result = fields.map(([key, child]) => ({ key, id: idlLabelToId(key), type: child,
+-      optional: this.kind(child) === -18 })).sort((a, b) => a.id - b.id);
+-    for (let i = 1; i < result.length; i++)
+-      if (result[i].id === result[i - 1].id) fail('duplicate numeric field ID');
+-    this.fieldCache.set(type, result);
+-    return result;
+-  }
+-  tuple(type: IDL.Type, components: IDL.Type[]): readonly Field[] {
+-    const old = this.fieldCache.get(type);
+-    if (old) return old;
+-    if (components.length > MAX_ITEMS) fail('collection length limit');
+-    const result = components.map((child, id) => ({ key: id, id, type: child,
+-      optional: this.kind(child) === -18 }));
+-    this.fieldCache.set(type, result);
+-    return result;
+-  }
+-}
+-
+-function integer(value: unknown): bigint {
+-  if (typeof value === 'bigint') return value;
+-  if (typeof value === 'number' && Number.isInteger(value)) return BigInt(value);
+-  return fail('invalid integer value');
+-}
+-
+-function validatePrimitive(op: number, value: unknown): Uint8Array | number | undefined {
+-  if (op === -17) fail('empty has no values');
+-  if (op === -1 && value !== null) fail('invalid null value');
+-  if (op === -2 && typeof value !== 'boolean') fail('invalid bool value');
+-  if (op === -15) {
+-    if (typeof value !== 'string') fail('invalid text value');
+-    return textLength(value);
+-  }
+-  if (op === -3 || op === -4) {
+-    const n = integer(value), bound = op === -3 ? natLimit : intLimit;
+-    if ((op === -3 && n < 0n) || n >= bound || (op === -4 && n < -bound)) fail('integer range or length limit');
+-  } else if (op >= -12 && op <= -5) {
+-    const limits = fixedLimits[(-op - 5) % 4], signed = op <= -9;
+-    const bound = signed ? limits.signed : limits.unsigned;
+-    const min = signed ? -bound : 0n;
+-    if (typeof value === 'number') {
+-      if (!Number.isInteger(value) || value < Number(min) || value >= Number(bound)) fail('fixed integer range');
+-    } else if (typeof value !== 'bigint' || value < min || value >= bound) fail('fixed integer range');
+-  } else if ((op === -13 || op === -14) && typeof value !== 'number' && !(value instanceof Number)) {
+-    fail('invalid float value');
+-  } else if (op === -24) {
+-    if (!value || typeof value !== 'object' || !('_isPrincipal' in value) || !value._isPrincipal ||
+-      !('toUint8Array' in value) || typeof value.toUint8Array !== 'function') fail('invalid public principal');
+-    const span = nativeSpan(value.toUint8Array());
+-    if (span.name !== 'Uint8Array') fail('invalid public principal bytes');
+-    if (span.length > 29) fail('principal length exceeds 29');
+-    const bytes = trustedView(span) as Uint8Array;
+-    return bytes;
+-  }
+-}
+-
+-function option(value: unknown): unknown[] {
+-  if (!Array.isArray(value) || value.length > 1) fail('option must be [] or [value]');
+-  return value;
+-}
+-
+-function vector(value: unknown, op: number): Vector {
+-  if (Array.isArray(value)) return value;
+-  const span = nativeSpan(value);
+-  if (op < -12 || op > -5 || span.type.bytes !== 2 ** ((-op - 5) % 4))
+-    fail('vector requires a matching integer typed-array width');
+-  const view = value as ArrayBufferView & { length: number; BYTES_PER_ELEMENT: number };
+-  if (view.BYTES_PER_ELEMENT !== span.type.bytes || view.length !== span.length ||
+-    view.buffer !== span.buffer || view.byteOffset !== span.offset || view.byteLength !== span.bytes)
+-    fail('spoofed native vector metadata');
+-  return trustedView(span);
+-}
+-
+-function record(value: unknown): Record<string | number, unknown> {
+-  if (value === null || typeof value !== 'object') fail('invalid record value');
+-  return value as Record<string | number, unknown>;
+-}
+-
+-function field(value: Record<string | number, unknown>, key: string | number): unknown {
+-  if (!Object.hasOwn(value, key)) fail(`record is missing field ${key}`);
+-  return value[key];
+-}
+-
+-function selected(value: unknown, fields: readonly Field[]): Field {
+-  const v = record(value), labels = Object.keys(v);
+-  if (labels.length !== 1) fail('variant must have exactly one selected case');
+-  const selected = fields.find(f => f.key === labels[0]);
+-  return selected ?? fail('unknown selected variant case');
+-}
+-
+-/** Visits typed values once to validate them and retain only the shapes actually used. */
+-class UsedShapes extends IDL.Visitor<unknown, Shape> {
+-  readonly shapes = new Shapes();
+-  private steps = 0;
+-  private depth = 0;
+-  constructor(readonly schemas: Schemas) { super(); }
+-  private consume(count: number, depth: number): void {
+-    this.steps += count;
+-    if (this.steps > MAX_ITEMS || depth > MAX_DEPTH) fail('value traversal limit');
+-  }
+-  shape(type: IDL.Type, value: unknown, depth = 0): Shape {
+-    this.consume(1, depth);
+-    const previous = this.depth; this.depth = depth;
+-    try { return this.schemas.unwrap(type).accept(this, value); }
+-    finally { this.depth = previous; }
+-  }
+-  visitType<T>(_type: IDL.Type<T>): Shape { return fail('unsupported or decoding-only schema'); }
+-  visitPrimitive<T>(type: IDL.PrimitiveType<T>, value: unknown): Shape {
+-    const op = this.schemas.kind(type);
+-    validatePrimitive(op, value);
+-    return this.shapes.type(op);
+-  }
+-  visitOpt<T>(_type: IDL.OptClass<T>, child: IDL.Type<T>, value: unknown): Shape {
+-    const v = option(value);
+-    return v.length ? this.shapes.type(-18, [], [this.shape(child, v[0], this.depth + 1)]) : this.shapes.null;
+-  }
+-  visitVec<T>(_type: IDL.VecClass<T>, child: IDL.Type<T>, value: unknown): Shape {
+-    const op = this.schemas.kind(child), v = vector(value, op), length = v.length;
+-    if (length > MAX_ITEMS) fail('collection length limit');
+-    if (op === -5) {
+-      this.consume(length, length ? this.depth + 1 : this.depth);
+-      if (!(v instanceof Uint8Array)) for (let i = 0; i < length; i++) {
+-        const n = integer(v[i]); if (n < 0n || n > 255n) fail('fixed integer range');
+-      }
+-      return this.shapes.type(-19, [], [this.shapes.type(-5)]);
+-    }
+-    let joined = this.shapes.empty;
+-    for (let i = 0; i < length; i++) joined = this.shapes.join(joined, this.shape(child, v[i], this.depth + 1));
+-    return this.shapes.type(-19, [], [joined]);
+-  }
+-  private fields(fields: readonly Field[], value: Record<string | number, unknown>): Shape {
+-    const labels: number[] = [], children: Shape[] = [];
+-    for (const f of fields) {
+-      const child = this.shape(f.type, field(value, f.key), this.depth + 1);
+-      if (child.op !== -1 || !f.optional) { labels.push(f.id); children.push(child); }
+-    }
+-    return this.shapes.type(-20, labels, children);
+-  }
+-  visitRecord(type: IDL.RecordClass, fields: Array<[string, IDL.Type]>, value: unknown): Shape {
+-    return this.fields(this.schemas.fields(type, fields), record(value));
+-  }
+-  visitTuple<T extends unknown[]>(type: IDL.TupleClass<T>, components: IDL.Type[], value: unknown): Shape {
+-    if (!Array.isArray(value) || value.length < components.length) fail('invalid tuple value');
+-    return this.fields(this.schemas.tuple(type, components), record(value));
+-  }
+-  visitVariant(type: IDL.VariantClass, fields: Array<[string, IDL.Type]>, value: unknown): Shape {
+-    const f = selected(value, this.schemas.fields(type, fields));
+-    return this.shapes.type(-21, [f.id], [this.shape(f.type, record(value)[f.key], this.depth + 1)]);
+-  }
+-  visitFunc(): Shape { return fail('function/service values outside data profile'); }
+-  visitService(): Shape { return fail('function/service values outside data profile'); }
+-}
+-
+-/** Writes original typed values at their joined wire shapes, without a payload/value tree. */
+-class EmitValues extends IDL.Visitor<unknown, Shape> {
+-  private target!: Shape;
+-  private depth = 0;
+-  private steps = 0;
+-  constructor(private readonly schemas: Schemas, private readonly shapes: Shapes,
+-    private readonly writer: Writer) { super(); }
+-  private consume(count: number, depth: number): void {
+-    this.steps += count;
+-    if (this.steps > MAX_ITEMS || depth > MAX_DEPTH) fail('emitted value traversal limit');
+-  }
+-  emit(type: IDL.Type, value: unknown, target: Shape, depth = 0): Shape {
+-    this.consume(1, depth);
+-    const op = this.schemas.kind(type);
+-    if (target.op === -18 && op !== -18) {
+-      this.writer.byte(op === -1 ? 0 : 1);
+-      return op === -1 ? this.shapes.null : this.emit(type, value, target.children[0], depth + 1);
+-    }
+-    const previous = this.target, previousDepth = this.depth;
+-    this.target = target; this.depth = depth;
+-    try { return this.schemas.unwrap(type).accept(this, value); }
+-    finally { this.target = previous; this.depth = previousDepth; }
+-  }
+-  private require(op: number): Shape {
+-    if (this.target.op !== op) fail('cannot emit at derived type');
+-    return this.target;
+-  }
+-  visitType<T>(_type: IDL.Type<T>): Shape { return fail('unsupported or decoding-only schema'); }
+-  visitPrimitive<T>(type: IDL.PrimitiveType<T>, value: unknown): Shape {
+-    const op = this.schemas.kind(type); this.require(op);
+-    const payload = validatePrimitive(op, value);
+-    if (op === -1 || op === -16) return this.shapes.type(op);
+-    if (op === -2) this.writer.byte(value ? 1 : 0);
+-    else if (op === -3 || op === -4) this.writer.int(integer(value), op === -4);
+-    else if (op >= -12 && op <= -5) this.writer.fixed(value as number | bigint, 2 ** ((-op - 5) % 4 + 3));
+-    else if (op === -13 || op === -14) this.writer.float(Number(value), op === -13 ? 32 : 64);
+-    else if (op === -15) this.writer.text(value as string, payload as number);
+-    else if (op === -24) {
+-      const bytes = payload as Uint8Array;
+-      this.writer.byte(1); this.writer.int(bytes.length); this.writer.add(bytes);
+-    } else fail('empty has no values');
+-    return this.shapes.type(op);
+-  }
+-  visitOpt<T>(_type: IDL.OptClass<T>, child: IDL.Type<T>, value: unknown): Shape {
+-    const v = option(value);
+-    if (!v.length) {
+-      if (this.target.op === -18) this.writer.byte(0);
+-      else this.require(-1);
+-      return this.shapes.null;
+-    } else {
+-      const target = this.require(-18);
+-      this.writer.byte(1);
+-      return this.shapes.type(-18, [], [this.emit(child, v[0], target.children[0], this.depth + 1)]);
+-    }
+-  }
+-  visitVec<T>(_type: IDL.VecClass<T>, child: IDL.Type<T>, value: unknown): Shape {
+-    const target = this.require(-19), op = this.schemas.kind(child), v = vector(value, op), length = v.length;
+-    if (length > MAX_ITEMS) fail('collection length limit');
+-    this.writer.int(length);
+-    if (op === -5) {
+-      if (target.children[0].op !== -5) fail('invalid binary shape');
+-      this.consume(length, length ? this.depth + 1 : this.depth);
+-      if (v instanceof Uint8Array) this.writer.add(v);
+-      else for (let i = 0; i < length; i++) {
+-        const n = integer(v[i]); if (n < 0n || n > 255n) fail('fixed integer range');
+-        this.writer.byte(Number(n));
+-      }
+-      return this.shapes.type(-19, [], [this.shapes.type(-5)]);
+-    }
+-    let joined = this.shapes.empty;
+-    for (let i = 0; i < length; i++) joined = this.shapes.join(joined,
+-      this.emit(child, v[i], target.children[0], this.depth + 1));
+-    return this.shapes.type(-19, [], [joined]);
+-  }
+-  private fields(fields: readonly Field[], value: Record<string | number, unknown>): Shape {
+-    const target = this.require(-20);
+-    const labels: number[] = [], children: Shape[] = [];
+-    let index = 0;
+-    for (const f of fields) {
+-      const v = field(value, f.key);
+-      if (f.id !== target.labels[index]) {
+-        if (f.id > (target.labels[index] ?? Infinity) || !f.optional || option(v).length)
+-          fail('typed value shape changed during encoding');
+-        continue;
+-      }
+-      const child = this.emit(f.type, v, target.children[index++], this.depth + 1);
+-      if (child.op !== -1 || !f.optional) { labels.push(f.id); children.push(child); }
+-    }
+-    if (index !== target.labels.length) fail('missing derived record field');
+-    return this.shapes.type(-20, labels, children);
+-  }
+-  visitRecord(type: IDL.RecordClass, fields: Array<[string, IDL.Type]>, value: unknown): Shape {
+-    return this.fields(this.schemas.fields(type, fields), record(value));
+-  }
+-  visitTuple<T extends unknown[]>(type: IDL.TupleClass<T>, components: IDL.Type[], value: unknown): Shape {
+-    if (!Array.isArray(value) || value.length < components.length) fail('invalid tuple value');
+-    return this.fields(this.schemas.tuple(type, components), record(value));
+-  }
+-  visitVariant(type: IDL.VariantClass, fields: Array<[string, IDL.Type]>, value: unknown): Shape {
+-    const target = this.require(-21), f = selected(value, this.schemas.fields(type, fields));
+-    const index = target.labels.indexOf(f.id);
+-    if (index < 0) fail('missing derived variant case');
+-    this.writer.int(index);
+-    return this.shapes.type(-21, [f.id], [this.emit(f.type, record(value)[f.key], target.children[index], this.depth + 1)]);
+-  }
+-  visitFunc(): Shape { return fail('function/service values outside data profile'); }
+-  visitService(): Shape { return fail('function/service values outside data profile'); }
+-}
+-
+-/** Direct cx encoding from ordinary SDK schemas and values. No ordinary message is built. */
+-export function encodeCanonical(types: readonly IDL.Type[], values: readonly unknown[]): Uint8Array {
+-  const count = types.length;
+-  if (count !== values.length) fail('argument count mismatch');
+-  if (count > MAX_ITEMS) fail('collection length limit');
+-  const schemas = new Schemas(), used = new UsedShapes(schemas);
+-  const shapes = types.map((type, i) => used.shape(type, values[i]));
+-  const writer = new Writer();
+-  writeHeader(writer, shapes);
+-  const emitter = new EmitValues(schemas, used.shapes, writer);
+-  for (let i = 0; i < count; i++)
+-    if (emitter.emit(types[i], values[i], shapes[i]) !== shapes[i]) fail('typed value shape changed during encoding');
+-  return writer.finish();
+-}
+--- a/ts/src/index.ts
++++ b/ts/src/index.ts
+@@ -1,11 +1,27 @@
+-import { MAX_BYTES, MAX_ITEMS, MAX_TYPES, MAX_DEPTH, Shape as Ty, Shapes, Writer, fail, writeHeader } from './codec.js';
+-
+ /** cx. No hashing or application schema identifier. */
+ export const PROFILE = 'cx';
++const MAX_BYTES = 32 * 1024 * 1024;
++const MAX_ITEMS = 2_000_000;
++const MAX_TYPES = 1024;
++const MAX_DEPTH = 256;
+ const utf8 = new TextDecoder('utf-8', { fatal: true });
+ type Node = { op: number; labels: number[]; edges: number[] };
+ type Val = { op: number; raw?: Uint8Array; items?: Val[]; labels?: number[]; binary?: boolean };
++type Ty = { op: number; labels: number[]; children: Ty[]; id: number };
+ const nullVal: Val = { op: -1 };
++const fail = (message: string): never => { throw new Error(`CandidX: ${message}`); };
++
++function leb(value: bigint, signed = false): number[] {
++  const out: number[] = [];
++  for (;;) {
++    const byte = Number(value & 127n);
++    value >>= 7n;
++    const done = signed ? (value === 0n && byte < 64) || (value === -1n && byte >= 64) : value === 0n;
++    out.push(byte | (done ? 0 : 128));
++    if (done) return out;
++  }
++}
++
+ class Reader {
+   pos = 0;
+   constructor(readonly data: Uint8Array) {}
+@@ -15,10 +31,7 @@
+     this.pos += n;
+     return out;
+   }
+-  byte(): number {
+-    if (this.pos === this.data.length) fail('truncated message');
+-    return this.data[this.pos++];
+-  }
++  byte(): number { return this.take(1)[0]; }
+   integer(signed = false, max = 4096): bigint {
+     let value = 0n, shift = 0n;
+     for (let i = 0; i < max; i++) {
+@@ -29,24 +42,6 @@
+     }
+     return fail('integer length limit');
+   }
+-  scalarInteger(signed: boolean): Uint8Array {
+-    const start = this.pos;
+-    for (let i = 0; i < 4096; i++) {
+-      if (this.byte() < 128) {
+-        let end = this.pos;
+-        while (end - start > 1) {
+-          const last = this.data[end - 1] & 127, previous = this.data[end - 2];
+-          if ((!signed && last === 0) || (signed && ((last === 0 && !(previous & 64)) || (last === 127 && (previous & 64))))) end--;
+-          else break;
+-        }
+-        // Node Buffer.slice aliases its input despite extending Uint8Array.
+-        const bytes = Uint8Array.from(this.data.subarray(start, end));
+-        bytes[bytes.length - 1] &= 127;
+-        return bytes;
+-      }
+-    }
+-    return fail('integer length limit');
+-  }
+   number(signed = false): number {
+     const value = this.integer(signed, 10);
+     if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) fail('index range');
+@@ -62,6 +57,23 @@
+     utf8.decode(bytes);
+     return bytes;
+   }
++}
++
++class Writer {
++  private data = new Uint8Array(256);
++  private size = 0;
++  add(bytes: Uint8Array | number[]): void {
++    const length = this.size + bytes.length;
++    if (length > MAX_BYTES) fail('output byte limit');
++    if (length > this.data.length) {
++      const next = new Uint8Array(Math.min(MAX_BYTES, Math.max(length, this.data.length * 2)));
++      next.set(this.data); this.data = next;
++    }
++    this.data.set(bytes, this.size); this.size = length;
++  }
++  byte(n: number): void { this.add([n]); }
++  int(n: number | bigint, signed = false): void { this.add(leb(BigInt(n), signed)); }
++  finish(): Uint8Array { return this.data.slice(0, this.size); }
+ }
+ 
+ /** Normalize an ordinary Candid message before any typed receiver projection. */
+@@ -118,15 +130,7 @@
+         const child = read(n.edges[0], depth + 1);
+         return { op: -18, items: [child] };
+       }
+-      if (n.op === -19) {
+-        const length = r.length();
+-        if (n.edges[0] === -5) {
+-          steps += length;
+-          if (steps > MAX_ITEMS || (length !== 0 && depth + 1 > MAX_DEPTH)) fail('value traversal limit');
+-          return { op: -19, raw: r.take(length), binary: true };
+-        }
+-        return { op: -19, items: Array.from({ length }, () => read(n.edges[0], depth + 1)) };
+-      }
++      if (n.op === -19) return { op: -19, items: Array.from({ length: r.length() }, () => read(n.edges[0], depth + 1)), binary: n.edges[0] === -5 };
+       if (n.op === -20) {
+         const items: Val[] = [], labels: number[] = [];
+         n.edges.forEach((edge, i) => {
+@@ -148,7 +152,7 @@
+     if (ref === -17) fail('empty has no values');
+     let raw: Uint8Array;
+     if (ref === -2) { raw = r.take(1); if (raw[0] > 1) fail('invalid bool'); }
+-    else if (ref === -3 || ref === -4) raw = r.scalarInteger(ref === -4);
++    else if (ref === -3 || ref === -4) raw = Uint8Array.from(leb(r.integer(ref === -4), ref === -4));
+     else if (ref >= -12 && ref <= -5) raw = r.take(2 ** ((-ref - 5) % 4));
+     else if (ref === -13 || ref === -14) {
+       raw = r.take(ref === -13 ? 4 : 8);
+@@ -167,25 +171,53 @@
+   const values = roots.map(ref => read(ref, 0));
+   if (r.pos !== data.length) fail('trailing payload');
+ 
+-  const shapes = new Shapes();
+-  const ty = shapes.type.bind(shapes), join = shapes.join.bind(shapes);
+-  const emptyType = shapes.empty;
++  const shapes = new Map<string, Ty>();
++  const ty = (op: number, labels: number[] = [], children: Ty[] = []): Ty => {
++    const key = `${op}/${labels.join(',')}/${children.map(c => c.id).join(',')}`;
++    let t = shapes.get(key);
++    if (!t) { t = { op, labels, children, id: shapes.size }; shapes.set(key, t); }
++    return t;
++  };
++  const nullType = ty(-1), emptyType = ty(-17);
++  const join = (a: Ty, b: Ty, depth = 0): Ty => {
++    if (depth > MAX_DEPTH) fail('type nesting limit');
++    if (a === b || b.op === -17) return a;
++    if (a.op === -17) return b;
++    if (a.op === -1) return b.op === -18 ? b : ty(-18, [], [b]);
++    if (b.op === -1) return a.op === -18 ? a : ty(-18, [], [a]);
++    if (a.op === -18 || b.op === -18) return ty(-18, [], [join(a.op === -18 ? a.children[0] : a, b.op === -18 ? b.children[0] : b, depth + 1)]);
++    if (a.op !== b.op || ![-19, -20, -21].includes(a.op)) return fail('incompatible value shapes');
++    if (a.op === -19) return ty(-19, [], [join(a.children[0], b.children[0], depth + 1)]);
++    const aa = new Map(a.labels.map((k, i) => [k, a.children[i]])), bb = new Map(b.labels.map((k, i) => [k, b.children[i]]));
++    const labels = Array.from(new Set([...a.labels, ...b.labels])).sort((x, y) => x - y);
++    return ty(a.op, labels, labels.map(k => a.op === -21 && !aa.has(k) ? bb.get(k)! : a.op === -21 && !bb.has(k) ? aa.get(k)! : join(aa.get(k) ?? nullType, bb.get(k) ?? nullType, depth + 1)));
++  };
+   const shape = (v: Val, depth = 0): Ty => {
+     if (depth > MAX_DEPTH) fail('type nesting limit');
+     if (v.op === -18) return ty(-18, [], [shape(v.items![0], depth + 1)]);
+-    if (v.op === -19) return ty(-19, [], [v.binary ? ty(-5) : v.items!.reduce((a, v) => join(a, shape(v, depth + 1)), emptyType)]);
++    if (v.op === -19) return ty(-19, [], [v.items!.reduce((a, v) => join(a, shape(v, depth + 1)), v.binary ? ty(-5) : emptyType)]);
+     if (v.op === -20 || v.op === -21) return ty(v.op, v.labels!, v.items!.map(v => shape(v, depth + 1)));
+     return ty(v.op);
+   };
+-  const types = values.map(v => shape(v)), w = new Writer();
+-  writeHeader(w, types);
++  const types = values.map(v => shape(v)), table: Ty[] = [], indices = new Map<Ty, number>();
++  const intern = (t: Ty): number => {
++    if (![-18, -19, -20, -21].includes(t.op)) return t.op;
++    const old = indices.get(t); if (old !== undefined) return old;
++    if (table.length >= MAX_TYPES) return fail('output type-table limit');
++    const id = table.length; indices.set(t, id); table.push(t); t.children.forEach(intern); return id;
++  };
++  const args = types.map(intern), w = new Writer();
++  w.add([68, 73, 68, 76]); w.int(table.length);
++  for (const t of table) {
++    w.int(t.op, true);
++    if (t.op === -18 || t.op === -19) w.int(intern(t.children[0]), true);
++    else { w.int(t.labels.length); t.labels.forEach((label, i) => { w.int(label); w.int(intern(t.children[i]), true); }); }
++  }
++  w.int(args.length); args.forEach(a => w.int(a, true));
+   const emit = (v: Val, t: Ty, depth = 0): void => {
+     if (depth > MAX_DEPTH) fail('emitted value nesting limit');
+     if (t.op === -18) { w.byte(v.op === -1 ? 0 : 1); if (v.op !== -1) emit(v.op === -18 ? v.items![0] : v, t.children[0], depth + 1); }
+-    else if (t.op === -19 && v.op === -19) {
+-      if (v.binary) { if (t.children[0].op !== -5) fail('invalid binary shape'); w.int(v.raw!.length); w.add(v.raw!); }
+-      else { w.int(v.items!.length); v.items!.forEach(c => emit(c, t.children[0], depth + 1)); }
+-    }
++    else if (t.op === -19 && v.op === -19) { w.int(v.items!.length); v.items!.forEach(c => emit(c, t.children[0], depth + 1)); }
+     else if (t.op === -20 && v.op === -20) {
+       const fields = new Map(v.labels!.map((k, i) => [k, v.items![i]])); t.labels.forEach((k, i) => emit(fields.get(k) ?? nullVal, t.children[i], depth + 1));
+     } else if (t.op === -21 && v.op === -21) {
+--- a/ts/test/benchmark.mjs
++++ b/ts/test/benchmark.mjs
+@@ -36,8 +36,7 @@
+   result.push({ name, transactions: count, memo_bytes: memoSize, ordinary_bytes: raw.length, canonical_bytes: canonical.length, raw_hex: Buffer.from(raw).toString('hex'), canonical_hex: Buffer.from(canonical).toString('hex'),
+     ordinary_encode: sample(() => IDL.encode([Block], [block]).byteLength),
+     canonicalize_preencoded: sample(() => canonicalize(raw).byteLength),
+-    canonical_encode_direct: sample(() => encodeCanonical([Block], [block]).byteLength),
+-    canonical_encode_pipeline: sample(() => canonicalize(IDL.encode([Block], [block])).byteLength),
++    canonical_encode_pipeline: sample(() => encodeCanonical([Block], [block]).byteLength),
+     ordinary_decode: sample(() => IDL.decode([Block], raw)[0].tx.length),
+     canonical_decode: sample(() => IDL.decode([Block], canonical)[0].tx.length),
+     compatible_decode: sample(() => decodeCompatible([Block], canonical)[0].tx.length) });

@@ -1,0 +1,5 @@
+(lang dune 3.10)
+(name candidx)
+(generate_opam_files false)
+
+(version 1.0.0)

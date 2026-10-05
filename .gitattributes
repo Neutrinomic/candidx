@@ -1,0 +1,3 @@
+# Preserve upstream license text and patch context byte for byte.
+*.patch -whitespace
+wasm/licenses/** -whitespace

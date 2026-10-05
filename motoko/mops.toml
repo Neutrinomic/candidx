@@ -1,0 +1,13 @@
+[package]
+name = "candidx"
+version = "1.0.0"
+description = "Native Motoko value-based canonical Candid encoding"
+license = "MIT"
+keywords = ["candid", "encoding", "blocks"]
+
+[dependencies]
+core = "1.0.0"
+
+[requirements]
+moc = "0.16.1"
+

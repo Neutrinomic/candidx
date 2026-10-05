@@ -1,0 +1,892 @@
+{
+  "profile": "cx",
+  "aggregation": "median of 3 runs, each 7 trials; ratio median computed within each run",
+  "source_fingerprints": {
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "rust/src/typed.rs": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/examples/probe.rs": "8dbff2d333c8dafaa9efdad2c6f9d95493e60b439ac5f0b97753765144aa84ed",
+    "rust/examples/evolution.rs": "4e2b1e38dc1160b0cca87bf7dec8daa763f0e38d67318698263c80d464e434bb",
+    "rust/examples/fuzz.rs": "f9febcc4b77218680a43c73ca4d75bf1f850fc1fe66de8a381a26053862cfcca",
+    "rust/examples/bench.rs": "e44472a9e0447a8b960ab8c2d632fb8f7941056f19dcaf17be42924926bffac7",
+    "rust/examples/profile.rs": "cbee607fb6a2c12b037fd14ac7ebdfcc956deaaeef62730f47957c5517c135bf",
+    "rust/examples/support/mod.rs": "3b2b3dbda5c82b8166c995c0504b76fda1f4356ce4c3ccab923922fdf1413b3c",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ts/src/index.ts": "0ea79fbd4039e81b8d1c0d6166a8a11f03aa9b59fe6a6f30914e1b18e74295ca",
+    "ts/src/candid.ts": "7534dd3413ffd5ed81ed0aa855b8d23e2f157f2cde16901c3f91cad544acfaa6",
+    "ts/src/codec.ts": "b802f039c25c44157976235b3eb26e69e8417c455445f30ee072a4a84823b750",
+    "ts/test/compatibility.test.mjs": "25a5a5a9d56fdb5ac753e2ae8e587d2eed919ae7033bf943e4bbd1e96a1bd686",
+    "ts/test/benchmark.mjs": "fbd8b83806800e070c65e158669fbad6438925a08c817d3b799c366fe5b649db",
+    "ts/test/direct-guard.mjs": "ce655b99114119696588e571287ef70f3509cf3af8bbb586cba64d7e9722f705",
+    "ts/test/evolution.mjs": "abcb2f191fa3b084aa7a8fc3492381591323aff3a954629f07882c6b4e41a128",
+    "ts/test/probe.mjs": "19ba4c7cca0c0d8cc8a3c830207eb0c0b27933ad75037e4ef01eb8f4efe5b135",
+    "ts/test/direct.test.mjs": "bc538c3f738960c600d7057a13bfb151a4afda5457fdd93f3b81bccfafd1263c",
+    "ts/test/direct-guard-loader.mjs": "4a69616fedc51c03fa5d992cc73491cf4a7f457f551ae6dde219bfccb310d2cb",
+    "ts/test/audit_codec.mjs": "49319e73bf39c24ac301193c2b5d3f235ea21cf5151385bdc59c373848ebb961",
+    "ts/test/corpus.test.mjs": "089aea8b99a3d96f7c3160961aa8e16f7bdb63220773d3e87ec780dd5cd3a8fc",
+    "ts/test/fuzz.mjs": "e64d8b99629179dd39dc59b038fec93d1a6229b8a9d97140f4813ab8067dbda3",
+    "ocaml/direct_tests.ml": "e4243f48cec513a2c25f945b077cad4fa205e38fe6c8d5a0afcc91a029441678",
+    "ocaml/test_json.ml": "7dd8695ee8a2799346dde8913249cf3e6d08e57202a4c996353f0b2421a8bd52",
+    "ocaml/candidx.opam": "271fd0f9554a41edc1646e201f5da1be3b3577711381eb9a50bf65c68d84f0e4",
+    "ocaml/direct_probe.ml": "f8bd390497b9ea23193611b95f887cb96095a5992f0a6b9a5026b0af7b739fe7",
+    "ocaml/README.md": "197aab59b4f04e5aec489f9a26e3665be50f02094ebdce4d15e6679dd289f6f9",
+    "ocaml/bench.ml": "c792a9b0eebe414391a0f4b2c57f6f157574a4ed334a5c559820f81207b0cbe5",
+    "ocaml/probe.ml": "5394318ec0104217c8f826f2de1a8ce04e56f09522bbf562dfece8b610f89411",
+    "ocaml/candidx.mli": "76ee926b6025d6005d11eda75d490e76439f244a29c019bb69ebd29895a9586b",
+    "ocaml/direct_bench.ml": "f6572ebbadbc9b13a61a04b31e264df4f52c87027f8d4ecb6fd6db79eb65ca1c",
+    "ocaml/candidx.ml": "fe03d63f891bb713b0e04f3a6853440a0c167da32b0252d2c211cbb6f30539e1",
+    "motoko/src/lib.mo": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+    "motoko/test/evolution.mo": "5d02e172a75bdb9446d083e8d9a46ef14bc9f2a2eba3dcab27d874768e665579",
+    "motoko/test/heap.mo": "65a2ec1470fe035b1721fee7ebe109806681c16eab46aa3d953c6ca8f2a66dc4",
+    "motoko/test/benchmark.mo": "0bf5a1b1039a72a101e9b4aad150fd7bfc5da2fd5818550951ae7e3d316fb131",
+    "motoko/test/optimization.mo": "163aa7e0765feab436ed600bd08b948197ec0547f814765725c8ceaf46292d1c",
+    "wasm/src/lib.rs": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49",
+    "benchmarks/run.py": "ecaed5444a1807c15dc686c019ddd3bf6a0a07c7eef74f3f5b32dc2e0e79b83a",
+    "benchmarks/runtime_sources.py": "3e4ddae9d80f00409766ba4f06a86853f8cad46e9614fae93422cfa22d0e0311",
+    "wasm/motoko-compiler.patch": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+    "rust/Cargo.toml": "fd83fe1e11837b1efec339b3365191ebcedb6b5610511ac0e0b3280379f0374b",
+    "rust/Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5",
+    "ts/package.json": "1b9657bd221af91a86ab161ed86815463c645b48180f18607a4e4c97c3843c75",
+    "ts/package-lock.json": "7aa2b27b47c3a1687b90f58d24c3019850abfb1c8c9a263448dffa1a9724d996",
+    "wasm/artifacts/manifest.json": "2095d6f6e8ed0cdc618904a03b32bdd5bfb1f1348fea50bb2de12254cb1a6c1b"
+  },
+  "rows": [
+    {
+      "language": "rust",
+      "name": "small",
+      "ordinary_bytes": 305,
+      "canonical_bytes": 296,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 5.3895605,
+          "min_us": 5.2733255,
+          "max_us": 5.4460355
+        },
+        "canonicalize_preencoded": {
+          "median_us": 2.7864632136550913,
+          "min_us": 2.6868321123321124,
+          "max_us": 2.8267650000000004
+        },
+        "canonical_encode_direct": {
+          "median_us": 8.9795905,
+          "min_us": 8.873445499999999,
+          "max_us": 9.086456
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 8.323840500000001,
+          "min_us": 8.143755500000001,
+          "max_us": 8.488801
+        },
+        "ordinary_decode": {
+          "median_us": 8.192001,
+          "min_us": 7.830700499999999,
+          "max_us": 8.3148355
+        },
+        "canonical_decode": {
+          "median_us": 7.6004505,
+          "min_us": 7.263800499999999,
+          "max_us": 7.686490500000001
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 1.6696878610481156,
+      "direct_speedup_vs_pipeline": 0.9176572590295998,
+      "normalizer_speedup_vs_initial": 8.72914051932938
+    },
+    {
+      "language": "rust",
+      "name": "records-128",
+      "ordinary_bytes": 5875,
+      "canonical_bytes": 5866,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 23.457665743305633,
+          "min_us": 23.151825925925923,
+          "max_us": 23.949706371191134
+        },
+        "canonicalize_preencoded": {
+          "median_us": 30.377966666666666,
+          "min_us": 29.756541766109784,
+          "max_us": 30.956454545454548
+        },
+        "canonical_encode_direct": {
+          "median_us": 102.99071369294606,
+          "min_us": 99.994688,
+          "max_us": 104.61585185185184
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 55.01032618025751,
+          "min_us": 54.005944444444445,
+          "max_us": 56.26253020134228
+        },
+        "ordinary_decode": {
+          "median_us": 116.51713207547171,
+          "min_us": 115.2053145539906,
+          "max_us": 125.976441314554
+        },
+        "canonical_decode": {
+          "median_us": 117.13105936073059,
+          "min_us": 114.72023529411764,
+          "max_us": 118.60285321100916
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 4.359982906739091,
+      "direct_speedup_vs_pipeline": 0.5387395707580469,
+      "normalizer_speedup_vs_initial": 14.071063509153479
+    },
+    {
+      "language": "rust",
+      "name": "blob-64k",
+      "ordinary_bytes": 65676,
+      "canonical_bytes": 65667,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 7.4719055,
+          "min_us": 7.367126,
+          "max_us": 7.823966
+        },
+        "canonicalize_preencoded": {
+          "median_us": 3.3027655000000005,
+          "min_us": 3.1957155000000004,
+          "max_us": 3.4084499999999998
+        },
+        "canonical_encode_direct": {
+          "median_us": 7.8354705000000004,
+          "min_us": 7.5062405,
+          "max_us": 8.334130499999999
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 11.063461,
+          "min_us": 10.8740805,
+          "max_us": 11.307255999999999
+        },
+        "ordinary_decode": {
+          "median_us": 206.753375,
+          "min_us": 202.1569516129032,
+          "max_us": 210.54001666666667
+        },
+        "canonical_decode": {
+          "median_us": 205.66354098360657,
+          "min_us": 200.77646774193548,
+          "max_us": 209.54624590163934
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 1.0392437129931158,
+      "direct_speedup_vs_pipeline": 1.4135685349469258,
+      "normalizer_speedup_vs_initial": 2189.5164320123035
+    },
+    {
+      "language": "rust",
+      "name": "records-1024",
+      "ordinary_bytes": 35262,
+      "canonical_bytes": 35253,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 150.6019259259259,
+          "min_us": 148.1809268292683,
+          "max_us": 153.8069315068493
+        },
+        "canonicalize_preencoded": {
+          "median_us": 228.8326111111111,
+          "min_us": 225.9279642857143,
+          "max_us": 232.64382727272726
+        },
+        "canonical_encode_direct": {
+          "median_us": 771.481,
+          "min_us": 735.3015454545455,
+          "max_us": 793.9275624999999
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 379.2294153846154,
+          "min_us": 372.94152238805975,
+          "max_us": 400.618
+        },
+        "ordinary_decode": {
+          "median_us": 834.6390344827586,
+          "min_us": 821.3742068965516,
+          "max_us": 849.0324482758622
+        },
+        "canonical_decode": {
+          "median_us": 835.0936129032259,
+          "min_us": 821.3440666666667,
+          "max_us": 850.0642068965518
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 5.028265791500062,
+      "direct_speedup_vs_pipeline": 0.5096215104454938,
+      "normalizer_speedup_vs_initial": 8.368776594827805
+    },
+    {
+      "language": "ts",
+      "name": "small",
+      "ordinary_bytes": 305,
+      "canonical_bytes": 296,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 262.281761904762,
+          "min_us": 220.18874603174612,
+          "max_us": 311.9344590163935
+        },
+        "canonicalize_preencoded": {
+          "median_us": 79.61737368421046,
+          "min_us": 58.551952631578864,
+          "max_us": 91.26873480662987
+        },
+        "canonical_encode_direct": {
+          "median_us": 101.9842134146342,
+          "min_us": 92.5086449704142,
+          "max_us": 122.32114184397193
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 335.6800277777804,
+          "min_us": 296.12417073170775,
+          "max_us": 383.16936666666663
+        },
+        "ordinary_decode": {
+          "median_us": 136.5923676470586,
+          "min_us": 102.84694904458604,
+          "max_us": 149.7069739130438
+        },
+        "canonical_decode": {
+          "median_us": 107.68488888888919,
+          "min_us": 87.77699315068507,
+          "max_us": 130.11706920415227
+        },
+        "compatible_decode": {
+          "median_us": 118.78420535714237,
+          "min_us": 105.49647767857145,
+          "max_us": 154.6826832298136
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 0.39388118537915023,
+      "direct_speedup_vs_pipeline": 3.2130978192618707,
+      "normalizer_speedup_vs_initial": 2.411024861893599
+    },
+    {
+      "language": "ts",
+      "name": "records-128",
+      "ordinary_bytes": 5875,
+      "canonical_bytes": 5866,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 2709.4824444444484,
+          "min_us": 1905.9168888888962,
+          "max_us": 3122.312000000003
+        },
+        "canonicalize_preencoded": {
+          "median_us": 510.84703333333437,
+          "min_us": 362.7887419354832,
+          "max_us": 866.6590952380893
+        },
+        "canonical_encode_direct": {
+          "median_us": 1500.6477647058919,
+          "min_us": 1086.7994999999978,
+          "max_us": 2204.3595882352934
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 3852.205333333359,
+          "min_us": 2861.751833333339,
+          "max_us": 7329.150499999969
+        },
+        "ordinary_decode": {
+          "median_us": 1309.3219375000017,
+          "min_us": 1158.028250000001,
+          "max_us": 2595.112538461535
+        },
+        "canonical_decode": {
+          "median_us": 1261.3817777777792,
+          "min_us": 1117.1890000000026,
+          "max_us": 1666.1509999999987
+        },
+        "compatible_decode": {
+          "median_us": 1265.671157894734,
+          "min_us": 1074.365304347833,
+          "max_us": 1478.4341333333334
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 0.5215539318661162,
+      "direct_speedup_vs_pipeline": 2.6783808113539993,
+      "normalizer_speedup_vs_initial": 5.652614378265539
+    },
+    {
+      "language": "ts",
+      "name": "blob-64k",
+      "ordinary_bytes": 65676,
+      "canonical_bytes": 65667,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 508.27082352941267,
+          "min_us": 421.3648620689677,
+          "max_us": 590.441999999997
+        },
+        "canonicalize_preencoded": {
+          "median_us": 168.0586711409405,
+          "min_us": 158.91350335570507,
+          "max_us": 188.7377681159409
+        },
+        "canonical_encode_direct": {
+          "median_us": 179.74260493827072,
+          "min_us": 169.62556790123512,
+          "max_us": 188.48878395061703
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 737.2121025641019,
+          "min_us": 697.8441538461503,
+          "max_us": 802.6600526315848
+        },
+        "ordinary_decode": {
+          "median_us": 1442.776588235307,
+          "min_us": 1361.1344285714472,
+          "max_us": 1546.1312941176457
+        },
+        "canonical_decode": {
+          "median_us": 1270.2284166666498,
+          "min_us": 1041.9156800000019,
+          "max_us": 1358.7846666666792
+        },
+        "compatible_decode": {
+          "median_us": 1280.5234166666726,
+          "min_us": 1189.7183478260915,
+          "max_us": 1350.9244347826059
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 0.3477683098041867,
+      "direct_speedup_vs_pipeline": 4.101487807063238,
+      "normalizer_speedup_vs_initial": 171.59923260261144
+    },
+    {
+      "language": "ts",
+      "name": "records-1024",
+      "ordinary_bytes": 35262,
+      "canonical_bytes": 35253,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 17979.271000000153,
+          "min_us": 16205.276499999854,
+          "max_us": 19386.136500000248
+        },
+        "canonicalize_preencoded": {
+          "median_us": 3960.368666666606,
+          "min_us": 2481.4772857142607,
+          "max_us": 6510.174600000028
+        },
+        "canonical_encode_direct": {
+          "median_us": 10656.954000000042,
+          "min_us": 9205.01400000012,
+          "max_us": 11135.2176666666
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 24300.27199999995,
+          "min_us": 20764.521499999773,
+          "max_us": 26531.78200000002
+        },
+        "ordinary_decode": {
+          "median_us": 9851.270666666702,
+          "min_us": 8403.047333333234,
+          "max_us": 11507.496000000174
+        },
+        "canonical_decode": {
+          "median_us": 9765.926000000036,
+          "min_us": 8228.300499999932,
+          "max_us": 12442.074333333343
+        },
+        "compatible_decode": {
+          "median_us": 9608.490999999958,
+          "min_us": 8030.195499999991,
+          "max_us": 11123.976000000312
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 0.5716999994450211,
+      "direct_speedup_vs_pipeline": 2.326008792652427,
+      "normalizer_speedup_vs_initial": 3.25538455763298
+    },
+    {
+      "language": "ocaml",
+      "name": "small",
+      "ordinary_bytes": 305,
+      "canonical_bytes": 296,
+      "phases": {
+        "canonicalize_preencoded": {
+          "median_us": 8.689612,
+          "min_us": 8.554418,
+          "max_us": 9.779114,
+          "allocated_bytes_per_op": 19304
+        },
+        "canonical_encode_direct": {
+          "median_us": 13.011715,
+          "min_us": 12.736501,
+          "max_us": 14.536594,
+          "allocated_bytes_per_op": 27536
+        }
+      },
+      "normalizer_speedup_vs_initial": 2.674067725923781
+    },
+    {
+      "language": "ocaml",
+      "name": "records-128",
+      "ordinary_bytes": 5875,
+      "canonical_bytes": 5866,
+      "phases": {
+        "canonicalize_preencoded": {
+          "median_us": 114.352853,
+          "min_us": 112.76773,
+          "max_us": 125.667195,
+          "allocated_bytes_per_op": 289809
+        },
+        "canonical_encode_direct": {
+          "median_us": 283.792961,
+          "min_us": 273.540102,
+          "max_us": 287.047652,
+          "allocated_bytes_per_op": 632945
+        }
+      },
+      "normalizer_speedup_vs_initial": 4.253876525494296
+    },
+    {
+      "language": "ocaml",
+      "name": "blob-64k",
+      "ordinary_bytes": 65676,
+      "canonical_bytes": 65667,
+      "phases": {
+        "canonicalize_preencoded": {
+          "median_us": 34.898122,
+          "min_us": 33.631524,
+          "max_us": 37.179034,
+          "allocated_bytes_per_op": 339912
+        },
+        "canonical_encode_direct": {
+          "median_us": 25.884568,
+          "min_us": 24.813156,
+          "max_us": 26.736498,
+          "allocated_bytes_per_op": 274544
+        }
+      },
+      "normalizer_speedup_vs_initial": 213.90849974677718
+    },
+    {
+      "language": "ocaml",
+      "name": "records-1024",
+      "ordinary_bytes": 35262,
+      "canonical_bytes": 35253,
+      "phases": {
+        "canonicalize_preencoded": {
+          "median_us": 1044.895914,
+          "min_us": 1027.27943,
+          "max_us": 1119.053364,
+          "allocated_bytes_per_op": 2213237
+        },
+        "canonical_encode_direct": {
+          "median_us": 2201.622183,
+          "min_us": 2144.098282,
+          "max_us": 2227.263017,
+          "allocated_bytes_per_op": 4985057
+        }
+      },
+      "normalizer_speedup_vs_initial": 2.8677538756266974
+    },
+    {
+      "language": "motoko",
+      "name": "small",
+      "ordinary_bytes": 305,
+      "canonical_bytes": 296,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 5.405055,
+          "min_us": 5.335750000000001,
+          "max_us": 6.5284,
+          "median_fuel": 27892.425,
+          "allocated_bytes_per_op": 984.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 182.10166666666666,
+          "min_us": 175.69500000000002,
+          "max_us": 190.7437,
+          "median_fuel": 800417.6666666666,
+          "allocated_bytes_per_op": 58632.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 187.59536666666665,
+          "min_us": 179.72566666666668,
+          "max_us": 195.0186666666667,
+          "median_fuel": 828131.8,
+          "allocated_bytes_per_op": 59616.0
+        },
+        "ordinary_decode": {
+          "median_us": 9.3852,
+          "min_us": 9.1373,
+          "max_us": 9.64485,
+          "median_fuel": 65055.855,
+          "allocated_bytes_per_op": 1912.0
+        },
+        "canonical_decode": {
+          "median_us": 9.3902,
+          "min_us": 9.0675,
+          "max_us": 10.15395,
+          "median_fuel": 64021.13,
+          "allocated_bytes_per_op": 1904.0
+        }
+      },
+      "encode_method": "canonical_encode_pipeline",
+      "encode_ratio": 34.707392740067704,
+      "normalizer_speedup_vs_initial": 4.104486870887142
+    },
+    {
+      "language": "motoko",
+      "name": "records-128",
+      "ordinary_bytes": 5875,
+      "canonical_bytes": 5866,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 145.91500000000002,
+          "min_us": 143.81205,
+          "max_us": 151.2445,
+          "median_fuel": 843959.35,
+          "allocated_bytes_per_op": 21048.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 1817.57,
+          "min_us": 1782.1536666666668,
+          "max_us": 1872.8233333333335,
+          "median_fuel": 7858284.0,
+          "allocated_bytes_per_op": 368248.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 1945.6633333333332,
+          "min_us": 1917.7503333333334,
+          "max_us": 2012.12,
+          "median_fuel": 8701973.333333334,
+          "allocated_bytes_per_op": 389296.0
+        },
+        "ordinary_decode": {
+          "median_us": 256.94105,
+          "min_us": 252.01999999999998,
+          "max_us": 271.42199999999997,
+          "median_fuel": 1865739.25,
+          "allocated_bytes_per_op": 52816.0
+        },
+        "canonical_decode": {
+          "median_us": 260.74705,
+          "min_us": 254.3925,
+          "max_us": 273.50300000000004,
+          "median_fuel": 1864707.0,
+          "allocated_bytes_per_op": 52808.0
+        }
+      },
+      "encode_method": "canonical_encode_pipeline",
+      "encode_ratio": 13.277456053181647,
+      "normalizer_speedup_vs_initial": 8.99512811060922
+    },
+    {
+      "language": "motoko",
+      "name": "blob-64k",
+      "ordinary_bytes": 65676,
+      "canonical_bytes": 65667,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 61.553055,
+          "min_us": 60.325805,
+          "max_us": 66.638155,
+          "median_fuel": 139229.955,
+          "allocated_bytes_per_op": 131504.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 1947.131,
+          "min_us": 1897.841,
+          "max_us": 2105.42,
+          "median_fuel": 15310397.0,
+          "allocated_bytes_per_op": 640704.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 2039.57,
+          "min_us": 1989.34,
+          "max_us": 2181.05,
+          "median_fuel": 15449555.0,
+          "allocated_bytes_per_op": 772208.0
+        },
+        "ordinary_decode": {
+          "median_us": 34.637005,
+          "min_us": 32.7625,
+          "max_us": 35.560955,
+          "median_fuel": 87093.22,
+          "allocated_bytes_per_op": 66184.0
+        },
+        "canonical_decode": {
+          "median_us": 33.94465,
+          "min_us": 32.868404999999996,
+          "max_us": 34.54915,
+          "median_fuel": 86057.655,
+          "allocated_bytes_per_op": 66176.0
+        }
+      },
+      "encode_method": "canonical_encode_pipeline",
+      "encode_ratio": 33.37429799382013,
+      "normalizer_speedup_vs_initial": 58.370778853605636
+    },
+    {
+      "language": "motoko",
+      "name": "records-1024",
+      "ordinary_bytes": 35262,
+      "canonical_bytes": 35253,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 1113.8481,
+          "min_us": 1097.0756,
+          "max_us": 1127.2171,
+          "median_fuel": 6714136.7,
+          "allocated_bytes_per_op": 144328.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 12964.281,
+          "min_us": 12540.661,
+          "max_us": 13253.042,
+          "median_fuel": 56372474.0,
+          "allocated_bytes_per_op": 2505728.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 14213.861,
+          "min_us": 13769.551,
+          "max_us": 14484.022,
+          "median_fuel": 63086083.0,
+          "allocated_bytes_per_op": 2650056.0
+        },
+        "ordinary_decode": {
+          "median_us": 2020.70665,
+          "min_us": 1995.62815,
+          "max_us": 2084.4702,
+          "median_fuel": 14897515.4,
+          "allocated_bytes_per_op": 409848.0
+        },
+        "canonical_decode": {
+          "median_us": 2036.47915,
+          "min_us": 1996.9191500000002,
+          "max_us": 2063.9886500000002,
+          "median_fuel": 14896474.75,
+          "allocated_bytes_per_op": 409840.0
+        }
+      },
+      "encode_method": "canonical_encode_pipeline",
+      "encode_ratio": 12.784139129921728,
+      "normalizer_speedup_vs_initial": 8.486348143796018
+    },
+    {
+      "language": "motoko-wasm",
+      "name": "small",
+      "ordinary_bytes": 305,
+      "canonical_bytes": 296,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 5.36175,
+          "min_us": 5.276549999999999,
+          "max_us": 7.4088,
+          "median_fuel": 27892.425,
+          "allocated_bytes_per_op": 984.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 12.639333333333333,
+          "min_us": 12.291033333333333,
+          "max_us": 13.272,
+          "median_fuel": 46444.96666666667,
+          "allocated_bytes_per_op": 4768.0
+        },
+        "canonical_encode_direct": {
+          "median_us": 13.658305,
+          "min_us": 13.20115,
+          "max_us": 20.174,
+          "median_fuel": 74387.315,
+          "allocated_bytes_per_op": 5032.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 17.919666666666668,
+          "min_us": 17.272666666666666,
+          "max_us": 22.56833333333333,
+          "median_fuel": 74165.4,
+          "allocated_bytes_per_op": 5752.0
+        },
+        "ordinary_decode": {
+          "median_us": 9.38335,
+          "min_us": 9.1876,
+          "max_us": 10.787049999999999,
+          "median_fuel": 65055.855,
+          "allocated_bytes_per_op": 1912.0
+        },
+        "canonical_decode": {
+          "median_us": 9.278805,
+          "min_us": 9.09975,
+          "max_us": 12.623605,
+          "median_fuel": 64021.13,
+          "allocated_bytes_per_op": 1904.0
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 2.5267863823419376,
+      "direct_speedup_vs_pipeline": 1.306194262250584
+    },
+    {
+      "language": "motoko-wasm",
+      "name": "records-128",
+      "ordinary_bytes": 5875,
+      "canonical_bytes": 5866,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 147.2045,
+          "min_us": 141.9655,
+          "max_us": 183.773,
+          "median_fuel": 843959.35,
+          "allocated_bytes_per_op": 21048.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 122.31333333333333,
+          "min_us": 119.71333333333332,
+          "max_us": 148.52333333333334,
+          "median_fuel": 541640.6666666666,
+          "allocated_bytes_per_op": 44992.0
+        },
+        "canonical_encode_direct": {
+          "median_us": 208.56300000000002,
+          "min_us": 204.45605,
+          "max_us": 225.36700000000002,
+          "median_fuel": 1395941.45,
+          "allocated_bytes_per_op": 29968.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 269.16333333333336,
+          "min_us": 259.81,
+          "max_us": 286.7633333333333,
+          "median_fuel": 1385144.6666666667,
+          "allocated_bytes_per_op": 66040.0
+        },
+        "ordinary_decode": {
+          "median_us": 256.537,
+          "min_us": 253.53905,
+          "max_us": 334.55,
+          "median_fuel": 1865739.25,
+          "allocated_bytes_per_op": 52816.0
+        },
+        "canonical_decode": {
+          "median_us": 259.85605,
+          "min_us": 257.06305000000003,
+          "max_us": 282.7215,
+          "median_fuel": 1864707.0,
+          "allocated_bytes_per_op": 52808.0
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 1.399308445054329,
+      "direct_speedup_vs_pipeline": 1.282086758955164
+    },
+    {
+      "language": "motoko-wasm",
+      "name": "blob-64k",
+      "ordinary_bytes": 65676,
+      "canonical_bytes": 65667,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 61.972405,
+          "min_us": 61.056255,
+          "max_us": 64.021305,
+          "median_fuel": 139229.855,
+          "allocated_bytes_per_op": 131504.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 167.55,
+          "min_us": 164.79,
+          "max_us": 302.68,
+          "median_fuel": 170362.0,
+          "allocated_bytes_per_op": 134816.0
+        },
+        "canonical_encode_direct": {
+          "median_us": 69.035905,
+          "min_us": 67.171105,
+          "max_us": 70.95836,
+          "median_fuel": 171232.375,
+          "allocated_bytes_per_op": 134712.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 228.731,
+          "min_us": 225.77,
+          "max_us": 281.57,
+          "median_fuel": 309320.0,
+          "allocated_bytes_per_op": 266320.0
+        },
+        "ordinary_decode": {
+          "median_us": 33.570755,
+          "min_us": 32.6942,
+          "max_us": 34.628455,
+          "median_fuel": 87093.325,
+          "allocated_bytes_per_op": 66184.0
+        },
+        "canonical_decode": {
+          "median_us": 33.540755,
+          "min_us": 32.423255,
+          "max_us": 34.263805000000005,
+          "median_fuel": 86057.655,
+          "allocated_bytes_per_op": 66176.0
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 1.1096978172794443,
+      "direct_speedup_vs_pipeline": 3.309620315331983
+    },
+    {
+      "language": "motoko-wasm",
+      "name": "records-1024",
+      "ordinary_bytes": 35262,
+      "canonical_bytes": 35253,
+      "phases": {
+        "ordinary_encode": {
+          "median_us": 1129.1601,
+          "min_us": 1105.6126,
+          "max_us": 1299.0546,
+          "median_fuel": 6714135.65,
+          "allocated_bytes_per_op": 144328.0
+        },
+        "canonicalize_preencoded": {
+          "median_us": 748.7,
+          "min_us": 717.67,
+          "max_us": 791.84,
+          "median_fuel": 4088909.0,
+          "allocated_bytes_per_op": 314048.0
+        },
+        "canonical_encode_direct": {
+          "median_us": 1547.6825999999999,
+          "min_us": 1533.3790999999999,
+          "max_us": 1597.6141499999999,
+          "median_fuel": 10922216.85,
+          "allocated_bytes_per_op": 188848.0
+        },
+        "canonical_encode_pipeline": {
+          "median_us": 1858.27,
+          "min_us": 1823.23,
+          "max_us": 2321.62,
+          "median_fuel": 10802896.0,
+          "allocated_bytes_per_op": 458376.0
+        },
+        "ordinary_decode": {
+          "median_us": 2009.7177,
+          "min_us": 1978.25415,
+          "max_us": 2048.1912,
+          "median_fuel": 14897516.45,
+          "allocated_bytes_per_op": 409848.0
+        },
+        "canonical_decode": {
+          "median_us": 2014.68665,
+          "min_us": 1989.9871500000002,
+          "max_us": 2049.10615,
+          "median_fuel": 14896474.75,
+          "allocated_bytes_per_op": 409840.0
+        }
+      },
+      "encode_method": "canonical_encode_direct",
+      "encode_ratio": 1.378457457564577,
+      "direct_speedup_vs_pipeline": 1.2061972393780327
+    }
+  ]
+}

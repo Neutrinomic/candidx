@@ -1,0 +1,893 @@
+{
+  "recorded_utc": "2026-10-04T20:31:36.224022+00:00",
+  "label": "cx-release-1",
+  "platform": "Linux-6.12.63-x86_64-with-glibc2.40",
+  "machine": "x86_64",
+  "method": "7 trials; median wall time; Rust optimized; TS warmed V8; Wasm fuel instrumentation; no hashes timed",
+  "source_fingerprints": {
+    "rust/src/lib.rs": "dc9ff1de87403586d66482bbc39efe88a162873f55112d88450623c67eb13660",
+    "ts/src/decode.ts": "6ae0d6f157c3fbff43dabbff4d81a0eb3bf0363beae05be7d29c4d20d15c5ff9",
+    "ts/src/index.ts": "508df40f9823e4eea7794019daa14b293be3ce98a85ddcf091b71018efd40da3",
+    "ts/src/candid.ts": "ab280ec447273d262f18443c246f79e082f1b1c9fb1fad51c3747d7254e2c546",
+    "ocaml/candidx.opam": "7d079dadc75f01484d6150ab760996616f1f6aecf52baac9a04f36bcf39ecc5a",
+    "ocaml/README.md": "d36a50e8fe800832c86726480f633d16c58d37bf5f0405a8bdbeeb00cfd5e714",
+    "ocaml/bench.ml": "c792a9b0eebe414391a0f4b2c57f6f157574a4ed334a5c559820f81207b0cbe5",
+    "ocaml/probe.ml": "5394318ec0104217c8f826f2de1a8ce04e56f09522bbf562dfece8b610f89411",
+    "ocaml/candidx.mli": "c0d709af6a15983706319a7e27ca7b8fe34bfcf3037b17c2289ef188f8c36147",
+    "ocaml/candidx.install": "1ed1f33d234f2bef167dab628aa4c88ff34bdfbd6e8ed2d6cc6cf374b3bc23b1",
+    "ocaml/candidx.ml": "758d6f35f38de46eb8ff088e8a580406385f998ceab80ef8fabb717b6a5c0fc6",
+    "motoko/src/lib.mo": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+    "wasm/src/lib.rs": "33819fe268d79f17fa29e836d07acaf7388680f5bc8dfe6546d0d0cecbe9cab8"
+  },
+  "results": {
+    "rust": {
+      "cases": [
+        {
+          "canonical_bytes": 296,
+          "canonical_decode": {
+            "iterations_per_trial": 2000,
+            "max_us": 7.7357249999999995,
+            "median_us": 7.5353905,
+            "min_us": 7.4819755,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 2000,
+            "max_us": 8.374704,
+            "median_us": 8.309654499999999,
+            "min_us": 8.1623945,
+            "trials": 7
+          },
+          "canonical_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb",
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 2.847436,
+            "median_us": 2.7133965,
+            "min_us": 2.7020364999999997,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "small",
+          "ordinary_bytes": 305,
+          "ordinary_decode": {
+            "iterations_per_trial": 1229,
+            "max_us": 8.131787632221316,
+            "median_us": 7.978126118795769,
+            "min_us": 7.865148901545973,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 1853,
+            "max_us": 5.396879654614139,
+            "median_us": 5.285411225040475,
+            "min_us": 5.152702644360497,
+            "trials": 7
+          },
+          "raw_sha256": "2c096b610e5e8490b62f1ee28fa2e855a8d0ff73a3d712410c1507667f8c8505",
+          "transactions": 4
+        },
+        {
+          "canonical_bytes": 5866,
+          "canonical_decode": {
+            "iterations_per_trial": 221,
+            "max_us": 115.36338009049773,
+            "median_us": 115.07654751131221,
+            "min_us": 113.76206787330315,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 477,
+            "max_us": 52.24683018867924,
+            "median_us": 51.86628511530399,
+            "min_us": 51.44263731656185,
+            "trials": 7
+          },
+          "canonical_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632",
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 831,
+            "max_us": 29.50382551143201,
+            "median_us": 29.415677496991577,
+            "min_us": 29.36727797833935,
+            "trials": 7
+          },
+          "memo_bytes": 32,
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "ordinary_decode": {
+            "iterations_per_trial": 218,
+            "max_us": 118.94104128440367,
+            "median_us": 114.59508256880736,
+            "min_us": 114.15439449541286,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 1121,
+            "max_us": 21.86171989295272,
+            "median_us": 21.791943800178412,
+            "min_us": 21.600917930419268,
+            "trials": 7
+          },
+          "raw_sha256": "75dd57de180f116b18ac61196a9bea6883384e439b5ef42b22e1adb195117556",
+          "transactions": 128
+        },
+        {
+          "canonical_bytes": 65667,
+          "canonical_decode": {
+            "iterations_per_trial": 123,
+            "max_us": 205.74542276422767,
+            "median_us": 202.67494308943088,
+            "min_us": 199.87616260162602,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 503,
+            "max_us": 51.65536182902585,
+            "median_us": 51.30548111332008,
+            "min_us": 50.1994592445328,
+            "trials": 7
+          },
+          "canonical_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3",
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 2000,
+            "max_us": 3.3394055,
+            "median_us": 3.2919404999999995,
+            "min_us": 3.259026,
+            "trials": 7
+          },
+          "memo_bytes": 65536,
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "ordinary_decode": {
+            "iterations_per_trial": 127,
+            "max_us": 205.65264566929133,
+            "median_us": 204.92147244094488,
+            "min_us": 197.2583307086614,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 580,
+            "max_us": 43.820082758620686,
+            "median_us": 43.623893103448275,
+            "min_us": 43.4699775862069,
+            "trials": 7
+          },
+          "raw_sha256": "60adb7fd3effb1126aad19643db986f4f497b799befab76b0c2e702016822e11",
+          "transactions": 1
+        },
+        {
+          "canonical_bytes": 35253,
+          "canonical_decode": {
+            "iterations_per_trial": 31,
+            "max_us": 842.930193548387,
+            "median_us": 811.2067096774193,
+            "min_us": 805.0070322580646,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "iterations_per_trial": 70,
+            "max_us": 361.4615285714286,
+            "median_us": 357.9141142857143,
+            "min_us": 355.6504,
+            "trials": 7
+          },
+          "canonical_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31",
+          "canonicalize_preencoded": {
+            "iterations_per_trial": 101,
+            "max_us": 224.01634653465348,
+            "median_us": 221.5521881188119,
+            "min_us": 219.82655445544555,
+            "trials": 7
+          },
+          "memo_bytes": 0,
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "ordinary_decode": {
+            "iterations_per_trial": 30,
+            "max_us": 824.7193,
+            "median_us": 821.1386,
+            "min_us": 802.4766333333333,
+            "trials": 7
+          },
+          "ordinary_encode": {
+            "iterations_per_trial": 181,
+            "max_us": 137.64523756906078,
+            "median_us": 136.29734254143645,
+            "min_us": 135.16291712707184,
+            "trials": 7
+          },
+          "raw_sha256": "3822d18591235bdca5cad016adaec32282c50371faba094126114fcf1a35b9c1",
+          "transactions": 1024
+        }
+      ],
+      "language": "Rust"
+    },
+    "ts": {
+      "language": "TypeScript",
+      "checksum": 40686,
+      "cases": [
+        {
+          "name": "small",
+          "transactions": 4,
+          "memo_bytes": 32,
+          "ordinary_bytes": 305,
+          "canonical_bytes": 296,
+          "raw_sha256": "78bc96bf286c8d36c2a3d96713ebc021736ee47cb953075ca6342ef4a8218dba",
+          "canonical_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb",
+          "ordinary_encode": {
+            "median_us": 227.70490384615383,
+            "min_us": 208.17203846153868,
+            "max_us": 271.867923076923,
+            "iterations_per_trial": 52,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 83.46522797927462,
+            "min_us": 68.96270984455953,
+            "max_us": 90.07708808290164,
+            "iterations_per_trial": 193,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 314.4475744680855,
+            "min_us": 297.79248936170177,
+            "max_us": 331.892872340426,
+            "iterations_per_trial": 94,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 107.3317459016393,
+            "min_us": 97.5520819672138,
+            "max_us": 133.25400819672203,
+            "iterations_per_trial": 122,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 98.77717730496394,
+            "min_us": 95.59533333333306,
+            "max_us": 103.70085815602886,
+            "iterations_per_trial": 141,
+            "trials": 7
+          },
+          "compatible_decode": {
+            "median_us": 107.08456279069777,
+            "min_us": 100.98196279069789,
+            "max_us": 117.34793953488396,
+            "iterations_per_trial": 215,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-128",
+          "transactions": 128,
+          "memo_bytes": 32,
+          "ordinary_bytes": 5875,
+          "canonical_bytes": 5866,
+          "raw_sha256": "361d984e17b5c1c95b1e790d25211c365b57d503a021c4c1d9157d41e162b0b4",
+          "canonical_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632",
+          "ordinary_encode": {
+            "median_us": 2136.8001428571524,
+            "min_us": 1859.691857142853,
+            "max_us": 2765.56928571428,
+            "iterations_per_trial": 7,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 994.2606190476172,
+            "min_us": 665.5896190476207,
+            "max_us": 1156.6566190476155,
+            "iterations_per_trial": 21,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 3177.005888888895,
+            "min_us": 2802.475333333329,
+            "max_us": 3266.461333333331,
+            "iterations_per_trial": 9,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 1209.6979499999975,
+            "min_us": 1126.277550000009,
+            "max_us": 1272.7848499999936,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 1213.1712400000015,
+            "min_us": 1102.2173999999995,
+            "max_us": 1277.3475599999983,
+            "iterations_per_trial": 25,
+            "trials": 7
+          },
+          "compatible_decode": {
+            "median_us": 1194.4617916666687,
+            "min_us": 1105.7844166666748,
+            "max_us": 1259.267541666664,
+            "iterations_per_trial": 24,
+            "trials": 7
+          }
+        },
+        {
+          "name": "blob-64k",
+          "transactions": 1,
+          "memo_bytes": 65536,
+          "ordinary_bytes": 65676,
+          "canonical_bytes": 65667,
+          "raw_sha256": "028a55a9e2060e78ad1d86a601f8aca782bc12f0f6a3705886a4b5acdf71529c",
+          "canonical_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3",
+          "ordinary_encode": {
+            "median_us": 445.6263124999964,
+            "min_us": 390.736375000003,
+            "max_us": 453.35912499999154,
+            "iterations_per_trial": 32,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 170.59095312500006,
+            "min_us": 144.02723437500242,
+            "max_us": 198.35521093749975,
+            "iterations_per_trial": 128,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 296.18187499999067,
+            "min_us": 287.6436500000068,
+            "max_us": 668.9863999999943,
+            "iterations_per_trial": 40,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 609.6952000000101,
+            "min_us": 590.9242500000119,
+            "max_us": 649.8846500000127,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 534.913500000016,
+            "min_us": 509.52850000000655,
+            "max_us": 605.5158749999995,
+            "iterations_per_trial": 24,
+            "trials": 7
+          },
+          "compatible_decode": {
+            "median_us": 1247.4129583333327,
+            "min_us": 634.1979583333455,
+            "max_us": 1260.374249999984,
+            "iterations_per_trial": 24,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-1024",
+          "transactions": 1024,
+          "memo_bytes": 0,
+          "ordinary_bytes": 35262,
+          "canonical_bytes": 35253,
+          "raw_sha256": "b64179f3c1a622fd6f5d17cc1ce33214bdfd4b484f0c745b0c98490d34bd21aa",
+          "canonical_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31",
+          "ordinary_encode": {
+            "median_us": 13078.828499999872,
+            "min_us": 12836.818499999936,
+            "max_us": 13443.74300000004,
+            "iterations_per_trial": 2,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 7480.930666666761,
+            "min_us": 5634.549333333325,
+            "max_us": 8534.01233333337,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 21519.417499999916,
+            "min_us": 18930.79599999987,
+            "max_us": 21947.382000000063,
+            "iterations_per_trial": 2,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 9194.228333333436,
+            "min_us": 8103.096333333421,
+            "max_us": 11275.902000000011,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 8378.803999999946,
+            "min_us": 8312.399500000083,
+            "max_us": 9435.038000000077,
+            "iterations_per_trial": 2,
+            "trials": 7
+          },
+          "compatible_decode": {
+            "median_us": 8301.965999999993,
+            "min_us": 7317.630666666749,
+            "max_us": 8891.478666666444,
+            "iterations_per_trial": 3,
+            "trials": 7
+          }
+        }
+      ]
+    },
+    "ocaml": {
+      "language": "OCaml",
+      "ordinary_codec": "No standalone OCaml ordinary binary Candid codec in the audited repositories",
+      "cases": [
+        {
+          "name": "small",
+          "ordinary_bytes": 305,
+          "canonical_bytes": 296,
+          "canonicalize_preencoded": {
+            "median_us": 8.953942,
+            "min_us": 8.808242,
+            "max_us": 9.710711,
+            "allocated_bytes_per_op": 19192,
+            "iterations_per_trial": 1476,
+            "trials": 7,
+            "checksum": 0
+          }
+        },
+        {
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "canonical_bytes": 5866,
+          "canonicalize_preencoded": {
+            "median_us": 113.146955,
+            "min_us": 111.4997,
+            "max_us": 122.646852,
+            "allocated_bytes_per_op": 289697,
+            "iterations_per_trial": 110,
+            "trials": 7,
+            "checksum": 0
+          }
+        },
+        {
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "canonical_bytes": 65667,
+          "canonicalize_preencoded": {
+            "median_us": 34.636259,
+            "min_us": 33.261095,
+            "max_us": 35.057749,
+            "allocated_bytes_per_op": 339800,
+            "iterations_per_trial": 280,
+            "trials": 7,
+            "checksum": 0
+          }
+        },
+        {
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "canonical_bytes": 35253,
+          "canonicalize_preencoded": {
+            "median_us": 1026.94411,
+            "min_us": 1020.682485,
+            "max_us": 1093.839344,
+            "allocated_bytes_per_op": 2213125,
+            "iterations_per_trial": 19,
+            "trials": 7,
+            "checksum": 35253
+          }
+        }
+      ]
+    },
+    "motoko": {
+      "language": "Motoko",
+      "runtime": "WASI / Wasmtime with fuel instrumentation; fuel is not IC cycles",
+      "cases": [
+        {
+          "name": "small",
+          "ordinary_bytes": 305,
+          "canonical_bytes": 296,
+          "ordinary_encode": {
+            "median_us": 5.355544999999999,
+            "min_us": 5.263895,
+            "max_us": 5.472440000000001,
+            "median_fuel": 27892.425,
+            "allocated_bytes_per_op": 984.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 175.6371,
+            "min_us": 173.1311,
+            "max_us": 185.05110000000002,
+            "median_fuel": 800417.6666666666,
+            "allocated_bytes_per_op": 58632.0,
+            "iterations_per_trial": 30,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 182.24343333333334,
+            "min_us": 180.31210000000002,
+            "max_us": 187.87943333333334,
+            "median_fuel": 828131.8,
+            "allocated_bytes_per_op": 59616.0,
+            "iterations_per_trial": 30,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 9.285535,
+            "min_us": 8.99669,
+            "max_us": 10.35944,
+            "median_fuel": 65055.855,
+            "allocated_bytes_per_op": 1912.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 9.232190000000001,
+            "min_us": 9.05884,
+            "max_us": 9.300285,
+            "median_fuel": 64021.13,
+            "allocated_bytes_per_op": 1904.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "canonical_bytes": 5866,
+          "ordinary_encode": {
+            "median_us": 143.64079999999998,
+            "min_us": 141.8633,
+            "max_us": 144.6043,
+            "median_fuel": 843959.35,
+            "allocated_bytes_per_op": 21048.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 1793.201,
+            "min_us": 1775.5110000000002,
+            "max_us": 1860.7743333333335,
+            "median_fuel": 7858284.0,
+            "allocated_bytes_per_op": 368248.0,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 1926.8376666666666,
+            "min_us": 1905.9573333333335,
+            "max_us": 2003.8310000000001,
+            "median_fuel": 8701973.333333334,
+            "allocated_bytes_per_op": 389296.0,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 251.5627,
+            "min_us": 247.80865,
+            "max_us": 253.64520000000002,
+            "median_fuel": 1865739.25,
+            "allocated_bytes_per_op": 52816.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 254.95614999999998,
+            "min_us": 252.64665,
+            "max_us": 265.93265,
+            "median_fuel": 1864707.0,
+            "allocated_bytes_per_op": 52808.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          }
+        },
+        {
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "canonical_bytes": 65667,
+          "ordinary_encode": {
+            "median_us": 63.79822,
+            "min_us": 63.09962,
+            "max_us": 65.51147,
+            "median_fuel": 139229.955,
+            "allocated_bytes_per_op": 131504.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 1924.617,
+            "min_us": 1882.307,
+            "max_us": 2136.947,
+            "median_fuel": 15310397.0,
+            "allocated_bytes_per_op": 640704.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 1967.728,
+            "min_us": 1947.227,
+            "max_us": 2198.057,
+            "median_fuel": 15449555.0,
+            "allocated_bytes_per_op": 772208.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 34.61246,
+            "min_us": 33.247510000000005,
+            "max_us": 35.599050000000005,
+            "median_fuel": 87093.22,
+            "allocated_bytes_per_op": 66184.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 33.61146,
+            "min_us": 32.777055,
+            "max_us": 33.90306,
+            "median_fuel": 86057.655,
+            "allocated_bytes_per_op": 66176.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "canonical_bytes": 35253,
+          "ordinary_encode": {
+            "median_us": 1095.0321,
+            "min_us": 1084.1571,
+            "max_us": 1108.2821,
+            "median_fuel": 6714136.7,
+            "allocated_bytes_per_op": 144328.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 12956.524,
+            "min_us": 12883.063,
+            "max_us": 13089.653,
+            "median_fuel": 56372474.0,
+            "allocated_bytes_per_op": 2505728.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 14037.122,
+            "min_us": 13928.442,
+            "max_us": 14482.851,
+            "median_fuel": 63086083.0,
+            "allocated_bytes_per_op": 2650056.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 2003.1824000000001,
+            "min_us": 1989.9089499999998,
+            "max_us": 2119.33825,
+            "median_fuel": 14897515.4,
+            "allocated_bytes_per_op": 409848.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 1984.7450000000001,
+            "min_us": 1968.8470000000002,
+            "max_us": 1992.37395,
+            "median_fuel": 14896474.75,
+            "allocated_bytes_per_op": 409840.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          }
+        }
+      ],
+      "wasm_sha256": "d32ff777cc9efe4e1188375bf6700f207b1a143e8fa8ab87c581730652dd7b42",
+      "compiler": "Motoko compiler (source 1.16.1-44-g9384e1076)"
+    },
+    "motoko-wasm": {
+      "language": "Rust/Wasm in Motoko RTS",
+      "runtime": "WASI / Wasmtime with fuel instrumentation; fuel is not IC cycles",
+      "cases": [
+        {
+          "name": "small",
+          "ordinary_bytes": 305,
+          "canonical_bytes": 296,
+          "ordinary_encode": {
+            "median_us": 5.259145,
+            "min_us": 5.208445,
+            "max_us": 5.528745,
+            "median_fuel": 27892.425,
+            "allocated_bytes_per_op": 984.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 12.526666666666667,
+            "min_us": 12.284633333333334,
+            "max_us": 12.794633333333334,
+            "median_fuel": 46551.96666666667,
+            "allocated_bytes_per_op": 4768.0,
+            "iterations_per_trial": 30,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 17.35963333333333,
+            "min_us": 16.88596666666667,
+            "max_us": 17.757633333333334,
+            "median_fuel": 74272.4,
+            "allocated_bytes_per_op": 5752.0,
+            "iterations_per_trial": 30,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 9.37029,
+            "min_us": 9.36324,
+            "max_us": 9.533785,
+            "median_fuel": 65055.855,
+            "allocated_bytes_per_op": 1912.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 9.297039999999999,
+            "min_us": 9.28594,
+            "max_us": 10.977385,
+            "median_fuel": 64021.13,
+            "allocated_bytes_per_op": 1904.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-128",
+          "ordinary_bytes": 5875,
+          "canonical_bytes": 5866,
+          "ordinary_encode": {
+            "median_us": 142.1938,
+            "min_us": 139.1363,
+            "max_us": 145.67635,
+            "median_fuel": 843959.35,
+            "allocated_bytes_per_op": 21048.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 119.09333333333332,
+            "min_us": 117.24333333333334,
+            "max_us": 127.06966666666666,
+            "median_fuel": 541747.6666666666,
+            "allocated_bytes_per_op": 44992.0,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 262.57599999999996,
+            "min_us": 256.673,
+            "max_us": 277.393,
+            "median_fuel": 1385251.6666666667,
+            "allocated_bytes_per_op": 66040.0,
+            "iterations_per_trial": 3,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 258.12315,
+            "min_us": 256.48715000000004,
+            "max_us": 262.79470000000003,
+            "median_fuel": 1865739.25,
+            "allocated_bytes_per_op": 52816.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 258.14265,
+            "min_us": 256.58465,
+            "max_us": 270.28615,
+            "median_fuel": 1864707.0,
+            "allocated_bytes_per_op": 52808.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          }
+        },
+        {
+          "name": "blob-64k",
+          "ordinary_bytes": 65676,
+          "canonical_bytes": 65667,
+          "ordinary_encode": {
+            "median_us": 62.09237,
+            "min_us": 60.54347,
+            "max_us": 62.64412,
+            "median_fuel": 139229.96,
+            "allocated_bytes_per_op": 131504.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 167.74,
+            "min_us": 162.56,
+            "max_us": 189.05,
+            "median_fuel": 170458.0,
+            "allocated_bytes_per_op": 134816.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 226.139,
+            "min_us": 224.21,
+            "max_us": 375.04,
+            "median_fuel": 309427.0,
+            "allocated_bytes_per_op": 266320.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 33.325255,
+            "min_us": 32.93166,
+            "max_us": 33.772705,
+            "median_fuel": 87093.325,
+            "allocated_bytes_per_op": 66184.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 33.670505,
+            "min_us": 33.008755,
+            "max_us": 33.792755,
+            "median_fuel": 86057.655,
+            "allocated_bytes_per_op": 66176.0,
+            "iterations_per_trial": 200,
+            "trials": 7
+          }
+        },
+        {
+          "name": "records-1024",
+          "ordinary_bytes": 35262,
+          "canonical_bytes": 35253,
+          "ordinary_encode": {
+            "median_us": 1099.1316000000002,
+            "min_us": 1088.2761500000001,
+            "max_us": 1107.5101,
+            "median_fuel": 6714135.65,
+            "allocated_bytes_per_op": 144328.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonicalize_preencoded": {
+            "median_us": 743.429,
+            "min_us": 729.479,
+            "max_us": 767.169,
+            "median_fuel": 4089005.0,
+            "allocated_bytes_per_op": 314048.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "canonical_encode_pipeline": {
+            "median_us": 1882.548,
+            "min_us": 1832.507,
+            "max_us": 1979.047,
+            "median_fuel": 10803003.0,
+            "allocated_bytes_per_op": 458376.0,
+            "iterations_per_trial": 1,
+            "trials": 7
+          },
+          "ordinary_decode": {
+            "median_us": 2042.51985,
+            "min_us": 2038.1499,
+            "max_us": 2088.3343,
+            "median_fuel": 14897516.45,
+            "allocated_bytes_per_op": 409848.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          },
+          "canonical_decode": {
+            "median_us": 2033.9348999999997,
+            "min_us": 2023.3324,
+            "max_us": 2042.1544000000001,
+            "median_fuel": 14896473.7,
+            "allocated_bytes_per_op": 409840.0,
+            "iterations_per_trial": 20,
+            "trials": 7
+          }
+        }
+      ],
+      "wasm_sha256": "08c1bd1dc564876897fb665bdb901efe80b61e53c6b3078e3209b16af891c355",
+      "compiler": "Motoko compiler (source 1.16.1-44-g9384e1076-dirty)"
+    }
+  }
+}

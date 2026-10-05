@@ -1,0 +1,155 @@
+{
+  "profile": "cx",
+  "package_version": "1.0.0",
+  "compiler_base_commit": "9384e1076bf71c1c44b78627b9191011d8543deb",
+  "compiler_typed_operator": "to_candid_canonical",
+  "compiler_inbound_primitive": "Prim.canonicalizeCandid",
+  "standalone_typed_entry": "cx_encode_typed / TypedEncoder.encode_args",
+  "manifest_sha256": "2095d6f6e8ed0cdc618904a03b32bdd5bfb1f1348fea50bb2de12254cb1a6c1b",
+  "compiler_patch_sha256": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+  "source_fingerprint_count": 76,
+  "artifact_fingerprints": {
+    "cx.wasm": {
+      "sha256": "8789214dae6638840c021ab9f5730aa7f64baadb9a086b0af415672bb57f2cec",
+      "bytes": 61849
+    },
+    "mo-rts.wasm": {
+      "sha256": "13832fceda4cf6ebd7778f8cac8573d1a714a2db90297315c8e3bb134a08e7ce",
+      "bytes": 283788
+    },
+    "mo-rts-debug.wasm": {
+      "sha256": "185a6cc7893b4682ba495aa8adb13c22142b5c15892d4d9c18a3babfd12ef852",
+      "bytes": 9641562
+    }
+  },
+  "compiler_build_fingerprints": {
+    "src/_build/default/exes/moc.exe": {
+      "sha256": "0b13d798a8836a4aa95412d0fbc80614a254a38f406e40298d7284c2e288988d",
+      "bytes": 17189776
+    },
+    "src/_build/default/js/moc_js.bc.js": {
+      "sha256": "8192d4744b073fd5d7a1357028be0ca78037977bbcc9678a6f9502e044ad5267",
+      "bytes": 3140427
+    },
+    "src/_build/default/js/moc_interpreter.bc.js": {
+      "sha256": "ce33fb33de7cf5fbf274f03a76f4caa7aac1fdf72b9f04c391f866218f54bb8c",
+      "bytes": 2002173
+    }
+  },
+  "validation": {
+    "typed_memory_abi": {
+      "profile": "cx",
+      "seed": 830749,
+      "goldens": 16,
+      "scalar_properties": 837,
+      "malformed_typed_abi_cases": 18,
+      "arena_reuse_calls": 100,
+      "memory_bytes": 1114112
+    },
+    "inbound_standalone_normalizer": {
+      "positive_messages": 202,
+      "idempotence_checks": 202,
+      "negative_cases": 30,
+      "arena_reuse_calls": 1000,
+      "module_imports": 0,
+      "memory_bytes": 1114112,
+      "scratch_limit_trap_and_reset": true
+    },
+    "source_interpreter_and_compiled_rts_bridge": {
+      "raw_messages_per_runtime": 202,
+      "idempotence_checks_per_runtime": 80,
+      "malformed_trap_checks_per_runtime": 30,
+      "runtimes": [
+        "native OCaml interpreter",
+        "Motoko compiler-emitted memory64 Wasm/RTS"
+      ],
+      "typed_recovery_smoke": true,
+      "rts_scratch_limit_trap": true,
+      "direct_scalar_resource_traps_per_runtime": 3
+    },
+    "javascript": {
+      "js_interpreter_fixtures": 2,
+      "js_compiler_wasm_fixtures": 1,
+      "profile": "cx"
+    }
+  },
+  "compiler_targeted_test_runner": {
+    "passed": 10,
+    "command": "test-runner -b -f 'cx-candid|cx-direct|idl-ops|idl-decoding-bug|leb-random' test/run test/fail test/trap"
+  },
+  "architecture": {
+    "profile": "cx",
+    "passed": 16,
+    "checks": [
+      "dedicated typed IR branch retains native values",
+      "typed IR branch calls direct helper",
+      "typed IR branch bypasses ordinary serializer",
+      "direct helper passes source metadata to heap encoder",
+      "direct helper has no ordinary serializer call",
+      "source metadata uses CXTY rather than DIDL",
+      "RTS entry derives and emits from native source handles",
+      "RTS entry parses only source metadata",
+      "RTS entry does not invoke inbound parser or typed-tree builder",
+      "native adapter implements source visitor",
+      "native adapter does not construct compound payload nodes",
+      "shape visit does not read scalar payloads",
+      "emission reads scalar payloads directly",
+      "source visitor does not invoke inbound parser",
+      "standalone typed ABI directly encodes typed nodes",
+      "standalone typed ABI bypasses inbound normalizer"
+    ],
+    "source_sha256": {
+      "codegen": "647735a4ac6592582290e65badf354fe322a3e8158bfc827e8f5a6df7b85d920",
+      "rts": "4db4e99e098ba76c80126fdd355c60781e85a976fe0beddfb5671a2faee71448",
+      "visitor": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+      "standalone": "1fe3f54aef9c838d491cf9de4a9101a25319aa77b4620a4b1dff940599752a49"
+    },
+    "scope": "Source call-chain guards complement golden byte, decoder, disabled-parser SDK, and compiler runtime tests."
+  },
+  "clean_patch_apply": {
+    "matching_files": 67,
+    "pinned_pristine_base": "9384e1076bf71c1c44b78627b9191011d8543deb"
+  },
+  "commands": [
+    "python3 wasm/build.py --prepared",
+    "/srv/shared/code/motoko_candid/research/candid-canonical/.venv/bin/python wasm/test_typed.py",
+    "/srv/shared/code/motoko_candid/research/candid-canonical/.venv/bin/python wasm/test.py --resource-stress",
+    "python3 wasm/test_bridge.py --resource-stress (inside the Motoko Nix shell)",
+    "node wasm/test_compiler_js.cjs (inside the Motoko Nix shell)",
+    "python3 wasm/test_architecture.py --report _out/wasm-architecture-final.json"
+  ],
+  "validation_script_sha256": {
+    "wasm/build.py": "8ccea7b2ac8394df965c8953ba69bcb278cd5fa3b34d65aeccc0559a0a7a0a2d",
+    "wasm/runtime.py": "9986027fbe5728160bb52ffb3ecedd30334501708452617a5c8442f24db93884",
+    "wasm/test_typed.py": "2e905c6f1ca4752f824a95b703a84240e7803662b7c11badd7b901ef9936ce7d",
+    "wasm/test.py": "59923d731e91fa6a2dfefcbd36140c88f6a15949568880997afa30490dee287a",
+    "wasm/test_bridge.py": "994602a2289c5c746fb01ab547a1112f64023774da8f7ef442e64f1822fec41c",
+    "wasm/test_compiler_js.cjs": "949a9b4403944e8505d0f45225486ec5519fad56a54ccf8a054a38a8d9df1810",
+    "wasm/test_architecture.py": "ed654eb6bc21330bac3c49c9ca250ef9b56dcad8fbb6d4214da72c175e497768"
+  },
+  "typed_abi_precondition": "Each vector represents one uniform source Candid schema; record presence varies only through absent optional fields. Option contents and selected variant cases may differ.",
+  "build_observations": [
+    "Native compiler and release/debug RTS build successfully without new warnings.",
+    "The JS build retains the existing missing caml_unix_map_file_bytecode warning; both interpreter fixtures and JS compiler-emitted direct Wasm fixture pass.",
+    "JS artifacts embed the final RTS with the upstream generator; the development loader source is restored byte-identically to the pinned pristine base."
+  ],
+  "source_refresh": {
+    "rust_typed_rs_sha256": "8825fd5d1d364851c79161efee5d033ee04eca9cd280507b4986d246548d98e5",
+    "all_rust_sources_copied_to_rts": true,
+    "all_three_wasm_artifacts_byte_identical_to_previous_build": true,
+    "all_three_compiler_artifacts_byte_identical_to_previous_build": true,
+    "changelog_entry": "Next entry for to_candid_canonical and Prim.canonicalizeCandid ends (#NNNN).",
+    "pr_number_placeholder": "Reserved for eventual upstream submission; no PR has been created.",
+    "fixed_cx_wire_contract_unchanged": true
+  },
+  "validation_capture_sha256": {
+    "_out/wasm-final-cache-build.log": "d76e77d8d3ce112ce8fa828bf20dec7940fe9eb91b4852dd273a2f4d77284485",
+    "_out/wasm-final-typed.json": "529d840b2c8f36b6aa933931bfcca82869ee5cd551e10a25906786c31e64b1d5",
+    "_out/wasm-final-normalizer.json": "b5ce0743a4a7527dd36fe691f6c882c8c45a2cb9b0bee74840c7e593ac344a5b",
+    "_out/wasm-final-bridge.json": "25560de860ba92950dde6c2d4c403482ae15ad4600587706dc45f2239f802b06",
+    "_out/wasm-final-js.json": "1a45dd8f696de07d78db5085c0daae62baeeee805fbe410f870ef01bb2a7f438",
+    "_out/wasm-architecture-final.json": "662a309d88d89c9c53ad63a7bc90f5842b164f5e83484acd8e178ebea78a1033",
+    "_out/changelog-patch-dry-run.txt": "d10be780231ae367e5892241b25b18c1059506a7270ee30bdffafbf3ec52aa8d",
+    "_out/changelog-patch-clean-apply.txt": "53f2b3c0747e2dba2d4c3fb3b7864c93d07f495a3c73a846d8da56447480115d"
+  }
+}

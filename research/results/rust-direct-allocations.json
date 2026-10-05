@@ -1,0 +1,353 @@
+{
+  "profile": "cx",
+  "package_version": "1.0.0",
+  "license": "MIT",
+  "backend": "Rust CandidType direct typed callbacks",
+  "method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input",
+  "toolchain": "rustc 1.98.1",
+  "fixture": {
+    "path": "_out/rust-after/bench.json",
+    "sha256": "cf425460012cbf5c50828625dd27aff888fe2efcfcf4fe30371bbb84f5a5436b",
+    "origin": "four shared native Block fixtures, ordinary/canonical payload bytes frozen before direct encoder changes"
+  },
+  "commands": [
+    "rustup run 1.98.1 cargo run --locked --release --manifest-path rust/Cargo.toml --example profile -- _out/rust-after/bench.json > _out/rust-direct-allocations-after-shape-reuse.json",
+    "rustup run 1.98.1 cargo test --locked --all-features --manifest-path rust/Cargo.toml",
+    "rustup run 1.98.1 cargo test --locked --no-default-features --manifest-path rust/Cargo.toml",
+    "rustup run 1.98.1 cargo clippy --locked --all-features --all-targets --manifest-path rust/Cargo.toml -- -D warnings"
+  ],
+  "before_typed_source_sha256": "26a45625a3094ebd34a7dcf4943f4b861365715aa747c2e4cd520c7aa2e137d4",
+  "final_sha256": {
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/src/typed.rs": "0c13b04c05ad1eb4169dce347785f72e133b2805e64ac1068dd0333233b136c7",
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "rust/Cargo.toml": "fd83fe1e11837b1efec339b3365191ebcedb6b5610511ac0e0b3280379f0374b",
+    "rust/Cargo.lock": "a1d1bd317593e4920adb41031ece60ad7cdb9e7e02b9adf8b0433c2b5f95caa5",
+    "rust/examples/profile.rs": "cbee607fb6a2c12b037fd14ac7ebdfcc956deaaeef62730f47957c5517c135bf",
+    "rust/examples/bench.rs": "e44472a9e0447a8b960ab8c2d632fb8f7941056f19dcaf17be42924926bffac7",
+    "rust/examples/support/mod.rs": "3b2b3dbda5c82b8166c995c0504b76fda1f4356ce4c3ccab923922fdf1413b3c",
+    "rust/README.md": "eb8a2968d3d7a3ad0ab8420051efa41ee77f790169efd582c0e2995dd78fbc1e",
+    "rust/tests/direct.rs": "6c5718d3d04792c6e35a5de4bbb99084dd8f85f424b6d58589e30420598e73f9",
+    "rust/tests/visitor.rs": "672ec189400560bab0c2c618c4b24d9a40bf3971946079acad8153d7a879a928",
+    "spec/CanonicalValues.md": "8cd4fda70c17f4be00d5f61102f57b689469ae17302294f2656c28cbe3d653e4",
+    "tests/vectors.json": "878efe14b3f4fb9727dc409bb6d4be20571e46e3afb67e20d7f382975fa4bf86"
+  },
+  "profiler_artifact_sha256": "ddd8ed2369e2d80039f38f34e15d505511c8d2d0c2d40ba4d94de55ad24cbf2c",
+  "before_shape_reuse": {
+    "cases": [
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 11155,
+          "allocation_requests": 102,
+          "operation_end_measured_allocation_bytes": 5527,
+          "peak_live_allocation_bytes": 7119,
+          "retained_output_capacity_bytes": 407
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 11898,
+          "allocation_requests": 116,
+          "operation_end_measured_allocation_bytes": 5494,
+          "peak_live_allocation_bytes": 8743,
+          "retained_output_capacity_bytes": 374
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 3574,
+          "allocation_requests": 36,
+          "operation_end_measured_allocation_bytes": 374,
+          "peak_live_allocation_bytes": 3318,
+          "retained_output_capacity_bytes": 374
+        },
+        "name": "small",
+        "ordinary_encode": {
+          "allocated_bytes": 8324,
+          "allocation_requests": 80,
+          "operation_end_measured_allocation_bytes": 5425,
+          "peak_live_allocation_bytes": 6307,
+          "retained_output_capacity_bytes": 305
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 126382,
+          "allocation_requests": 1342,
+          "operation_end_measured_allocation_bytes": 11382,
+          "peak_live_allocation_bytes": 12974,
+          "retained_output_capacity_bytes": 6262
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 78801,
+          "allocation_requests": 534,
+          "operation_end_measured_allocation_bytes": 11064,
+          "peak_live_allocation_bytes": 45003,
+          "retained_output_capacity_bytes": 5944
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 34264,
+          "allocation_requests": 201,
+          "operation_end_measured_allocation_bytes": 5944,
+          "peak_live_allocation_bytes": 34008,
+          "retained_output_capacity_bytes": 5944
+        },
+        "name": "records-128",
+        "ordinary_encode": {
+          "allocated_bytes": 44537,
+          "allocation_requests": 333,
+          "operation_end_measured_allocation_bytes": 10995,
+          "peak_live_allocation_bytes": 21805,
+          "retained_output_capacity_bytes": 5875
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 73872,
+          "allocation_requests": 72,
+          "operation_end_measured_allocation_bytes": 70889,
+          "peak_live_allocation_bytes": 72473,
+          "retained_output_capacity_bytes": 65769
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 337837,
+          "allocation_requests": 105,
+          "operation_end_measured_allocation_bytes": 70865,
+          "peak_live_allocation_bytes": 202456,
+          "retained_output_capacity_bytes": 65745
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 68337,
+          "allocation_requests": 32,
+          "operation_end_measured_allocation_bytes": 65745,
+          "peak_live_allocation_bytes": 68081,
+          "retained_output_capacity_bytes": 65745
+        },
+        "name": "blob-64k",
+        "ordinary_encode": {
+          "allocated_bytes": 269500,
+          "allocation_requests": 73,
+          "operation_end_measured_allocation_bytes": 70796,
+          "peak_live_allocation_bytes": 202456,
+          "retained_output_capacity_bytes": 65676
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 947791,
+          "allocation_requests": 10302,
+          "operation_end_measured_allocation_bytes": 42863,
+          "peak_live_allocation_bytes": 44455,
+          "retained_output_capacity_bytes": 37743
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 452426,
+          "allocation_requests": 3523,
+          "operation_end_measured_allocation_bytes": 40451,
+          "peak_live_allocation_bytes": 285377,
+          "retained_output_capacity_bytes": 35331
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 245251,
+          "allocation_requests": 1396,
+          "operation_end_measured_allocation_bytes": 35331,
+          "peak_live_allocation_bytes": 244995,
+          "retained_output_capacity_bytes": 35331
+        },
+        "name": "records-1024",
+        "ordinary_encode": {
+          "allocated_bytes": 207175,
+          "allocation_requests": 2127,
+          "operation_end_measured_allocation_bytes": 40382,
+          "peak_live_allocation_bytes": 78840,
+          "retained_output_capacity_bytes": 35262
+        }
+      }
+    ],
+    "language": "Rust",
+    "method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input"
+  },
+  "after_shape_reuse": {
+    "cases": [
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 9475,
+          "allocation_requests": 86,
+          "operation_end_measured_allocation_bytes": 5527,
+          "peak_live_allocation_bytes": 7169,
+          "retained_output_capacity_bytes": 407
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 11898,
+          "allocation_requests": 116,
+          "operation_end_measured_allocation_bytes": 5494,
+          "peak_live_allocation_bytes": 8743,
+          "retained_output_capacity_bytes": 374
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 3574,
+          "allocation_requests": 36,
+          "operation_end_measured_allocation_bytes": 374,
+          "peak_live_allocation_bytes": 3318,
+          "retained_output_capacity_bytes": 374
+        },
+        "name": "small",
+        "ordinary_encode": {
+          "allocated_bytes": 8324,
+          "allocation_requests": 80,
+          "operation_end_measured_allocation_bytes": 5425,
+          "peak_live_allocation_bytes": 6307,
+          "retained_output_capacity_bytes": 305
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 30710,
+          "allocation_requests": 416,
+          "operation_end_measured_allocation_bytes": 11382,
+          "peak_live_allocation_bytes": 13024,
+          "retained_output_capacity_bytes": 6262
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 78801,
+          "allocation_requests": 534,
+          "operation_end_measured_allocation_bytes": 11064,
+          "peak_live_allocation_bytes": 45003,
+          "retained_output_capacity_bytes": 5944
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 34264,
+          "allocation_requests": 201,
+          "operation_end_measured_allocation_bytes": 5944,
+          "peak_live_allocation_bytes": 34008,
+          "retained_output_capacity_bytes": 5944
+        },
+        "name": "records-128",
+        "ordinary_encode": {
+          "allocated_bytes": 44537,
+          "allocation_requests": 333,
+          "operation_end_measured_allocation_bytes": 10995,
+          "peak_live_allocation_bytes": 21805,
+          "retained_output_capacity_bytes": 5875
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 73872,
+          "allocation_requests": 72,
+          "operation_end_measured_allocation_bytes": 70889,
+          "peak_live_allocation_bytes": 72473,
+          "retained_output_capacity_bytes": 65769
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 337837,
+          "allocation_requests": 105,
+          "operation_end_measured_allocation_bytes": 70865,
+          "peak_live_allocation_bytes": 202456,
+          "retained_output_capacity_bytes": 65745
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 68337,
+          "allocation_requests": 32,
+          "operation_end_measured_allocation_bytes": 65745,
+          "peak_live_allocation_bytes": 68081,
+          "retained_output_capacity_bytes": 65745
+        },
+        "name": "blob-64k",
+        "ordinary_encode": {
+          "allocated_bytes": 269500,
+          "allocation_requests": 73,
+          "operation_end_measured_allocation_bytes": 70796,
+          "peak_live_allocation_bytes": 202456,
+          "retained_output_capacity_bytes": 65676
+        }
+      },
+      {
+        "canonical_encode_direct": {
+          "allocated_bytes": 173631,
+          "allocation_requests": 2806,
+          "operation_end_measured_allocation_bytes": 42863,
+          "peak_live_allocation_bytes": 44505,
+          "retained_output_capacity_bytes": 37743
+        },
+        "canonical_encode_pipeline": {
+          "allocated_bytes": 452426,
+          "allocation_requests": 3523,
+          "operation_end_measured_allocation_bytes": 40451,
+          "peak_live_allocation_bytes": 285377,
+          "retained_output_capacity_bytes": 35331
+        },
+        "canonicalize_preencoded": {
+          "allocated_bytes": 245251,
+          "allocation_requests": 1396,
+          "operation_end_measured_allocation_bytes": 35331,
+          "peak_live_allocation_bytes": 244995,
+          "retained_output_capacity_bytes": 35331
+        },
+        "name": "records-1024",
+        "ordinary_encode": {
+          "allocated_bytes": 207175,
+          "allocation_requests": 2127,
+          "operation_end_measured_allocation_bytes": 40382,
+          "peak_live_allocation_bytes": 78840,
+          "retained_output_capacity_bytes": 35262
+        }
+      }
+    ],
+    "language": "Rust",
+    "method": "System allocator requested bytes, counting whole realloc requests; fixtures and type-cache warmup outside counters; typed encoders' own schema allocations included; excludes allocator metadata and pre-existing input"
+  },
+  "cases": [
+    {
+      "name": "small",
+      "direct_allocated_bytes_before": 11155,
+      "direct_allocated_bytes_after": 9475,
+      "pipeline_allocated_bytes": 11898,
+      "allocation_reduction_from_before_percent": 15.06,
+      "allocation_reduction_from_pipeline_percent": 20.36
+    },
+    {
+      "name": "records-128",
+      "direct_allocated_bytes_before": 126382,
+      "direct_allocated_bytes_after": 30710,
+      "pipeline_allocated_bytes": 78801,
+      "allocation_reduction_from_before_percent": 75.7,
+      "allocation_reduction_from_pipeline_percent": 61.03
+    },
+    {
+      "name": "blob-64k",
+      "direct_allocated_bytes_before": 73872,
+      "direct_allocated_bytes_after": 73872,
+      "pipeline_allocated_bytes": 337837,
+      "allocation_reduction_from_before_percent": 0.0,
+      "allocation_reduction_from_pipeline_percent": 78.13
+    },
+    {
+      "name": "records-1024",
+      "direct_allocated_bytes_before": 947791,
+      "direct_allocated_bytes_after": 173631,
+      "pipeline_allocated_bytes": 452426,
+      "allocation_reduction_from_before_percent": 81.68,
+      "allocation_reduction_from_pipeline_percent": 61.62
+    }
+  ],
+  "scope": [
+    "Measures native System allocator requests, not real IC heap or timings.",
+    "Typed inputs and cache warmup are outside counters; encoders own schema allocations are included.",
+    "Direct callbacks visit original values twice, retaining only Shape metadata. No ordinary message or intermediate typed payload tree is built.",
+    "The no_std DirectSource visitor shares shape joins and wire writer; actual RTS heap and timing results are reported separately."
+  ],
+  "validation": {
+    "all_features_tests_passed": 24,
+    "no_default_features_tests_passed": 15,
+    "all_features_all_targets_clippy": "passed with -D warnings",
+    "typed_direct_frozen_corpus_cases": 93,
+    "typed_direct_frozen_corpus_status": "passed in each of three final full verification runs, including disabled-parser guards",
+    "timings": "not measured in this report; parent controls quiet CPU slot",
+    "independent_callback_review": "passed final typed.rs0c13b04c suite, including scratch reuse, native unit/newtype/variant/byte callbacks, bounds, swallowed errors, root and nested forgotten compounds",
+    "shared_final_verification_reports": [
+      "research/results/direct-final-pass-1.json",
+      "research/results/direct-final-pass-2.json",
+      "research/results/direct-final-pass-3.json"
+    ]
+  },
+  "measurement_stage": "historical shape-reuse stage before bounded source cache",
+  "latest_measurement_report": "research/results/rust-typed-cpu.json"
+}

@@ -1,0 +1,31 @@
+{
+  "seed": "0xcad1d",
+  "iterations": 2500,
+  "counts": {
+    "typed": 5500,
+    "schema_extensions": 2750,
+    "recursive": 250,
+    "float_bits": 2222,
+    "padded_integer": 80,
+    "resource_edges": 4,
+    "mutations": 5000,
+    "accepted_mutations": 476,
+    "upstream_decoding_losses": 100,
+    "sdk_recursive_field_losses": 388
+  },
+  "rust_differential": true,
+  "cases": 12811,
+  "limitations": [
+    {
+      "id": "tuple-missing-leading-option",
+      "canonical": "4449444c016c0101710100026f6b",
+      "result": "Expected type 'record {opt nat; text}', but received non-tuple type 'record {_1_:text}'"
+    },
+    {
+      "id": "tuple-missing-trailing-option",
+      "canonical": "4449444c016c0100710100026f6b",
+      "result": "Tuple mismatch: expected 2 components, but received 1"
+    }
+  ],
+  "canonical_failures": []
+}

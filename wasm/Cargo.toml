@@ -1,0 +1,19 @@
+[package]
+name = "cx-wasm"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candidx = { path = "../rust", default-features = false }
+
+[profile.release]
+panic = "abort"
+lto = true
+opt-level = 3
+codegen-units = 1
+strip = "debuginfo"
