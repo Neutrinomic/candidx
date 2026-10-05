@@ -1,0 +1,58 @@
+{
+  "status": "pass",
+  "source_files": 83,
+  "sources_changed": false,
+  "full_fixed_cross_decoder_original_recoveries": 930,
+  "seed_cross_decoder_original_recoveries": 43470,
+  "seed_reports": {
+    "cad1d": {
+      "path": "_out/wasm-minimal-fuzz-cad1d-500/report.json",
+      "sha256": "cceea48a02909801a851f09db4a75fa03305fd1eabbfecb92003d882f90a3d44",
+      "typed_cases": 1130,
+      "extension_pairs": 565,
+      "normalizer_messages": 5664,
+      "original_value_recoveries": 14490,
+      "vanilla_sdk_caveats": 352
+    },
+    "135288c": {
+      "path": "_out/wasm-minimal-fuzz-135288c-500/report.json",
+      "sha256": "8174f77edc17feab8f0b48fbfb7427573e1b3b6d4d788c15879102a2ada0f333",
+      "typed_cases": 1130,
+      "extension_pairs": 565,
+      "normalizer_messages": 5664,
+      "original_value_recoveries": 14490,
+      "vanilla_sdk_caveats": 346
+    },
+    "13579bdf": {
+      "path": "_out/wasm-minimal-fuzz-13579bdf-500/report.json",
+      "sha256": "688990b670fc125da9cacccc78da9d0b558a83512e22928cd356bd7ffaf89a92",
+      "typed_cases": 1130,
+      "extension_pairs": 565,
+      "normalizer_messages": 5664,
+      "original_value_recoveries": 14490,
+      "vanilla_sdk_caveats": 328
+    }
+  },
+  "bridge_typed_cases": 95,
+  "bridge_compiled_original_recoveries": 95,
+  "bridge_cold_integer_recoveries": 3,
+  "bridge_resource_traps_per_runtime": 10,
+  "bridge_depth256_empty_vector_byte_checks_per_runtime": 2,
+  "architecture_checks": 43,
+  "interpreter_ordinary_decoder": "unavailable; direct bytes checked against independent oracle",
+  "captures": {
+    "fixed": {
+      "path": "_out/wasm-minimal-verify-final/results.json",
+      "sha256": "2c1f33134dc3756c9a03d2798be81760797503891ae343a13a2b31f841601106"
+    },
+    "bridge": {
+      "path": "_out/wasm-minimal-bridge-final/report.json",
+      "sha256": "60ad27e1433cc866e4692aede53d0a4188ab0920bf4aeab77ed665bfeb98834f"
+    },
+    "architecture": {
+      "path": "_out/wasm-minimal-architecture-final.json",
+      "sha256": "9b102d0ff6b821800597be8a0a5803b39419ee675d0865d6092c9f2be2fd93c0"
+    }
+  },
+  "source_freeze": "_out/wasm-minimal-source-freeze.json"
+}

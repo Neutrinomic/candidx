@@ -98,19 +98,25 @@ async function call(canister, method, types = [], values = [], replyTypes = [], 
 async function stats(canister) { return (await call(canister, 'stats', [], [], [Stats], true))[0]; }
 async function collect(canister) {
   let current;
+  let instructions = 0n;
   // Fixed increments: occupied heap cannot converge while the current 64 MiB
   // allocation partition retains garbage and GC creates fresh mark bitmaps.
   for (let step = 0; step < 4; step++) {
     await call(canister, '__motoko_gc_trigger');
     current = await stats(canister);
+    // This counter belongs to the last update, not the canister lifetime.
+    instructions += current.collectorInstructions;
   }
-  return { ...current, increments: 4 };
+  return { ...current, increments: 4, forcedGcInstructions: instructions };
 }
 const report = { label: options.label, recorded_utc: new Date().toISOString(), profile: 'cx',
   wasm_sha256: sha(wasm), trials: options.trials,
   phases, stress_phase: phases[stressPhase],
+  stress_limits: { allocation_target_bytes: 72 * 1024 * 1024, maximum_calls: 20_000,
+    estimated_instruction_budget: 5_000_000_000 },
   method: 'Fresh local IC canister per workload/trial; clear previous output, force GC, execute one operation, retain output, force GC; no hashing inside canister',
   heap_semantics: 'Before/after snapshots exclude reply serialization. Operation-end occupied heap is the operation peak when no collection occurs inside the synchronous operation. Post-GC occupied heap includes retained data, bookkeeping, and garbage in the current 64 MiB allocation partition (not evacuated). It is not an exact live-object measurement, process RSS, or reserved linear memory.',
+  gc_instruction_semantics: 'Operation-message cleanup GC plus the sum of four subsequent forced GC increments. rts_collector_instructions is a last-message counter, so it is read after each update and never subtracted between snapshots. The clean-state increments are excluded.',
   cases: [] };
 report.source_fingerprints = Object.fromEntries(await Promise.all([
   'benchmarks/heap.mjs', 'benchmarks/runtime_sources.py', 'motoko/src/lib.mo',
@@ -160,6 +166,7 @@ try {
         const clean = await collect(canister);
         const [sample] = await call(canister, 'run', [IDL.Nat, IDL.Nat], [BigInt(phase), 1n], [Measurement]);
         strictEqual(sample.before.reclaimed, sample.after.reclaimed, 'Unexpected GC inside synchronous operation');
+        const afterMessage = await stats(canister);
         const retained = await collect(canister);
         strictEqual((await call(canister, 'check', [], [], [IDL.Bool], true))[0], true, 'Original typed block lost');
         caseResult.measurements.push({ trial, phase: phases[phase], instructions: sample.instructions,
@@ -169,7 +176,9 @@ try {
           clean_heap: clean.heap, retained_heap: retained.heap,
           retained_heap_growth: retained.heap - clean.heap,
           reclaimed_after_gc: retained.reclaimed - clean.reclaimed,
-          gc_instructions: retained.collectorInstructions - clean.collectorInstructions,
+          automatic_gc_instructions: afterMessage.collectorInstructions,
+          forced_gc_instructions: retained.forcedGcInstructions,
+          gc_instructions: afterMessage.collectorInstructions + retained.forcedGcInstructions,
           wasm_memory_before: sample.before.memory, wasm_memory_after: sample.after.memory,
           max_live_ever_after_gc: retained.maxLive,
           forced_gc_increments: retained.increments, output_size: sample.outputSize });
@@ -181,6 +190,7 @@ try {
       const instructionBudgetIterations = Math.max(1, Math.floor(5_000_000_000 / Number(single.instructions)));
       const iterations = BigInt(Math.max(1, Math.min(20_000, allocationTargetIterations, instructionBudgetIterations)));
       const [stress] = await call(canister, 'run', [IDL.Nat, IDL.Nat], [BigInt(stressPhase), iterations], [Measurement]);
+      const afterMessage = await stats(canister);
       const collected = await collect(canister);
       const stressResult = { trial, phase: phases[stressPhase], iterations, allocation_target_iterations: allocationTargetIterations,
         instruction_budget_iterations: instructionBudgetIterations, instructions: stress.instructions,
@@ -189,7 +199,9 @@ try {
         heap_before: stress.before.heap, peak_occupied_heap: stress.after.heap,
         occupied_heap_after_forced_gc: collected.heap,
         reclaimed_bytes: collected.reclaimed - clean.reclaimed,
-        gc_instructions: collected.collectorInstructions - clean.collectorInstructions,
+        automatic_gc_instructions: afterMessage.collectorInstructions,
+        forced_gc_instructions: collected.forcedGcInstructions,
+        gc_instructions: afterMessage.collectorInstructions + collected.forcedGcInstructions,
         output_size: stress.outputSize, wasm_memory_bytes: collected.memory };
       (caseResult.gc_stress ??= []).push(stressResult);
       if (Number(stressResult.allocated_bytes) >= 64 * 1024 * 1024 && stressResult.reclaimed_bytes <= 0n)

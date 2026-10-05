@@ -4,27 +4,28 @@ The primary measurements exercise direct canonical encoding from original
 typed values in Rust, TypeScript, OCaml, and the linked Motoko runtime. The
 temporary native Motoko library retains ordinary encoding followed by
 normalization. Encode-and-normalize controls remain measured separately.
-Hashing is outside every timed operation. Wasm embeddings reuse Rust; they
-are integration paths rather than additional independent codecs.
+Hashing is outside every timed operation. The standalone Wasm ABI reuses Rust.
+The current Motoko integration generates typed Wasm and uses only internal
+Rust shape/header helpers.
 
 ## Encoding and decoding time
 
-Ratios are medians of three within-run ratios, each with seven trials. `2.0x` means twice ordinary encoding wall time. OCaml reports direct microseconds because it has no ordinary binary baseline.
+Ratios are medians of three within-run ratios, each with seven trials. `2.0x` means twice ordinary encoding wall time. OCaml reports direct microseconds because it has no ordinary binary baseline. Rust, TypeScript, OCaml and native-fallback columns retain their earlier captures with unchanged codec sources; compiled Motoko uses the new [matched generated-encoder capture](results-minimal-cpu.json).
 
 | Workload | Rust direct / ordinary | TypeScript direct / ordinary | OCaml direct, µs | Native Motoko fallback / ordinary | Compiled Motoko direct / ordinary |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| small | 1.67x | 0.39x | 13.01 | 34.71x | 2.53x |
+| small | 1.67x | 0.39x | 13.01 | 34.71x | 1.93x |
 | records-128 | 4.36x | 0.52x | 283.79 | 13.28x | 1.40x |
-| blob-64k | 1.04x | 0.35x | 25.88 | 33.37x | 1.11x |
+| blob-64k | 1.04x | 0.35x | 25.88 | 33.37x | 0.57x |
 | records-1024 | 5.03x | 0.57x | 2201.62 | 12.78x | 1.38x |
 
 On these workloads, the TypeScript direct visitor takes 35–57% of ordinary
-SDK encoding time. The compiled Motoko direct path takes 1.11–2.53 times its
+SDK encoding time. The compiled Motoko direct path takes 0.57–1.93 times its
 generated ordinary encoder. Rust's record path remains slower than both its
 ordinary encoder and encode-and-normalize control; its allocation savings
 are reported separately below. The native Motoko fallback remains expensive.
 
-Microseconds per operation, median of three run medians. Phases are timed separately and need not sum. `motoko-wasm` is the actual linked Rust encoder reading Motoko heap values; `motoko` is the native library fallback.
+Microseconds per operation, median of three run medians. Phases are timed separately and need not sum. `motoko-wasm` is the generated typed encoder; its normalization and pipeline columns now use the existing native CandidX library as a control. `motoko` is the native library fallback from the earlier capture. The removed compiler Prim normalizer is not measured as a current API.
 
 | Backend | Workload | Ordinary encode | Direct canonical encode | Normalize | Encode-and-normalize | Ordinary decode | Decode canonical |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -44,10 +45,10 @@ Microseconds per operation, median of three run medians. Phases are timed separa
 | motoko | records-128 | 145.92 | — | 1817.57 | 1945.66 | 256.94 | 260.75 |
 | motoko | blob-64k | 61.55 | — | 1947.13 | 2039.57 | 34.64 | 33.94 |
 | motoko | records-1024 | 1113.85 | — | 12964.28 | 14213.86 | 2020.71 | 2036.48 |
-| motoko-wasm | small | 5.36 | 13.66 | 12.64 | 17.92 | 9.38 | 9.28 |
-| motoko-wasm | records-128 | 147.20 | 208.56 | 122.31 | 269.16 | 256.54 | 259.86 |
-| motoko-wasm | blob-64k | 61.97 | 69.04 | 167.55 | 228.73 | 33.57 | 33.54 |
-| motoko-wasm | records-1024 | 1129.16 | 1547.68 | 748.70 | 1858.27 | 2009.72 | 2014.69 |
+| motoko-wasm | small | 5.23 | 10.02 | 171.72 | 176.59 | 9.06 | 8.97 |
+| motoko-wasm | records-128 | 138.65 | 194.16 | 1716.98 | 1856.01 | 247.91 | 248.64 |
+| motoko-wasm | blob-64k | 59.98 | 34.20 | 1908.86 | 1980.28 | 32.09 | 31.87 |
+| motoko-wasm | records-1024 | 1051.04 | 1446.81 | 12362.39 | 13414.45 | 1927.16 | 1922.94 |
 
 The ordinary SDK decoder supports these benchmark schemas. Its optional compatibility adapter is measured separately; BOM/tuple/recursive-option caveats are documented in the decoder audit.
 
@@ -72,51 +73,67 @@ ranking. Fuel is not IC instructions or cycle charges.
 
 ## Real canister instructions and allocation
 
-The [direct runtime capture](results-heap-rts-direct.json) runs actual canister
+The [generated runtime capture](results-heap-minimal-generated.json) and
+[matched previous bridge](results-heap-minimal-baseline.json) run actual canister
 Wasm through PocketIC 10.0.0, using three fresh canisters per workload and
 `performanceCounter(0)` around each synchronous operation. These are IC
 instructions, not cycles. RPC, installation, verification, and hashing are
 outside the measured operation. The table subtracts the measured 72-byte
 statistics-record control from allocation deltas; the raw report retains it.
 
-| Workload | Direct instructions | Direct / ordinary | Direct allocated bytes | Encode-and-normalize allocated bytes |
-| --- | ---: | ---: | ---: | ---: |
-| small | 100,451 | 2.62x | 5,032 | 5,752 |
-| records-128 | 1,817,339 | 1.59x | 29,968 | 66,040 |
-| blob-64k | 186,969 | 1.31x | 134,712 | 266,320 |
-| records-1024 | 14,169,976 | 1.56x | 188,848 | 458,376 |
-| nat64-4096 | 5,959,521 | 12.40x | 66,584 | 263,544 |
-| text-64k | 242,846 | 1.83x | 131,640 | 262,928 |
-| unicode-64k | 1,856,632 | 14.00x | 131,640 | 262,928 |
+| Workload | Direct instructions | Direct / ordinary | Direct allocated bytes | Previous bridge allocated bytes | Native encode-and-normalize allocated bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| small | 76,898 | 2.01x | 3,288 | 5,032 | 59,616 |
+| records-128 | 1,641,899 | 1.44x | 17,792 | 29,968 | 389,296 |
+| blob-64k | 102,247 | 0.72x | 68,152 | 134,712 | 772,208 |
+| records-1024 | 12,914,097 | 1.42x | 111,688 | 188,848 | 2,650,056 |
+| nat64-4096 | 214,402 | 0.45x | 33,312 | 66,584 | 72,824 |
+| text-64k | 68,496 | 0.52x | 65,848 | 131,640 | 135,344 |
+| unicode-64k | 68,496 | 0.52x | 65,848 | 131,640 | 135,344 |
 
-The 1,024-record block allocates 59% less through the direct heap visitor than
-through the pipeline. Scalar visitation and Unicode validation remain costly:
-the numeric-vector and multibyte-text workloads show why the block ratios
-cannot be generalized to every value. This implementation does not establish
-that direct encoding is always faster or cheaper.
+Record workloads allocate about 41% less than the previous bridge and use
+9–10% fewer IC instructions. Binary/text/numeric-vector allocation is about
+half the previous bridge. Primitive-array shape/sizing bulk paths and native
+text writing remove its expensive scalar visits and repeated UTF-8 validation.
+The record workloads still take 1.42–2.01 times ordinary instructions. The
+ordinary encoder uses exactly the same instruction counts in all seven
+matched old/new workloads. These results do not establish that canonical
+encoding is always faster than ordinary encoding.
 
 The driver retains source data and output, clears previous results, forces four
 GC increments before and after the operation, and records allocation,
 occupied heap, reclaimed bytes, GC instructions, and linear-memory capacity.
 It asserts no reclamation during the single operation, so the measured heap
-increase bounds that operation's temporary occupancy above its starting heap.
+increase gives its temporary occupancy above its starting heap. The new
+1,024-record operation grows occupied heap by 111,760 bytes, including the
+72-byte measurement control, versus 188,920 bytes for the previous bridge.
 
 Post-GC occupied heap is not exact live-object memory: Motoko leaves garbage
 in the current 64 MiB allocation partition and adds collector bookkeeping.
 Repeated direct-encoding batches therefore target 72 MiB allocation, capped
-at 20,000 calls and five billion estimated instructions. All six workloads
-that crossed a partition reclaimed temporary objects in all three trials;
-retained outputs still decoded to the original values. The Nat64-vector batch
-hit its instruction cap before crossing a partition and is not counted as a
+at 20,000 calls and five billion estimated instructions. The generated binary,
+numeric-vector and two text batches allocate at least 64 MiB and reclaim
+temporary objects in all three trials. Small blocks hit the call cap below
+64 MiB of batch allocation but also reclaim: earlier allocations can already
+occupy the current partition. Record batches hit the instruction cap, remain
+below the allocation target and show no reclamation. Retained outputs still
+decode correctly in every case. These capped cases are not counted as a
 separate reclamation proof. Single-operation capacity was 128 MiB; stress
 commonly retained 192 MiB, including runtime reservations. Neither is codec
 live heap or process RSS.
+
+GC instruction measurements sum the operation-message cleanup interval and
+each of four subsequent forced increments. The last-message counter is read
+after every update, rather than subtracted between snapshots. These intervals
+include scheduling/instrumentation overhead even when no collection occurs.
+Older raw reports that subtract this counter cannot establish cumulative GC
+cost; their allocation and cumulative reclaimed-byte deltas remain valid.
 
 The unchanged native Motoko fallback has a separate
 [heap capture](results-heap-native-final.json). Its 1,024-record normalization
 allocates 2,505,728 bytes after control subtraction. This older capture
 measures normalization of preencoded bytes, so it is not directly comparable
-to the direct visitor's complete encoding allocation. Historical optimization
+to the generated encoder's complete encoding allocation. Historical optimization
 comparisons remain in [the adapter report](performance-adapters.md).
 
 ## Native Rust allocation and CPU work
@@ -193,7 +210,7 @@ high-water and capacity. Arena measurements include copied typed host input,
 reconstructed typed nodes, output, and temporaries until reset; Python source
 preparation is outside them. Capacity stays at the largest workload and is not
 live heap. This ABI marshals typed nodes and has different allocation costs
-from Motoko's direct native-heap visitor. Both embeddings enforce a tested
+from Motoko's generated native-value traversal. Both embeddings enforce a tested
 256 MiB scratch limit.
 
 ## Workloads and reproducibility
@@ -218,8 +235,9 @@ These sizes are not an ICRC-3 `Value` comparison or a universal compression
 claim. Extra canister probes use 4,096 Nat64s, 64 KiB ASCII, and 64 KiB UTF-8
 containing 16,384 globe characters.
 
-The three final timing runs use identical source fingerprints and run
-sequentially without competing project builds or tests. Seven trials per
+The earlier three library timing runs and current three paired compiler
+passes retain their source fingerprints and run sequentially without
+competing project builds or tests. Seven trials per
 phase retain their full ranges. The Linux x86_64 host has no exclusive-host
 or CPU-frequency guarantee; deployment capacity needs its own measurements.
 
@@ -230,6 +248,7 @@ Build the optional compiler integration described in [wasm/](../wasm/README.md).
 .venv/bin/python benchmarks/run.py --label direct-final-2 --moc /path/to/moc --core /path/to/core/src --wasm-moc wasm/moc
 .venv/bin/python benchmarks/run.py --label direct-final-3 --moc /path/to/moc --core /path/to/core/src --wasm-moc wasm/moc
 .venv/bin/python benchmarks/summarize.py --prefix direct _out/benchmarks-direct-final-1.json _out/benchmarks-direct-final-2.json _out/benchmarks-direct-final-3.json
+.venv/bin/python benchmarks/compare_runtime.py --baseline /path/to/previous/patched-motoko --candidate wasm/_build/motoko-minimal --passes 3 --out _out/minimal-pair
 .venv/bin/python benchmarks/runtime_sources.py heap --output _out/heap-rts.mo
 wasm/moc --package core /path/to/core/src _out/heap-rts.mo -o _out/heap-rts.wasm
 node benchmarks/heap.mjs --wasm _out/heap-rts.wasm --source _out/heap-rts.mo --direct true --stress-phase canonical_encode_direct --server /path/to/pocket-ic --label direct-local --trials 3
@@ -238,7 +257,16 @@ node benchmarks/ts_memory.mjs _out/bench-rust-direct-final-1.json local
 cargo run --release --locked --manifest-path rust/Cargo.toml --example profile -- _out/bench-rust-direct-final-1.json
 ```
 
-Captured final timing: [run 1](results-direct-1.json),
+The previous bridge baseline uses CandidX revision
+`2ab5573b2f6951553d4b4d5c00a5f402aefb16f2`; build its isolated compiler using
+that revision's build script. Compile the same generated heap source with
+both compilers and run the same host command to compare them.
+
+Current generated-compiler captures: [paired CPU](results-minimal-cpu.json),
+[IC baseline](results-heap-minimal-baseline.json),
+[IC generated](results-heap-minimal-generated.json), and
+[IC summary](results-minimal-summary.json).
+Earlier library timing: [run 1](results-direct-1.json),
 [run 2](results-direct-2.json), [run 3](results-direct-3.json), and
 [aggregate](results-direct-summary.json). Historical adapters, earlier
 optimizations, and restoration patches remain documented separately in

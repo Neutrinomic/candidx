@@ -1,0 +1,486 @@
+{
+  "status": "pass",
+  "recorded_utc": "2026-10-05T15:10:12.634133+00:00",
+  "method": "Same source and host driver;3fresh IC canisters per workload and implementation;median actual IC instructions and heap/allocation;72-byte measurement control subtracted only from allocation;no hashing timed",
+  "ordinary_instructions_equal_in_all_workloads": true,
+  "generated_source_sha256": "a088023efbce900e937350e8b7cb703725d08032df89c6558237bc63d79b6939",
+  "source_fingerprints": {
+    "benchmarks/heap.mjs": "8275de1192abe899bf0a9db6c08668938f5d1c664d91900287f12f85f57e6fb0",
+    "benchmarks/runtime_sources.py": "c49bc9aa3d1c571bf48da022144c8d1155e23a83ea71c8b739622657ed7d2d27",
+    "motoko/src/lib.mo": "848090dcec21745fc97035b05395e51bf277ac9d7e58d3c93e2c9ac9cadd48e9",
+    "motoko/test/heap.mo": "65a2ec1470fe035b1721fee7ebe109806681c16eab46aa3d953c6ca8f2a66dc4",
+    "rust/src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
+    "rust/src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
+    "rust/src/visitor.rs": "239d6befdded95ddc4af95ad4c02e850ef48c81a5b926f63888c885a2c66ac1f",
+    "wasm/motoko-compiler.patch": "21fb28a80aa6fa1475b35193e4b2e4ca1c3c92970751e3958b278fa6d8b62692",
+    "wasm/artifacts/manifest.json": "f95930eecc9d37472f8eb7f1149099357bc031ea8909bd1e4a0a154b407353fe"
+  },
+  "cpu_report_sha256": "92bfa50b8416756981a6560da37444323d5a741d09271470c5bb0387822e9a8a",
+  "baseline_heap_report_sha256": "b71e870663971c712d32e9cc77a41b72e897b0bd6f2ea436c9d7b15868871e72",
+  "generated_heap_report_sha256": "aa21eacd0050dc45fca92a824b514886b036be0f0fbc555ed83ebe4d9b73e2d3",
+  "rows": [
+    {
+      "name": "small",
+      "canonical_bytes": 296,
+      "canonical_sha256": "f6e012c3cf79e53dec2279c3887b2467dee7b7c338971ad324ff1d3e4259ddbb",
+      "baseline_direct": {
+        "instructions": 100451,
+        "allocated_bytes": 5104,
+        "occupied_heap_growth": 5104,
+        "retained_heap_growth": 75552,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21049442,
+        "allocated_bytes_minus_control": 5032
+      },
+      "generated_direct": {
+        "instructions": 76898,
+        "allocated_bytes": 3360,
+        "occupied_heap_growth": 3360,
+        "retained_heap_growth": 73808,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21051042,
+        "allocated_bytes_minus_control": 3288
+      },
+      "ordinary_encode": {
+        "instructions": 38292,
+        "allocated_bytes": 1056,
+        "occupied_heap_growth": 1056,
+        "retained_heap_growth": 71504,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21051042,
+        "allocated_bytes_minus_control": 984
+      },
+      "native_pipeline": {
+        "instructions": 1159470,
+        "allocated_bytes": 59688,
+        "occupied_heap_growth": 59688,
+        "retained_heap_growth": 130136,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21051042,
+        "allocated_bytes_minus_control": 59616
+      },
+      "instruction_ratio_to_baseline": 0.765527471105315,
+      "instruction_ratio_to_ordinary": 2.0082001462446466,
+      "allocation_ratio_to_baseline": 0.6534181240063593,
+      "allocation_ratio_to_native_pipeline": 0.055152979066022546,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 14792,
+          "allocated_bytes": 74433416,
+          "reclaimed_bytes": 61847320,
+          "gc_cleanup_interval_instructions": 33041672
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 0,
+          "reclamation_observed_trials": 3,
+          "iterations": 20000,
+          "allocated_bytes": 65760072,
+          "reclaimed_bytes": 61847464,
+          "gc_cleanup_interval_instructions": 31501845
+        }
+      }
+    },
+    {
+      "name": "records-128",
+      "canonical_bytes": 5866,
+      "canonical_sha256": "594e6cb3e80390e5c2f9ce50bd9cf5da2552f3b0ab381c2cd2b658486948a632",
+      "baseline_direct": {
+        "instructions": 1817339,
+        "allocated_bytes": 30040,
+        "occupied_heap_growth": 30040,
+        "retained_heap_growth": 100496,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21735830,
+        "allocated_bytes_minus_control": 29968
+      },
+      "generated_direct": {
+        "instructions": 1641899,
+        "allocated_bytes": 17864,
+        "occupied_heap_growth": 17864,
+        "retained_heap_growth": 88320,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21737430,
+        "allocated_bytes_minus_control": 17792
+      },
+      "ordinary_encode": {
+        "instructions": 1140825,
+        "allocated_bytes": 21120,
+        "occupied_heap_growth": 21120,
+        "retained_heap_growth": 91568,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21737430,
+        "allocated_bytes_minus_control": 21048
+      },
+      "native_pipeline": {
+        "instructions": 11977297,
+        "allocated_bytes": 389368,
+        "occupied_heap_growth": 389368,
+        "retained_heap_growth": 459816,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21737430,
+        "allocated_bytes_minus_control": 389296
+      },
+      "instruction_ratio_to_baseline": 0.9034632503897182,
+      "instruction_ratio_to_ordinary": 1.4392207393772052,
+      "allocation_ratio_to_baseline": 0.593699946609717,
+      "allocation_ratio_to_native_pipeline": 0.04570301261764827,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 2514,
+          "allocated_bytes": 75339624,
+          "reclaimed_bytes": 61809424,
+          "gc_cleanup_interval_instructions": 34557263
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 0,
+          "reclamation_observed_trials": 0,
+          "iterations": 3045,
+          "allocated_bytes": 54176712,
+          "reclaimed_bytes": 0,
+          "gc_cleanup_interval_instructions": 21737430
+        }
+      }
+    },
+    {
+      "name": "blob-64k",
+      "canonical_bytes": 65667,
+      "canonical_sha256": "a2a221bffb7f1fe2693cf41df5b7531ed8693a89e64156cdbd92bbdd205059c3",
+      "baseline_direct": {
+        "instructions": 186969,
+        "allocated_bytes": 134784,
+        "occupied_heap_growth": 134784,
+        "retained_heap_growth": 205240,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21032858,
+        "allocated_bytes_minus_control": 134712
+      },
+      "generated_direct": {
+        "instructions": 102247,
+        "allocated_bytes": 68224,
+        "occupied_heap_growth": 68224,
+        "retained_heap_growth": 138680,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21034426,
+        "allocated_bytes_minus_control": 68152
+      },
+      "ordinary_encode": {
+        "instructions": 142672,
+        "allocated_bytes": 131576,
+        "occupied_heap_growth": 131576,
+        "retained_heap_growth": 202032,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21034426,
+        "allocated_bytes_minus_control": 131504
+      },
+      "native_pipeline": {
+        "instructions": 18850264,
+        "allocated_bytes": 772280,
+        "occupied_heap_growth": 772280,
+        "retained_heap_growth": 842736,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21034426,
+        "allocated_bytes_minus_control": 772208
+      },
+      "instruction_ratio_to_baseline": 0.5468660580096165,
+      "instruction_ratio_to_ordinary": 0.7166577884938881,
+      "allocation_ratio_to_baseline": 0.5059089019537978,
+      "allocation_ratio_to_native_pipeline": 0.08825601392370967,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 561,
+          "allocated_bytes": 75573504,
+          "reclaimed_bytes": 61621752,
+          "gc_cleanup_interval_instructions": 33983567
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 1107,
+          "allocated_bytes": 75444336,
+          "reclaimed_bytes": 61621536,
+          "gc_cleanup_interval_instructions": 33939448
+        }
+      }
+    },
+    {
+      "name": "records-1024",
+      "canonical_bytes": 35253,
+      "canonical_sha256": "ca9da6f4ddc235b7283be53431ea7969230ef3f9dffd76960a28fdd535cc9f31",
+      "baseline_direct": {
+        "instructions": 14169976,
+        "allocated_bytes": 188920,
+        "occupied_heap_growth": 188920,
+        "retained_heap_growth": 259376,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 26701398,
+        "allocated_bytes_minus_control": 188848
+      },
+      "generated_direct": {
+        "instructions": 12914097,
+        "allocated_bytes": 111760,
+        "occupied_heap_growth": 111760,
+        "retained_heap_growth": 182216,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 26702998,
+        "allocated_bytes_minus_control": 111688
+      },
+      "ordinary_encode": {
+        "instructions": 9076692,
+        "allocated_bytes": 144400,
+        "occupied_heap_growth": 144400,
+        "retained_heap_growth": 214856,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 26702998,
+        "allocated_bytes_minus_control": 144328
+      },
+      "native_pipeline": {
+        "instructions": 87105127,
+        "allocated_bytes": 2650128,
+        "occupied_heap_growth": 2650128,
+        "retained_heap_growth": 2720584,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 26702998,
+        "allocated_bytes_minus_control": 2650056
+      },
+      "instruction_ratio_to_baseline": 0.9113704215165925,
+      "instruction_ratio_to_ordinary": 1.4227757204937659,
+      "allocation_ratio_to_baseline": 0.5914174362450224,
+      "allocation_ratio_to_native_pipeline": 0.04214552447193569,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 0,
+          "reclamation_observed_trials": 3,
+          "iterations": 352,
+          "allocated_bytes": 66474568,
+          "reclaimed_bytes": 61606144,
+          "gc_cleanup_interval_instructions": 42669495
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 0,
+          "reclamation_observed_trials": 0,
+          "iterations": 387,
+          "allocated_bytes": 43223328,
+          "reclaimed_bytes": 0,
+          "gc_cleanup_interval_instructions": 26702998
+        }
+      }
+    },
+    {
+      "name": "nat64-4096",
+      "canonical_bytes": 32779,
+      "canonical_sha256": "889ffcb36322d444d0c46d532a7860254cfa617392e5d172cc962d06c5d26075",
+      "baseline_direct": {
+        "instructions": 5959521,
+        "allocated_bytes": 66656,
+        "occupied_heap_growth": 66656,
+        "retained_heap_growth": 137112,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 44094642,
+        "allocated_bytes_minus_control": 66584
+      },
+      "generated_direct": {
+        "instructions": 214402,
+        "allocated_bytes": 33384,
+        "occupied_heap_growth": 33384,
+        "retained_heap_growth": 103840,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 44096210,
+        "allocated_bytes_minus_control": 33312
+      },
+      "ordinary_encode": {
+        "instructions": 480599,
+        "allocated_bytes": 65712,
+        "occupied_heap_growth": 65712,
+        "retained_heap_growth": 136168,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 44096210,
+        "allocated_bytes_minus_control": 65640
+      },
+      "native_pipeline": {
+        "instructions": 560734,
+        "allocated_bytes": 72896,
+        "occupied_heap_growth": 72896,
+        "retained_heap_growth": 143352,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 44096210,
+        "allocated_bytes_minus_control": 72824
+      },
+      "instruction_ratio_to_baseline": 0.03597638132326407,
+      "instruction_ratio_to_ordinary": 0.4461141200876406,
+      "allocation_ratio_to_baseline": 0.5003003724618527,
+      "allocation_ratio_to_native_pipeline": 0.45743161595078546,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 0,
+          "reclamation_observed_trials": 0,
+          "iterations": 838,
+          "allocated_bytes": 55797464,
+          "reclaimed_bytes": 0,
+          "gc_cleanup_interval_instructions": 44094642
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 2262,
+          "allocated_bytes": 75351816,
+          "reclaimed_bytes": 61029904,
+          "gc_cleanup_interval_instructions": 70981563
+        }
+      }
+    },
+    {
+      "name": "text-64k",
+      "canonical_bytes": 65546,
+      "canonical_sha256": "00c3eae5b09197659e8cd8d906b76731677fba38fb362aed0dbc3b4e734b8995",
+      "baseline_direct": {
+        "instructions": 242846,
+        "allocated_bytes": 131712,
+        "occupied_heap_growth": 131712,
+        "retained_heap_growth": 202168,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21027022,
+        "allocated_bytes_minus_control": 131640
+      },
+      "generated_direct": {
+        "instructions": 68496,
+        "allocated_bytes": 65920,
+        "occupied_heap_growth": 65920,
+        "retained_heap_growth": 136376,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 65848
+      },
+      "ordinary_encode": {
+        "instructions": 132665,
+        "allocated_bytes": 131248,
+        "occupied_heap_growth": 131248,
+        "retained_heap_growth": 201704,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 131176
+      },
+      "native_pipeline": {
+        "instructions": 7515019,
+        "allocated_bytes": 135416,
+        "occupied_heap_growth": 135416,
+        "retained_heap_growth": 205872,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 135344
+      },
+      "instruction_ratio_to_baseline": 0.28205529430173854,
+      "instruction_ratio_to_ordinary": 0.5163079938190178,
+      "allocation_ratio_to_baseline": 0.5002127013065938,
+      "allocation_ratio_to_native_pipeline": 0.48652322969618156,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 574,
+          "allocated_bytes": 75561432,
+          "reclaimed_bytes": 61616336,
+          "gc_cleanup_interval_instructions": 33748255
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 1146,
+          "allocated_bytes": 75461880,
+          "reclaimed_bytes": 61641320,
+          "gc_cleanup_interval_instructions": 33705236
+        }
+      }
+    },
+    {
+      "name": "unicode-64k",
+      "canonical_bytes": 65546,
+      "canonical_sha256": "377be83b14757d614f5dd33d87a2da4be2ccdd661656f59496257d4072ee5149",
+      "baseline_direct": {
+        "instructions": 1856632,
+        "allocated_bytes": 131712,
+        "occupied_heap_growth": 131712,
+        "retained_heap_growth": 202168,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21027022,
+        "allocated_bytes_minus_control": 131640
+      },
+      "generated_direct": {
+        "instructions": 68496,
+        "allocated_bytes": 65920,
+        "occupied_heap_growth": 65920,
+        "retained_heap_growth": 136376,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 65848
+      },
+      "ordinary_encode": {
+        "instructions": 132665,
+        "allocated_bytes": 131248,
+        "occupied_heap_growth": 131248,
+        "retained_heap_growth": 201704,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 131176
+      },
+      "native_pipeline": {
+        "instructions": 11365259,
+        "allocated_bytes": 135416,
+        "occupied_heap_growth": 135416,
+        "retained_heap_growth": 205872,
+        "reclaimed_after_gc": 0,
+        "gc_instructions": 21028622,
+        "allocated_bytes_minus_control": 135344
+      },
+      "instruction_ratio_to_baseline": 0.03689260984406172,
+      "instruction_ratio_to_ordinary": 0.5163079938190178,
+      "allocation_ratio_to_baseline": 0.5002127013065938,
+      "allocation_ratio_to_native_pipeline": 0.48652322969618156,
+      "stress": {
+        "baseline": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 574,
+          "allocated_bytes": 75561432,
+          "reclaimed_bytes": 61616336,
+          "gc_cleanup_interval_instructions": 33748255
+        },
+        "generated": {
+          "trials": 3,
+          "allocated_at_least_64mib_trials": 3,
+          "reclamation_observed_trials": 3,
+          "iterations": 1146,
+          "allocated_bytes": 75461880,
+          "reclaimed_bytes": 61641320,
+          "gc_cleanup_interval_instructions": 33705236
+        }
+      }
+    }
+  ],
+  "stress_limits": {
+    "allocation_target_bytes": 75497472,
+    "maximum_calls": 20000,
+    "estimated_instruction_budget": 5000000000
+  },
+  "heap_scope": "Before/after snapshots exclude reply serialization. Operation-end occupied heap is the operation peak when no collection occurs inside the synchronous operation. Post-GC occupied heap includes retained data, bookkeeping, and garbage in the current 64 MiB allocation partition (not evacuated). It is not an exact live-object measurement, process RSS, or reserved linear memory.",
+  "gc_instruction_scope": "Operation-message cleanup GC plus the sum of four subsequent forced GC increments. rts_collector_instructions is a last-message counter, so it is read after each update and never subtracted between snapshots. The clean-state increments are excluded.",
+  "gc_instruction_caveat": "Measured cleanup/increment intervals include scheduling and instrumentation overhead even when no collection occurs. Older reports subtracting last-message counters are not cumulative GC-cost measurements."
+}

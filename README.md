@@ -5,6 +5,11 @@ arrays, and application blocks. Profile: `cx`, package version 1.0.0. The spec
 and frozen vectors define its fixed encoding contract. This standalone profile
 is not currently an adopted Candid or ICRC standard.
 
+The current Motoko compiler integration exposes only `to_candid_canonical`,
+with no new flags or changes to ordinary `to_candid`. See
+[the minimal integration and verification](research/minimal_integration.md)
+and [current performance measurements](benchmarks/performance.md).
+
 ```candid
 record { a = "abc" } : record { a : text }
 record { a = "abc"; b = null } : record { a : text; b : opt text }
@@ -29,24 +34,32 @@ limits.
 | [rust/](rust/README.md) | `encode_one(&value)` / `encode_args(args)` with existing `CandidType` values | `canonicalize(&bytes)` |
 | [ocaml/](ocaml/README.md) | `Candidx.encode witness value` / `encode_args` with typed native records | `Candidx.canonicalize bytes` |
 | [motoko/](motoko/README.md) | Temporary native library: `CandidX.canonicalize(to_candid(block))` | Native `CandidX.canonicalize(blob)` |
-| [wasm/](wasm/README.md) | Direct typed memory ABI; isolated compiler operator `to_candid_canonical(block)` | Wasm ABI and `Prim.canonicalizeCandid(blob)` |
+| [wasm/](wasm/README.md) | Standalone typed memory ABI; compiler operator `to_candid_canonical(v1, ...)` | Standalone `cx_canonicalize(pointer, length)` ABI |
 
 Libraries only encode/normalize bytes. Applications select and implement the
 hash. There is no hashing function or SHA-256 dependency in Motoko.
 The direct typed encoders derive the used wire types and write a canonical
-header and payload from the original values. They can visit a value twice to
-determine its header before emitting its payload. The typed path creates no
-intermediate ordinary message and invokes no ordinary value decoder. Rust
-uses Candid's type/serializer traits, and TypeScript uses the SDK's type visitor.
+header and payload from the original values. They may revisit values to size
+or emit the result. Typed encoding creates no intermediate ordinary message
+and invokes no ordinary value decoder. Rust uses Candid's type/serializer
+traits, and TypeScript uses the SDK's type visitor.
 The [direct encoding notes](research/direct_encoding.md) explain the visits,
 source stability requirements, and tests that disable the ordinary path.
 
 The optional compiler patch adds `to_candid_canonical` to an isolated Motoko
-checkout and links the direct encoder into its real runtime. It covers the
-source interpreter, IR interpreter, and compiled Wasm. This operator is a
-proposal for upstream adoption; it is available in the supplied local patch.
+checkout. This is its only public addition: it requires no new compiler flags
+and leaves ordinary `to_candid` behavior unchanged. Generated Wasm derives the
+used shape, measures the exact output size, and writes directly into one final
+Motoko Blob. A small Rust RTS helper interns and joins shapes and writes the
+type header; the generated Wasm traverses and emits the payload.
+
+The operator also has source and IR interpreter implementations. It is a
+proposal for upstream adoption, available through the supplied local patch and
+`wasm/moc` wrapper. `CX_MOTOKO_DIR` selects another patched compiler directory.
 The native Motoko library retains its existing encode-and-normalize fallback.
-The four language codecs are independent; the Wasm backend reuses Rust.
+The four language codecs are independent. The standalone `cx.wasm` artifact
+embeds the Rust codec and retains both its typed ABI and incoming-message
+normalizer.
 
 ## Data contract
 
@@ -107,15 +120,14 @@ and TypeScript and compares it with independently constructed original values;
 native Motoko also checks original-value recovery. Separate mutation checks
 verify that these comparisons catch changed data. It also checks the native
 Motoko fallback and inbound normalizers. Pass `--runtime-moc wasm/moc` to additionally exercise
-the direct compiler operator; the import-free Wasm artifact is checked when available.
-Failures save the input schema, data, seed, and messages for
+the direct compiler operator; the standalone Wasm artifact is checked when
+available. Failures save the input schema, data, seed, and messages for
 replay. [tests/README.md](tests/README.md) explains coverage and limitations.
 
-The [performance report](benchmarks/performance.md) includes all five backends,
-ordinary decoding, and real local canister allocation/GC measurements. Native
-Motoko remains more expensive than generated ordinary encoding. The Rust/Wasm
-runtime path reduces that cost substantially; its measurements are separate
-from native Rust and the native Motoko library.
+The [performance report](benchmarks/performance.md) records the configurations
+and source fingerprints behind saved encoding, decoding, and canister
+allocation/GC measurements. Read those results against their recorded sources;
+they do not measure every later compiler integration change.
 
 Package registry publishing is disabled. The `cx` encoding contract is fixed: incompatible changes
 must use a different profile and must not change historical `cx` bytes.

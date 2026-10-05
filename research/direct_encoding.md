@@ -10,17 +10,18 @@ second message. The native Motoko library retains its temporary
 | Rust `encode_one` / `encode_args` | Existing `CandidType` values and serializer callbacks | Derive used shapes, then write from the original values |
 | TypeScript `encodeCanonical` | Existing SDK IDL types and values | Visit types and values, then write from the original values |
 | OCaml `encode` / `encode_args` | Typed witnesses, record getters, variant selectors | Derive used shapes, then write from native values |
-| Patched Motoko `to_candid_canonical` | Compiler-supplied type/layout metadata and native heap values | Rust RTS reads the original heap and writes the canonical Blob |
+| Patched Motoko `to_candid_canonical` | Compiler-generated traversal of native values | Generated Wasm derives shapes, measures the payload and writes directly into the final Blob |
 | Standalone Wasm `cx_encode_typed` | Typed nodes, source optional-field flags, and native scalar data | Read the ABI nodes and write canonical bytes; no ordinary DIDL input |
 
 The Rust `no_std` core exposes direct value-tree and source-visitor APIs for
-embedding. The Motoko runtime uses the source visitor, avoiding a complete
-intermediate payload tree. The standalone memory32 ABI reconstructs a typed
+embedding. The Motoko integration uses compiler-generated code and internal
+RTS shape/header helpers, with no dependency on this Rust crate. The standalone
+memory32 ABI reconstructs a typed
 tree from its host transport. That marshalling has a cost and is measured
 separately; it is not the native Motoko runtime's heap interface. Source and IR
 interpreter adapters also use internal value nodes as a reference path.
 
-## Why values can be visited twice
+## Why encoding needs internal visits
 
 A Candid message places its type table before its payload. In `cx`, that table
 depends on the data: absent optional record fields disappear, variants retain
@@ -28,18 +29,26 @@ used cases, and an array's common type depends on all its elements. The encoder
 must establish those types before it can emit the header and payload under
 them.
 
-The direct encoders first derive finite used shapes and their joins. They
+The Rust, TypeScript and standalone OCaml direct encoders first derive finite
+used shapes and their joins. They
 intern those shapes in the specified traversal order, write one header, and
 visit the source again to emit the payload. The first visit stores shape
 metadata rather than an ordinary encoded message. Scalar conversions and
 payload writes happen in the emission path. This is one encoding operation
 with internal visits, not an encode/decode/encode pipeline.
 
+The compiled Motoko encoder adds an exact sizing visit between shape
+derivation and writing. It then allocates the final Blob once and writes its
+header and payload there. No complete output buffer is grown or copied, and
+no ordinary input message is constructed. Fixed-width sizing and primitive
+array shape derivation use bulk paths. These are internal visits of the
+original values within one encoding call.
+
 Shape scratch is reused across array elements. Once an accumulated array
 shape already covers an element's shape, the join retains its buffers. Rust's
-typed callbacks use the same reuse helpers. Byte spans have a bulk path;
-Motoko ropes and arbitrary-precision integers still require conversion before
-their bytes can be written. A direct encoder is not inherently allocation
+typed callbacks use the same reuse helpers. Byte spans have a bulk path.
+The compiled Motoko encoder uses the existing text and arbitrary-precision
+integer writers. A direct encoder is not inherently allocation
 free or necessarily faster for every input.
 
 The Rust typed adapter also caches resolved source descriptors after enough
@@ -58,8 +67,8 @@ as its only present optional record field disappearing. This does not make
 arbitrary user callbacks pure: changes that preserve an argument's joined
 shape, including scalar changes, can still change the emitted value.
 
-Both visits enforce the profile's value-depth, traversal, scalar-integer, and
-output limits. Type/layout metadata is validated separately, including numeric
+The encoders enforce the profile's value-depth, traversal, scalar-integer, and
+output limits. Source schemas are validated separately, including numeric
 field-ID collisions. The low-level tree and source interfaces require each
 vector to originate from one uniformly typed source vector; the values may
 vary in option presence and selected variant cases. Arbitrarily heterogeneous
@@ -73,12 +82,14 @@ explicit original schemas and values, without decoding a source message.
 inbound canonicalizers while exercising the Rust, TypeScript, and OCaml typed
 paths. Negative controls verify that the disabled operations really fail.
 The supplied compiler patch lowers the direct operator to its own primitive
-and native heap RTS helper, independently of ordinary serialization.
+and generated traversal, independently of ordinary serialization. Its
+architecture guards also require the existing ordinary serializer and
+decoder/stream helpers to match the pinned compiler exactly.
 
-Compiler tests call the direct operator before ordinary encoding. This caught
-a lazy large-integer initialization defect that an ordinary-first test would
-have hidden. The runtime now initializes the integer through its supported
-accessor before reading it. Native vectors and principal spans in TypeScript
+Compiler tests call the direct operator before ordinary encoding, including
+cold large-integer literals and the exact 4,096-byte signed/unsigned boundary.
+Oversized magnitudes are rejected before signed sizing can allocate a copy.
+Native vectors and principal spans in TypeScript
 use intrinsic backing-storage metadata, with regressions for float views,
 incorrect widths, spoofed lengths, and oversized principals.
 The typed TypeScript API also rejects malformed UTF-16 before UTF-8 encoding,

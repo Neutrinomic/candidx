@@ -1,5 +1,18 @@
 # Performance and heap measurements
 
+This document preserves historical adapter measurements and the previous
+compiler integration. The current generated Motoko encoder and matched
+comparison are described in [performance.md](performance.md) and
+[minimal_integration.md](../research/minimal_integration.md). Its compiler
+exposes only `to_candid_canonical`; the old Prim inbound normalizer is removed.
+Old runtime reproduction commands require the earlier CandidX revision
+`2ab5573b2f6951553d4b4d5c00a5f402aefb16f2`.
+
+The older raw `gc_instructions` fields subtract last-message collector counters
+and cannot be interpreted as cumulative GC cost. Current captures read and
+sum each cleanup/increment interval; allocation, occupied-heap and cumulative
+reclaimed-byte measurements retain their stated meaning.
+
 Historical encode-and-normalize measurements, captured before the direct typed encoders. Source fingerprints in the reports identify the measured implementations. Current direct-encoding measurements are in [performance.md](performance.md).
 
 These measurements compare existing ordinary typed Candid codecs with the

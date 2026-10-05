@@ -1,0 +1,21 @@
+{
+  "recorded_utc": "2026-10-05T14:40:33.369715+00:00",
+  "source_sha256": "8e882b9503528645725398b07b0ff39c10aea88bb6a65ac6e22f07d0a2de4dc4",
+  "scope": "Simple ordinary to_candid/from_candid program without canonical operator; both Wasm executions pass. Artifact sizes include bundled RTS code; this is a code-size probe, not a security proof.",
+  "artifact_bytes": {
+    "pristine": 202254,
+    "baseline": 277280,
+    "candidate": 216023
+  },
+  "artifact_sha256": {
+    "pristine": "e28005efcb3a93802877cd1c981403afe23d64fd0c1a271a1543676ee1bdbd62",
+    "baseline": "6da123a4e3d22c9dc759ad798c4a1734b86e9acb073ae40b89442d01a141bdd1",
+    "candidate": "39aad1b11e00bd4921c482a62c1a43b0915ef1901e334e0802a2ce4c7809d110"
+  },
+  "candidate_exports": [
+    "_start",
+    "memory",
+    "table"
+  ],
+  "canonical_rts_helpers_exported_from_canister": false
+}

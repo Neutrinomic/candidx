@@ -365,15 +365,12 @@ def motoko_encode_source(cases, path, runtime_bridge=False):
   printBlob("canonical:{c['id']}", canonical);
 }};''')
     import_path = os.path.relpath(ROOT / "motoko/src/lib", path.parent)
-    printer = PRINT_MO
-    if runtime_bridge:
-        printer = printer.replace('case (#ok(bytes)) bytes;', 'case (#ok(bytes)) { assert Prim.canonicalizeCandid(raw) == bytes; bytes };')
-    source = ['import Prim "mo:⛔";', f'import CandidX "{import_path}";', printer,
+    source = ['import Prim "mo:⛔";', f'import CandidX "{import_path}";', PRINT_MO,
               *renderer.defs, *renderer.functions, *bodies]
     path.write_text('\n'.join(source) + '\n')
 
 
-def motoko_direct_source(cases, path):
+def motoko_direct_source(cases, path, compiled_controls=True):
     """Direct compiler calls from typed native values, including multiple roots."""
     renderer, bodies = MotokoSource(), []
     for i, case in enumerate(cases):
@@ -394,6 +391,13 @@ def motoko_direct_source(cases, path):
             declarations.append(f"  let value{j} : {name} = {renderer.val(schema, value)};")
             renderer.equal(schema)
         args = ", ".join(variables)
+        if not compiled_controls:
+            bodies.append(f'''do {{
+{chr(10).join(declarations)}
+  let canonical = to_candid_canonical({args});
+  printBlob("canonical:{case['id']}", canonical);
+}};''')
+            continue
         recovered_type = recovery_names[0] if len(names) == 1 else "(" + ", ".join(recovery_names) + ")"
         recovered = []
         for j, schema in enumerate(schemas):
@@ -427,7 +431,9 @@ def motoko_direct_source(cases, path):
   recoverOriginal(raw);
 }};''')
     import_path = os.path.relpath(ROOT / "motoko/src/lib", path.parent)
-    path.write_text('\n'.join(['import Prim "mo:⛔";', f'import CandidX "{import_path}";', PRINT_MO,
+    imports = ['import Prim "mo:⛔";'] + ([f'import CandidX "{import_path}";'] if compiled_controls else [])
+    printer = PRINT_MO if compiled_controls else PRINT_MO[:PRINT_MO.index('func normalize(')]
+    path.write_text('\n'.join([*imports, printer,
                                *renderer.defs, *renderer.functions, *bodies]) + '\n')
 
 
@@ -627,7 +633,8 @@ def main():
                         help='Nix development shell used when OCaml/Dune are absent from PATH')
     parser.add_argument('--rust-toolchain', default='1.98.1')
     parser.add_argument('--skip-build', action='store_true')
-    parser.add_argument('--runtime-moc', type=Path, help='exercise direct to_candid_canonical and linked Prim.canonicalizeCandid with this compiler')
+    parser.add_argument('--runtime-moc', type=Path,
+                        help='exercise direct to_candid_canonical with this compiler; inbound checks use the native library')
     parser.add_argument('--wasm-artifact', type=Path, default=ROOT / 'wasm/artifacts/cx.wasm')
     parser.add_argument('--skip-wasm', action='store_true')
     args = parser.parse_args()
@@ -778,11 +785,6 @@ def main():
             source.rename(path)
             # verify.motoko_corpus expects one level below root by default.
             text = path.read_text().replace('"../motoko/src/lib"', '"' + os.path.relpath(ROOT / 'motoko/src/lib', out) + '"')
-            if args.runtime_moc:
-                extra = []
-                for message in subset:
-                    extra.append(f'assert Prim.canonicalizeCandid({verify.mo_blob(message["raw"])}) == {verify.mo_blob(message["canonical"])};')
-                text += '\n'.join(extra) + '\n'
             path.write_text(text)
             wasm_path = path.with_suffix('.wasm')
             verify.command(moc + ['-o', wasm_path, path], f'motoko-normalize-build-{batch}')
@@ -812,7 +814,10 @@ def main():
                   'motoko_fresh_instances_per_program': 2, 'corpus_sha256': sha256(corpus_path.read_bytes()).hexdigest(),
                   'source_sha256': starting_sources, 'sources_changed_during_run': fingerprints() != starting_sources,
                   'wasm_backend': wasm_backend,
-                  'linked_runtime_bridge': 'matches every positive raw and canonical message' if args.runtime_moc else None,
+                  'compiler_runtime_direct': {'typed_cases': len(cases),
+                      'source_value_oracle_and_sha256': 'exact',
+                      'ordinary_decoder_original_value_recovery': 'exact',
+                      'inbound_normalizer': 'not exposed by the compiler'} if args.runtime_moc else None,
                   'rustc': verify.command([rustc, '--version'], 'rustc-version').strip(),
                   'moc': verify.command([compiler, '--version'], 'moc-version').strip(),
                   'node': verify.command(['node', '--version'], 'node-version').strip(),

@@ -1,5 +1,25 @@
 # Local verification
 
+The current Motoko compiler integration generates its own typed encoder and
+uses Rust only for internal shape/header helpers. Its current captures are
+[the full fixed suite](results/minimal-fixed.json),
+[95 interpreter/Wasm bridge cases and resource boundaries](results/minimal-bridge.json),
+and [43 architecture checks](results/minimal-architecture.json).
+The [current proof summary](results/minimal-proof-summary.json) records three
+500-case seeds: 3,390 matching typed cases, 1,695 unused-schema extension pairs
+and 44,400 original-value cross-decoder recoveries including the fixed suite.
+[Independent replay](results/minimal-fuzz-oracle.json) checks 36,453 saved
+messages. All 83 proof-source hashes remained stable during each run.
+The ordinary serializer, decoder and stream helpers match the pinned upstream
+source exactly. There are no new compiler flags or public Prim normalizer.
+
+See [minimal integration](minimal_integration.md) for source review, allocation
+lifetime, exact final-Blob writing and matched current performance evidence.
+
+The earlier captures below document the previous Rust heap visitor and the
+unchanged standalone packages. Their fingerprints remain historical evidence;
+they are not relabeled as results of the generated Motoko encoder.
+
 The final direct encoders passed three complete fixed-suite runs and three
 500-case seeded differential runs. The seeds produced 3,390 matching typed
 records, 43,470 successful original-value recoveries across encoder/decoder

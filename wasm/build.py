@@ -32,7 +32,7 @@ def rust_sources(directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--motoko-repo", type=Path, default=ROOT.parent / "motoko_candid")
-    parser.add_argument("--compiler-dir", type=Path, default=HERE / "_build/motoko")
+    parser.add_argument("--compiler-dir", type=Path, default=HERE / "_build/motoko-minimal")
     parser.add_argument("--rust-toolchain", default="1.98.1")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--standalone-only", action="store_true")
@@ -66,8 +66,10 @@ def main():
         patch = HERE / "motoko-compiler.patch"
         if args.prepared:
             source = compiler / "src/codegen/compile.ml"
-            if not source.is_file() or "cx_encode_typed_heap" not in source.read_text():
-                raise RuntimeError("--prepared requires an existing direct CandidX compiler checkout")
+            helper = compiler / "rts/motoko-rts/src/candid_canonical.rs"
+            if (not source.is_file() or "serialize_canonical" not in source.read_text()
+                    or not helper.is_file()):
+                raise RuntimeError("--prepared requires the generated canonical compiler integration")
         else:
             if not compiler.exists():
                 compiler.parent.mkdir(parents=True, exist_ok=True)
@@ -80,12 +82,8 @@ def main():
             if not applied:
                 command(["git", "apply", "--check", patch], cwd=compiler)
                 command(["git", "apply", patch], cwd=compiler)
-        # The same crate is reused, not counted as a fifth independent codec.
-        if (compiler / "rts/candidx/src").exists():
-            shutil.rmtree(compiler / "rts/candidx/src")
-        shutil.copytree(ROOT / "rust", compiler / "rts/candidx", dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("target", "_out", "__pycache__"))
-        assert rust_sources(ROOT / "rust") == rust_sources(compiler / "rts/candidx")
+        # The compiler emits payload traversal and writing. The RTS adds only
+        # shape/table helpers; no standalone encoder crate is copied into it.
         # OCaml 5.4 includes Bigarray in stdlib; its removed separate archive
         # needs local findlib metadata in this environment. No source change.
         compat = HERE / "_build/ocaml-compat/bigarray"
@@ -109,7 +107,10 @@ def main():
         finally:
             rts_loader.write_bytes(development_loader)
         if not args.skip_tests:
-            test_shell = shell + "test-runner -b -f 'cx-candid|cx-direct|idl-ops|idl-decoding-bug|leb-random' test/run test/fail test/trap\n"
+            test_shell = shell + "test-runner -b -f 'cx-direct|idl-ops|idl-decoding-bug|leb-random' test/run test/fail test/trap\n"
+            harness = "rts/motoko-rts/tests/candid_canonical_harness.rs"
+            test_shell += "rustc --edition 2024 -D warnings --test " + harness + " -o rts/_build/candid-canonical-tests\n"
+            test_shell += "rts/_build/candid-canonical-tests\n"
             test_shell += "CX_MOTOKO_DIR=" + shlex.quote(str(compiler)) + " node " + shlex.quote(str(HERE / "test_compiler_js.cjs")) + "\n"
             command(["nix", "develop", repository, "--command", "bash", "-c", test_shell], cwd=compiler)
         for name in ["mo-rts.wasm", "mo-rts-debug.wasm"]:
@@ -127,7 +128,9 @@ def main():
             path: {"sha256":digest(compiler / path), "bytes":(compiler / path).stat().st_size}
             for path in built_paths}
         manifest["compiler_typed_operator"] = "to_candid_canonical"
-        manifest["compiler_inbound_primitive"] = "Prim.canonicalizeCandid"
+        manifest.pop("compiler_inbound_primitive", None)
+        manifest["compiler_encoding"] = "generated typed Wasm; exact final Blob allocation"
+        manifest["compiler_rts_helpers"] = "shape interning, joins and canonical type header"
     for name in ["cx.wasm", "mo-rts.wasm", "mo-rts-debug.wasm"]:
         path = artifacts / name
         if path.exists():

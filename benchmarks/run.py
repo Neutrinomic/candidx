@@ -153,7 +153,7 @@ def main():
         command([compiler, "--package", "core", args.core, "-wasi-system-api", "-o", artifact, source])
         mo, lines = native_motoko(artifact)
         if lang == "motoko-wasm":
-            mo["language"] = "Rust/Wasm in Motoko RTS"
+            mo["language"] = "Motoko generated typed Wasm"
         mo["wasm_sha256"] = sha256(artifact.read_bytes()).hexdigest()
         mo["compiler"] = command([compiler, "--version"]).strip()
         results[lang] = mo

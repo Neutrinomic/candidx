@@ -120,7 +120,8 @@ def source_fingerprints():
         fingerprints[str(path.relative_to(ROOT))] = sha256(path.read_bytes()).hexdigest()
     for path in sorted((ROOT / "wasm").glob("src/*.*")) + [ROOT / "wasm/runtime.py", ROOT / "wasm/artifacts/cx.wasm", ROOT / "rust/Cargo.toml",
             ROOT / "wasm/motoko-compiler.patch", ROOT / "wasm/moc", ROOT / "wasm/artifacts/mo-rts.wasm", ROOT / "wasm/artifacts/mo-rts-debug.wasm",
-            ROOT / "wasm/artifacts/manifest.json", ROOT / "wasm/test_architecture.py"]:
+            ROOT / "wasm/artifacts/manifest.json", ROOT / "wasm/test_architecture.py", ROOT / "wasm/test_bridge.py",
+            ROOT / "wasm/test_compiler_js.cjs", ROOT / "wasm/smoke.mo", ROOT / "benchmarks/runtime_sources.py"]:
         if path.is_file():
             fingerprints[str(path.relative_to(ROOT))] = sha256(path.read_bytes()).hexdigest()
     return fingerprints
@@ -274,6 +275,7 @@ def main():
               "roundtrip_comparison_guards": roundtrip_comparisons,
               "direct_path_guards": guards,
               "compiler_architecture": compiler_architecture,
+              "compiler_runtime_direct": "typed value/oracle/hash/ordinary-decoder checks; no compiler inbound normalizer" if args.runtime_moc else None,
               "native_motoko_adapter": "temporary ordinary to_candid plus canonicalize fallback",
               "motoko_optimization_regressions": optimization_regressions,
               "limits": "fixed cx contract; recorded cases and toolchain versions; no publication"}

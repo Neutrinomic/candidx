@@ -30,12 +30,14 @@ values, and OCaml typed witnesses/native values. Ordinary Rust and SDK
 serialization are separate controls. Generated native Motoko source retains
 the temporary `to_candid` plus library-normalization fallback. With
 `--runtime-moc wasm/moc`, the same values are independently encoded through
-`to_candid_canonical` before ordinary encoding, and every positive raw and
-canonical message also exercises `Prim.canonicalizeCandid` as an inbound
-utility. All four normalizers still check every ordinary message. The standalone
-Wasm backend also receives typed source-memory values; it reuses Rust and is an
-additional embedding. Every direct result must match source-derived bytes and
-complete normalized data. The harness computes SHA-256 externally.
+`to_candid_canonical` before ordinary encoding and recovered with the existing
+`from_candid` decoder. The compiler's only public addition is that operator;
+it requires no new flags and leaves ordinary `to_candid` unchanged. All four
+library normalizers still check every ordinary message. The standalone
+`cx.wasm` artifact retains its typed-memory ABI and incoming-message normalizer;
+it embeds Rust as an additional backend. Every direct result must match
+source-derived bytes and complete normalized data. The harness computes
+SHA-256 externally.
 
 ```shell
 .venv/bin/python tests/fuzz.py --seed 0xcad1d --cases 500 --moc /path/to/moc --core /path/to/core/src
@@ -84,8 +86,20 @@ APIs. TypeScript's isolated ESM hook makes `IDL.encode`, ordinary type serialize
 methods, and the byte normalizer throw while direct encoding succeeds. These
 guards run from `verify.py` and never modify production source.
 When using the bundled `wasm/moc`, the verification report also captures the
-compiler/RTS source guard for its direct call chain and the final artifact
-manifest hashes.
+compiler/RTS source guard and the artifact manifest hashes. Generated Wasm
+derives used shapes, measures the exact output size, and writes header and
+payload directly into one final Motoko Blob. The Rust RTS helper only interns
+and joins shapes and writes the type header. Its source guard checks that
+there is no full Rust codec dependency, payload tree, `CXTY` descriptor, binary
+parser, or complete output byte vector in the compiler path, and compares
+ordinary serialization routines with the pinned upstream source.
+
+The compiler wrapper selects its bundled checkout by default. Use
+`CX_MOTOKO_DIR` to run these checks against another prepared checkout:
+
+```shell
+CX_MOTOKO_DIR=/path/to/patched-checkout .venv/bin/python tests/verify.py --runtime-moc wasm/moc --core /path/to/core/src --out _out/direct-pass
+```
 
 `roundtrip_guard.py` tests the semantic comparators with deliberately changed
 values, including option presence, array order/length, text, large integers,

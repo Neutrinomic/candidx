@@ -1,0 +1,32 @@
+{
+  "status": "pass",
+  "normalizer": "independent Python research model",
+  "checks": "source-value expected bytes, canonical bytes, idempotence, complete normalized data, external hashes",
+  "runs": [
+    {
+      "directory": "_out/wasm-minimal-fuzz-cad1d-500",
+      "typed_records": 1130,
+      "directed_typed_cases": 93,
+      "messages": 12151,
+      "status": "pass",
+      "records_sha256": "943fe5892432827308941d939a1813f8fbf2e0026cd72f6242e8f2f469e28f54"
+    },
+    {
+      "directory": "_out/wasm-minimal-fuzz-135288c-500",
+      "typed_records": 1130,
+      "directed_typed_cases": 93,
+      "messages": 12151,
+      "status": "pass",
+      "records_sha256": "3bade0a2ce0b08dd282502c48fa1184ff2431e0aa9327344daea5f05f7f73f57"
+    },
+    {
+      "directory": "_out/wasm-minimal-fuzz-13579bdf-500",
+      "typed_records": 1130,
+      "directed_typed_cases": 93,
+      "messages": 12151,
+      "status": "pass",
+      "records_sha256": "e2bf16cb4ab6e6672952f47b8509f03a9334dd1a901466533810e3f169318a83"
+    }
+  ],
+  "messages": 36453
+}

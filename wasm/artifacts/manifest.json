@@ -9,17 +9,17 @@
       "bytes": 61849
     },
     "mo-rts.wasm": {
-      "sha256": "13832fceda4cf6ebd7778f8cac8573d1a714a2db90297315c8e3bb134a08e7ce",
-      "bytes": 283788
+      "sha256": "14695e8e2c92ef882bd7b7126cf6b1a5a568b21f1c5a60fe5ecf564ea978a6d4",
+      "bytes": 219169
     },
     "mo-rts-debug.wasm": {
-      "sha256": "185a6cc7893b4682ba495aa8adb13c22142b5c15892d4d9c18a3babfd12ef852",
-      "bytes": 9641562
+      "sha256": "e7e0697bafb27b25c5f841158e4bc36fad5578ef8258f35061049691218bb8ef",
+      "bytes": 7957053
     }
   },
   "motoko_base_commit": "9384e1076bf71c1c44b78627b9191011d8543deb",
-  "compiler_worktree": "/srv/shared/code/candidx/wasm/_build/motoko",
-  "compiler_patch_sha256": "7900fbd9da4f27b8923e4bb3cdf63363cc67aa7a4eecda8b852248ec24b0a6c7",
+  "compiler_worktree": "/srv/shared/code/candidx/wasm/_build/motoko-minimal",
+  "compiler_patch_sha256": "21fb28a80aa6fa1475b35193e4b2e4ca1c3c92970751e3958b278fa6d8b62692",
   "rust_sources_sha256": {
     "src/lib.rs": "52b9e21849bb975c3741160d87859b1af97f5d2f130a045a1c4c509b26104dac",
     "src/tree.rs": "6eb555cd2f235bf8c6402894a1a9aad43f7652a9aea0784dc4a9325682d0d514",
@@ -34,16 +34,13 @@
     "Cargo.lock": "026f3d8320bff9c9514abed77c9896c1321c1e62af7bfabd936582b79da5ca4e"
   },
   "standalone_toolchain": "1.98.1",
-  "compiler_js_embedded_rts_source_sha256": "f1599f1c487f9e1cd812c9d514ba2da4efaae6b62bad3ceb6fbba1767f8019a8",
+  "compiler_js_embedded_rts_source_sha256": "4d133b9365fc72ba676990ae352dc2ed34a937992ff3d79d3def9f103e5e8ee7",
   "compiler_sources_sha256": {
-    "Changelog.md": "a0e129cb6a5027850b9b2957052302e41ce27d04e180e4d95b0de358463d1161",
-    "rts/motoko-rts/Cargo.lock": "ebeea0bd80ae5cc44e05370ddb7d2883f8f665c79577a7542363d7833883039e",
-    "rts/motoko-rts/Cargo.toml": "c95f3292c3fb03af14d962c0bd2d3e7529167e9533625b15142c5aa5cf8a46eb",
-    "rts/motoko-rts/src/allocator.rs": "879ecb95475df33bfd9b275355c734a8bb35872550268465f12773dcdf505503",
-    "rts/motoko-rts/src/candidx.rs": "4db4e99e098ba76c80126fdd355c60781e85a976fe0beddfb5671a2faee71448",
-    "rts/motoko-rts/src/lib.rs": "11f169fa2a4540a39ec6136b46f60022b1a475d88a78b46c8b1f5624f0a99cfd",
-    "rts/motoko-rts/src/text.rs": "49740e4fb945d26eb727697534dd40afd5c99336058635bfde55e4624992bff2",
-    "src/codegen/compile.ml": "647735a4ac6592582290e65badf354fe322a3e8158bfc827e8f5a6df7b85d920",
+    "Changelog.md": "1cc841b0eb2a48aa91557c03b710017a540fc7bfc32ee732044deee85a688869",
+    "rts/motoko-rts/src/candid_canonical.rs": "fd74ff93831096997fb4daa9ce98077146b4b157ac9d1f2dd721ea25d0070eff",
+    "rts/motoko-rts/src/lib.rs": "5bd6e2efebf34b3a99b72ced276cfee1414afeeae61e0de5e4dc28d2bf6e63f6",
+    "rts/motoko-rts/tests/candid_canonical_harness.rs": "4771855b710518e91afd37aab743883bfed725e8403ff56c09b873c8f18598b0",
+    "src/codegen/compile.ml": "d1d2b50e7f89613ac7a04660e068d3b3bac6a1a912976dfb8a66070e2d1febfd",
     "src/gen-grammar/grammar.sed": "5b8c3fbfd9d2d5e772d4a530f513889e7fb7b29dfb70ffff3cf82078dd5f0fc3",
     "src/idllib/escape.ml": "12150ad287f9ddd88a9518d51a5e34f755f2ea70b97d196a2c512bff1880dddb",
     "src/ir_def/arrange_ir.ml": "3fb11bedb37732b2058c693834881aa6aa357960d5b2a4257a22fac201da9847",
@@ -66,17 +63,14 @@
     "src/mo_frontend/traversals.ml": "cb9f1e6f8e3445e4c39f64fe1a18649dbdc97266415c143d04aaa1280b21ee87",
     "src/mo_frontend/typing.ml": "798798007473de0494f98228caaa9f2336568776b92249af1134c27b75e4c9a7",
     "src/mo_interpreter/interpret.ml": "ed2f16701d85ba39ee734a17fe49b1245382ff8ce5c3a40f073231b36b66b95f",
-    "src/mo_values/candidx.ml": "a27b042d0fe9e45d5559d3fcaadef3113c0670618b61672bf3413c6b824d32a6",
-    "src/mo_values/candidx.mli": "aa0a6f58eeeed7d910e26b2cbc7fad88991fae3cc57e287d3679f842f38117b3",
-    "src/mo_values/prim.ml": "3e438fd29812bdf4de1bfe3122c1302368a04359b7dd92497a6d32566b798bb4",
-    "src/prelude/prim.mo": "01f1d89fd9b7c73c11e608bd8f8d54487659abe9ad8a99c7bec2aea1e751022b",
+    "src/mo_values/candidx.ml": "0619818221626a3d055b11f3e7b23a309146f4e9688fdc9fc3b51bc62ebda74d",
+    "src/mo_values/candidx.mli": "a6a7f331e315fdbd05529e9a96772e519b3ab38b72893699a4e6fb7d3c22c237",
     "test/fail/cx-direct-nonshared.mo": "8742aa29bfc286ce6be43ad2bbb6cd4b93228d8268cbee7b59f1420d11db83fb",
     "test/fail/ok/cx-direct-nonshared.tc-human.ok": "64dab2107e9760f1734ab8d80a3f3fbcc7bbf1bf4ff143b586ba140b86776cb4",
     "test/fail/ok/cx-direct-nonshared.tc-human.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
     "test/fail/ok/cx-direct-nonshared.tc.ok": "020728723f76fa50acb687f86db9ae206eb67002abc0e325ac45f345cc8206b1",
     "test/fail/ok/cx-direct-nonshared.tc.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
-    "test/run/cx-candid.mo": "918520acaf522af39c84aefbd8a521475f6c22f6664bb7956f225c93d5e70276",
-    "test/run/cx-direct-candid.mo": "9dcb6491a52eb63f6bd2c0ad9ffc3ea86c036ba6bd457e605371b677558345e0",
+    "test/run/cx-direct-candid.mo": "d452a39d02d5c9ef8d4e5070647e0c53f4b83cbc747dabe1a50891d8bc489729",
     "test/trap/cx-direct-depth.mo": "b2264b5d358f7083ae7f350b99f140e6a42034645af006f8504e44addcf540f4",
     "test/trap/cx-direct-function.mo": "ad95b486832b0b52120f4cd7412d4518398cec0dd64504a97eb0b12c04db12b7",
     "test/trap/cx-direct-service.mo": "c8d2ea609b5bdfe5e4e8f378ecfd2894c14d9e79b253ebd10e337e6c1a1c578d",
@@ -85,7 +79,7 @@
     "test/trap/ok/cx-direct-depth.run-low.ok": "d6ba283db82007221029de477b60d7c8f5b534e644dcacd1af5ec78d18b29fde",
     "test/trap/ok/cx-direct-depth.run.ok": "d6ba283db82007221029de477b60d7c8f5b534e644dcacd1af5ec78d18b29fde",
     "test/trap/ok/cx-direct-depth.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
-    "test/trap/ok/cx-direct-depth.wasm-run.ok": "f1b80c04b868d49d499cfa841693d4fd3f3c437ba4ce3580207593cacba73d9b",
+    "test/trap/ok/cx-direct-depth.wasm-run.ok": "5d2a1fcce6160d2c4490cfd0d2d8c5a11cee8ad02d42287a3e19fbe6307a61cc",
     "test/trap/ok/cx-direct-depth.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5",
     "test/trap/ok/cx-direct-function.run-ir.ok": "5e932bf3dd98d975bb47238fa9204865ee536df61bdb20e9ed7cfbef5b75ee25",
     "test/trap/ok/cx-direct-function.run-low.ok": "5e932bf3dd98d975bb47238fa9204865ee536df61bdb20e9ed7cfbef5b75ee25",
@@ -95,29 +89,30 @@
     "test/trap/ok/cx-direct-service.run-low.ok": "649a9c4bdd0e14c3b559e60dc25e58cfa544fc56f96db123de62da1d0b226aa7",
     "test/trap/ok/cx-direct-service.run.ok": "649a9c4bdd0e14c3b559e60dc25e58cfa544fc56f96db123de62da1d0b226aa7",
     "test/trap/ok/cx-direct-service.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
-    "test/trap/ok/cx-direct-service.wasm-run.ok": "d39ed3d5f78480f3fc9ba82fb52e3add9657c85627d3391b81bf690aafa72437",
+    "test/trap/ok/cx-direct-service.wasm-run.ok": "a713f4348e2322efcd765d8b4c5c803aac90941e35336c72b194a49580f8403a",
     "test/trap/ok/cx-direct-service.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5",
     "test/trap/ok/cx-direct-unused-duplicate.run-ir.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
     "test/trap/ok/cx-direct-unused-duplicate.run-low.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
     "test/trap/ok/cx-direct-unused-duplicate.run.ok": "8b83f8a7f1d9989aaec3fdd15a2f4fe38e8ec6657cd1985408dffd09eed23090",
     "test/trap/ok/cx-direct-unused-duplicate.run.ret.ok": "f6b31808f474eae7705d11e0c49602b2a24d9e8388e647b5ff859b0bad1b2135",
-    "test/trap/ok/cx-direct-unused-duplicate.wasm-run.ok": "56330c23799ad50fb5bf50f3b3dbcea1e76797152fb9f9cc79907d101a4c4de0",
+    "test/trap/ok/cx-direct-unused-duplicate.wasm-run.ok": "f1239b4410f7a2b3ba32c74bc839cb4f1d466e915adf88ebe9c4de8699d0d3c6",
     "test/trap/ok/cx-direct-unused-duplicate.wasm-run.ret.ok": "41160641e1706babad277c97993b2acea4d3c35e86901477c18fe586a6f61eb5"
   },
   "compiler_build_artifacts": {
     "src/_build/default/exes/moc.exe": {
-      "sha256": "0b13d798a8836a4aa95412d0fbc80614a254a38f406e40298d7284c2e288988d",
-      "bytes": 17189776
+      "sha256": "6dda0fbaad4bd675b32fd408158482742c8b771eb10ad8e1c441414dd34eadee",
+      "bytes": 17244464
     },
     "src/_build/default/js/moc_js.bc.js": {
-      "sha256": "8192d4744b073fd5d7a1357028be0ca78037977bbcc9678a6f9502e044ad5267",
-      "bytes": 3140427
+      "sha256": "c5bf1026f910cb9136ac016d1db3982f23b5cf11063d6afe2daf552d427b4608",
+      "bytes": 2992094
     },
     "src/_build/default/js/moc_interpreter.bc.js": {
-      "sha256": "ce33fb33de7cf5fbf274f03a76f4caa7aac1fdf72b9f04c391f866218f54bb8c",
-      "bytes": 2002173
+      "sha256": "869d57f226f8c7e3f24ccc09ea8a5e0172474f659dc832b08012e597d50f1e82",
+      "bytes": 1996242
     }
   },
   "compiler_typed_operator": "to_candid_canonical",
-  "compiler_inbound_primitive": "Prim.canonicalizeCandid"
+  "compiler_encoding": "generated typed Wasm; exact final Blob allocation",
+  "compiler_rts_helpers": "shape interning, joins and canonical type header"
 }

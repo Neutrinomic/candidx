@@ -1,0 +1,78 @@
+{
+  "profile": "cx",
+  "status": "pass",
+  "passed": 43,
+  "checks": [
+    "compiler checkout has the pinned upstream HEAD",
+    "ordinary Serialization.serialize is byte-identical to pinned HEAD",
+    "ordinary Serialization.buffer_size is byte-identical to pinned HEAD",
+    "ordinary Serialization.serialize_go is byte-identical to pinned HEAD",
+    "ordinary Blob.of_ptr_size is byte-identical to pinned HEAD",
+    "dedicated IR branch compiles the native typed value",
+    "dedicated IR branch calls generated direct encoder",
+    "direct branch has no ordinary serializer or output copy",
+    "shape traversal is specialized to the concrete source type",
+    "shape traversal visits native fields, options, variants and arrays",
+    "payload traversal is specialized to the source type",
+    "same generated payload traversal measures and writes",
+    "generated payload traversal writes native scalar payloads",
+    "generated integer sizing bounds magnitude before ordinary scalar sizer",
+    "direct encoder derives shapes and checks exact output size before allocation",
+    "direct encoder allocates the final Blob once",
+    "header is written directly into final Blob payload",
+    "direct encoder writes payload after final Blob allocation",
+    "direct encoder does not create or copy a complete intermediate output",
+    "direct encoder bypasses ordinary encoding and inbound parsing",
+    "compiler has no heap descriptor or full Rust heap encoder",
+    "old public Prim inbound API is absent",
+    "no canonical Candid CLI mode was added",
+    "internal shape/header ABI exports candid_canonical_new",
+    "internal shape/header ABI exports candid_canonical_visit",
+    "internal shape/header ABI exports candid_canonical_begin",
+    "internal shape/header ABI exports candid_canonical_field",
+    "internal shape/header ABI exports candid_canonical_end",
+    "internal shape/header ABI exports candid_canonical_unary",
+    "internal shape/header ABI exports candid_canonical_join",
+    "internal shape/header ABI exports candid_canonical_root",
+    "internal shape/header ABI exports candid_canonical_root_type",
+    "internal shape/header ABI exports candid_canonical_types_size",
+    "internal shape/header ABI exports candid_canonical_write_types",
+    "internal shape/header ABI exports candid_canonical_child",
+    "internal shape/header ABI exports candid_canonical_field_type",
+    "internal shape/header ABI exports candid_canonical_case_index",
+    "internal shape/header ABI exports candid_canonical_done",
+    "RTS helper retains only shape and header state",
+    "RTS helper does not access native payloads or materialize a value tree",
+    "RTS helper does not depend on the standalone encoder or inbound parser",
+    "RTS helper has no complete output byte vector",
+    "RTS header writer writes bytes to caller's final allocation"
+  ],
+  "public_api": "to_candid_canonical",
+  "pinned_upstream_head": "9384e1076bf71c1c44b78627b9191011d8543deb",
+  "ordinary_functions": {
+    "Serialization.serialize": {
+      "sha256": "23e75dea980a41bbd8edfe008375cf81b8f59a7a91d3916a8d156163af1e53d4",
+      "bytes": 2058
+    },
+    "Serialization.buffer_size": {
+      "sha256": "99e85c107b0bf4f2ddabc3c5c78a4906683e881fd55b1095e971a74d6bdde142",
+      "bytes": 7500
+    },
+    "Serialization.serialize_go": {
+      "sha256": "b3001d3e1aa209d9ea6f4486bdc5728e166956e069c043342a4afa6b8105090a",
+      "bytes": 7893
+    },
+    "Blob.of_ptr_size": {
+      "sha256": "fdf6fbaa2e58b9475996a691a1e3780d307c006d172fe05fed55ad9f9bae81cf",
+      "bytes": 375
+    }
+  },
+  "source_sha256": {
+    "codegen": "d1d2b50e7f89613ac7a04660e068d3b3bac6a1a912976dfb8a66070e2d1febfd",
+    "shape_header_rts": "fd74ff93831096997fb4daa9ce98077146b4b157ac9d1f2dd721ea25d0070eff",
+    "prim": "81665633934e5c3691fa3caf238c39fe50d5bcc5ca9cbf869cca1ffadc84dde7",
+    "flags": "f1db2a424df0f3631cbb05f7c1b5a6232f92eecf055f26783d4014a60b724426"
+  },
+  "harness_sha256": "84027042bf75b29c1677fb5041b2328b2f63abf510338e7b8df095e213d34510",
+  "scope": "Source guards complement direct typed golden bytes, native original-value recovery, and resource traps."
+}
