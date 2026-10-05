@@ -1,5 +1,8 @@
 # Minimal Motoko compiler integration
 
+- Patch: [motoko-compiler.patch](../wasm/motoko-compiler.patch)
+- Build instructions: [wasm/README.md](../wasm/README.md#direct-motoko-compiler-encoding)
+
 The patch adds only `to_candid_canonical(...) : Blob`. It adds no compiler
 flag, public Prim normalizer, hash function or standalone Rust dependency.
 Existing ordinary Candid encoding and decoding remain unchanged.
