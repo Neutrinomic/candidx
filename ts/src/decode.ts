@@ -1,4 +1,6 @@
 import { IDL, lebDecode, safeRead } from '@icp-sdk/core/candid';
+import { CanonicalBytes, isCanonicalBytes, checkCanonicalBytes } from './canonical-bytes.js';
+import { MAX_BYTES, fail } from './codec.js';
 
 type Pipe = Parameters<IDL.TextClass['decodeValue']>[0];
 
@@ -35,6 +37,9 @@ class OptionalRecField extends IDL.OptClass<unknown> {
 class DecodingTypes extends IDL.Visitor<void, IDL.Type> {
   private readonly memo = new Map<IDL.Type, IDL.Type>();
   copy(type: IDL.Type): IDL.Type {
+    if (isCanonicalBytes(type)) return CanonicalBytes;
+    const original = decoderSources.get(type);
+    if (original) return this.copy(original);
     if (type instanceof IDL.UnknownClass)
       throw new Error('CandidX: decoding-only IDL.Unknown is outside the original-schema decoder profile');
     const old = this.memo.get(type);
@@ -79,11 +84,43 @@ class DecodingTypes extends IDL.Visitor<void, IDL.Type> {
   }
 }
 
+const decoderSources = new WeakMap<IDL.Type, IDL.Type>();
+
+class ReturnDecoderType<T> extends IDL.UnknownClass {
+  constructor(private readonly source: IDL.Type<T>, private readonly decoder: IDL.Type<T>) {
+    super();
+    decoderSources.set(this, source);
+  }
+  get name(): string { return `CandidX.Decoder(${this.source.name})`; }
+  decodeValue(pipe: Pipe, wire: IDL.Type): T {
+    try {
+      const value = this.decoder.decodeValue(pipe, wire);
+      checkCanonicalBytes(pipe);
+      return value;
+    } catch (error) {
+      checkCanonicalBytes(pipe);
+      throw error;
+    }
+  }
+}
+
+/** Prepare a return type for normal SDK/actor decoding with compatibility
+ * fixes and fail-closed CanonicalBytes extraction. This type is decode-only.
+ */
+export function decoderType<T>(type: IDL.Type<T>): IDL.Type<T> {
+  return new ReturnDecoderType(type, new DecodingTypes().copy(type));
+}
+
 /** Ordinary typed SDK decoding with three tested 6.1.0 compatibility fixes:
  * preserve leading text BOMs and synthesize omitted optional tuple/Rec fields.
- * Verify the original bytes before decoding; this is a projecting decoder.
+ * Ordinary fields are projected. CanonicalBytes subtrees retain the actual
+ * wire data as standalone canonical messages for verification before decoding.
  */
 export function decodeCompatible(types: IDL.Type[], bytes: Uint8Array): unknown[] {
+  if (bytes.byteLength > MAX_BYTES) fail('input byte limit');
+  // SDK 6.1.0's Pipe constructor starts at buffer offset zero. Normalize a
+  // sliced Uint8Array/Node Buffer before its header parser sees the bytes.
+  const input = bytes.byteOffset === 0 ? bytes : Uint8Array.from(bytes);
   const visitor = new DecodingTypes();
-  return IDL.decode(types.map(type => visitor.copy(type)), bytes);
+  return IDL.decode(types.map(type => new ReturnDecoderType(type, visitor.copy(type))), input);
 }

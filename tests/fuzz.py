@@ -471,11 +471,14 @@ def run_direct_corpus(out, name="direct", compiler=None, core=None, batch_size=6
                     'canonical': result['canonical:' + case['id']].hex(), 'decoding': 'exact',
                     'canonical_roundtrip': True, 'ordinary_roundtrip': True, 'direct_path': 'typed-values'}
     rows = direct.verify_outputs(cases, sources)
+    for case in cases:
+        assert sources['ts'][case['id']].get('client_canonical_checks') == len(direct.arguments(case)[0]) * 20, case['id']
     roundtrips = cross_decode(cases, sources, out, name)
     (out / f'{name}-records.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2) + '\n')
     return {'status': 'pass', 'typed_cases_per_implementation': len(cases), 'frozen_golden_cases': len(direct.frozen_cases()),
             'implementations': list(sources), 'expected_bytes': 'independent source-value oracle and unchanged frozen goldens',
             'external_hash': 'Python hashlib.sha256 over complete bytes',
+            'client_canonical_byte_checks': sum(row['client_canonical_checks'] for row in sources['ts'].values()),
             'ordinary_decoders': {'rust': 'exact', 'ts': 'decodeCompatible exact; upstream caveats recorded',
                                   'ocaml': 'not available', **({'compiler': 'exact'} if compiler else {})},
             'original_value_roundtrips': roundtrips, 'constructor_coverage': constructor_coverage(cases),
@@ -580,13 +583,17 @@ def cross_decode(cases, sources, out, name):
         'rust-candid': load_results(verify.command([ROOT / 'rust/target/debug/examples/fuzz', path], name + '-decode-rust')),
         'typescript-decodeCompatible': load_results(verify.command(['node', ROOT / 'ts/test/fuzz.mjs', path], name + '-decode-ts')),
     }
-    ids, encoders = {case['id'] for case in cases}, set(sources)
+    roots_by_id = {case['id']: len(direct.arguments(case)[0]) for case in cases}
+    ids, encoders = set(roots_by_id), set(sources)
     for decoder, rows in outputs.items():
         assert set(rows) == ids, (decoder, 'roundtrip case IDs')
         for row in rows.values():
             assert not row.get('error'), (decoder, row)
             assert set(row.get('roundtrips', {})) == encoders, (decoder, row)
             assert all(status == 'exact' for status in row['roundtrips'].values()), (decoder, row)
+            if decoder == 'typescript-decodeCompatible':
+                roots = roots_by_id[row['id']]
+                assert row.get('client_canonical_checks') == {encoder: roots * 2 for encoder in encoders}, (decoder, row)
     records = out / f'{name}-roundtrips.json'
     records.write_text(json.dumps(outputs, ensure_ascii=False, indent=2) + '\n')
     return {'status': 'pass', 'cases': len(cases), 'successful_original_value_recoveries': len(cases) * len(sources) * len(outputs),
@@ -594,6 +601,8 @@ def cross_decode(cases, sources, out, name):
             'equality': 'independently constructed original typed values; finite float bits including signed zero; NaN class; Reserved ignored',
             'ocaml_ordinary_decoder': 'not available; its actual output bytes are checked by Rust and TypeScript decoders',
             'standalone_wasm_ordinary_decoder': 'not supplied; its actual output bytes are checked by host Rust and TypeScript decoders',
+            'client_canonical_byte_checks': {encoder: sum(row['client_canonical_checks'][encoder]
+                for row in outputs['typescript-decodeCompatible'].values()) for encoder in encoders},
             'inputs_sha256': sha256(path.read_bytes()).hexdigest(), 'records_sha256': sha256(records.read_bytes()).hexdigest()}
 
 
@@ -709,6 +718,8 @@ def main():
                 fail(f'{c["id"]}: encoder error', {'input': c, 'outputs': values})
             if values['ts'].get('compatible_decoding') != 'exact':
                 fail(f'{c["id"]}: compatible SDK decoder recovery failure', {'input': c, 'output': values['ts']})
+            if values['ts'].get('client_canonical_checks') != len(direct.arguments(c)[0]) * 20:
+                fail(f'{c["id"]}: CanonicalBytes client verification incomplete', {'input': c, 'output': values['ts']})
             canons = {v['canonical'] for v in values.values()}
             if len(canons) != 1:
                 fail(f'{c["id"]}: canonical bytes disagree', {'input': c, 'outputs': values})
@@ -808,6 +819,8 @@ def main():
                   'cross_messages_per_normalizer': len(messages), 'external_hash': 'Python hashlib.sha256 over full canonical bytes',
                   'canonical_decoder_regressions': 0, 'upstream_sdk_decoder_losses': decoders,
                   'decodeCompatible_original_value_recovery': 'exact for ordinary and canonical TS input',
+                  'client_canonical_byte_checks': sum(source['client_canonical_checks'] for source in sources['ts'].values()),
+                  'client_canonical_byte_equality': 'standalone direct producer bytes and external SHA256; captures decode to independent original typed values',
                   'rust_original_schema_reencoding': 'secondary byte control; original typed semantic equality is mandatory',
                   'ocaml_ordinary_decoder': 'not available; direct bytes and normalized data match independent typed oracle',
                   'directed_float32_wire_records': len(float_cases),

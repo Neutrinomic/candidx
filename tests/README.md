@@ -78,6 +78,19 @@ version; reports fingerprint source and corpus files. `replay_oracle.py` also
 checks the saved messages against the independent Python model, including
 complete normalized-data preservation before and after canonicalization.
 
+The TypeScript runner additionally replaces expected subtrees with
+`CanonicalBytes`, using both `decodeCompatible` and `IDL.decode` with root
+`decoderType` wrappers. It checks each result against standalone direct
+encoding, external SHA-256, and the independently constructed original typed
+value. Every ordinary/canonical TS case exercises root captures and a response
+envelope with vectors, options, variants, and unknown metadata. Cross-decoder
+runs capture each actual backend's canonical argument roots, including OCaml,
+Motoko, and standalone Wasm. Reports count these assertions separately.
+The TypeScript unit tests also exercise a normal SDK actor call, old schemas
+omitting newly present fields, variant-index remapping, fail-closed optional
+decoding, malformed inputs and limits, and guards that disable the SDK's value
+decoders or forbid its copying `Pipe.buffer` accessor during capture.
+
 `direct_guard.py` copies instrumented packages into ignored `_out/` and runs
 the direct suite with the old Rust parser/normalizer and OCaml
 parser/normalized-value emitter/normalizer disabled. A Rust native custom

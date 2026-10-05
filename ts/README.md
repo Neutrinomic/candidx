@@ -62,13 +62,93 @@ mutating caller schemas or SDK globals. It also reads ordinary Candid. The
 encoder output itself is valid ordinary Candid; these workarounds address
 existing SDK decoder behavior. See [audit_spec.md](../research/audit_spec.md).
 The adapter supports original encodable schemas; decoding-only `IDL.Unknown`
-is rejected explicitly.
+is rejected explicitly, except for the CandidX markers described below.
 
-Native SDK `IDL.decode` works for the tested nonproblematic schemas. Neither
-decoder preserves present fields that the expected schema omits; retain the
-original bytes for hash verification.
+## Capture canonical transactions before projection
 
-Run `npm test`. For a local application, a path dependency such as
+Replace a selected subtree in the **client's decoder** with `CanonicalBytes`:
+
+```ts
+import { IDL } from '@icp-sdk/core/candid';
+import { CanonicalBytes, decodeCompatible } from 'candidx/candid';
+
+const Reply = IDL.Record({
+  first_index: IDL.Nat,
+  transactions: IDL.Vec(CanonicalBytes),
+});
+const [reply] = decodeCompatible([Reply], rawReplyBytes) as [{
+  first_index: bigint;
+  transactions: Uint8Array[];
+}];
+for (const bytes of reply.transactions) {
+  // Verify the hash/signature over bytes here, using your application's hash.
+  const [transaction] = decodeCompatible([OldTransaction], bytes);
+}
+```
+
+Each result is a new `Uint8Array` containing **one complete standalone canonical
+Candid message**, including its `DIDL` header and value-derived type table. Hash
+the entire result. Do not prepend a prefix or hash a slice of the enclosing
+reply. The marker reads the actual incoming wire type and value, preserving
+present fields and selected cases unknown to `OldTransaction`. It normalizes
+the selected value independently of other transactions and surrounding reply
+metadata. `transactions` is an array of independently decodable messages, not
+one message for the entire array. Each element matches encoding that transaction
+alone: `encodeCanonical([Transaction], [transaction])` or Motoko's
+`to_candid_canonical(transaction)`. It accepts both ordinary and canonical
+Candid replies.
+
+For a `phash` chain, compute the hash of each **individual element** and compare
+it with the following transaction's `phash`. Read `phash` from the decoded
+transaction after preserving its canonical bytes. The enclosing array and
+reply metadata do not contribute to an individual transaction's hash; the
+transaction's own present `phash` field does.
+
+For normal SDK actor calls, wrap each **outer return type** with `decoderType`:
+
+```ts
+import { Actor } from '@icp-sdk/core/agent';
+import { CanonicalBytes, decoderType } from 'candidx/candid';
+
+const idlFactory = ({ IDL }) => IDL.Service({
+  get_transactions: IDL.Func([Request], [decoderType(IDL.Record({
+    first_index: IDL.Nat,
+    transactions: IDL.Vec(CanonicalBytes),
+  }))], ['query']),
+});
+const actor = Actor.createActor(idlFactory, { agent, canisterId });
+const reply = await actor.get_transactions(request);
+```
+
+`Request`, `OldTransaction`, `agent`, and `canisterId` come from your application.
+Replace the return decoder in an existing actor factory; generated client
+return declarations should describe these selected fields as `Uint8Array`.
+The canister's `.did`, method arguments, and transport remain ordinary Candid.
+`CanonicalBytes` and `decoderType` are client-only, decode-only types; they
+cannot be used to encode requests or define a server schema. They also work
+with `IDL.decode([decoderType(Reply)], bytes)`.
+
+Use `decodeCompatible` or the root `decoderType` wrapper whenever a marker is
+present. The wrapper ensures an unsupported, malformed, or over-limit selected
+value fails the call, even inside an option where the SDK would otherwise
+catch decoder errors and return absence. Surrounding fields still use the
+usual typed decoding and projection; the marker only preserves its subtree.
+Selected actual function/service references remain outside the `cx` data
+profile. The value limits apply to each captured subtree, with the wire graph
+cached per reply; `decodeCompatible` also bounds the complete input to 32 MiB.
+
+Hash verification works even when an older schema cannot decode a newly used
+variant case. In that case retain the canonical bytes and handle the unknown
+transaction at application level. Old typed decoding can discard new fields;
+re-encoding that projected object cannot reproduce the original hash.
+Sending each canonical transaction as a `blob` remains another valid API design.
+
+Native SDK `IDL.decode` works for the tested nonproblematic ordinary schemas.
+Without a marker, both decoders project fields absent from the expected schema.
+
+Run `npm test`. The [client validation report](../research/client_canonical_bytes.md)
+includes the individual `phash` chain regression and reproducible cross-backend
+capture checks. For a local application, a path dependency such as
 `"candidx": "file:../candidx/ts"` works after building `dist/`; package exports
 include JavaScript and TypeScript declarations. The `cx` rules and conformance
 vectors define a fixed encoding contract; its name is not included in bytes.

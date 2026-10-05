@@ -38,7 +38,7 @@ fn main() {
 TS_CONSUMER = r'''
 import assert from 'node:assert/strict';
 import { IDL } from '@icp-sdk/core/candid';
-import { encodeCanonical, decodeCompatible } from 'candidx/candid';
+import { encodeCanonical, decodeCompatible, CanonicalBytes, decoderType } from 'candidx/candid';
 
 const text = IDL.Text, option = IDL.Opt(text);
 const type = IDL.Record({a: text, b: option});
@@ -64,7 +64,25 @@ assert.deepEqual(decodeCompatible([type], bytes), [value]);
 assert.equal(Buffer.from(encodeCanonical([], [])).toString('hex'), '4449444c0000');
 assert.equal(Buffer.from(encodeCanonical([IDL.Bool,IDL.Bool,IDL.Null], [true,false,null])).toString('hex'),
              '4449444c00037e7e7f0100');
+const replyType = IDL.Record({ transactions: IDL.Vec(type), future_metadata: IDL.Text });
+const reply = IDL.encode([replyType], [{ transactions: [{ a: 'abc', b: ['future field'] }, value], future_metadata: 'new' }]);
+const clientType = IDL.Record({ transactions: IDL.Vec(CanonicalBytes) });
+const expected = [{ transactions: [encodeCanonical([type], [{ a: 'abc', b: ['future field'] }]), bytes] }];
+assert.deepEqual(decodeCompatible([clientType], reply), expected);
+assert.deepEqual(IDL.decode([decoderType(clientType)], reply), expected);
 console.log('packaged-typescript-direct-native-values-passed');
+'''
+
+TS_DECLARATIONS = r'''
+import { IDL } from '@icp-sdk/core/candid';
+import { CanonicalBytes, decoderType, decodeCompatible, encodeCanonical } from 'candidx/candid';
+import { canonicalize, PROFILE } from 'candidx';
+const marker: IDL.Type<Uint8Array> = CanonicalBytes;
+const reply: IDL.Type<Uint8Array[]> = decoderType(IDL.Vec(marker));
+const bytes: Uint8Array = encodeCanonical([IDL.Nat], [7n]);
+const canonical: Uint8Array = canonicalize(bytes);
+const decoded: unknown[] = decodeCompatible([reply], canonical);
+const profile: 'cx' = PROFILE;
 '''
 
 
@@ -150,6 +168,10 @@ hex = "0.4"
     verify.command(['npm', 'install', '--ignore-scripts', '@icp-sdk/core@6.1.0'], 'package-ts-sdk-install', cwd=consumer)
     (consumer / 'typed.mjs').write_text(TS_CONSUMER)
     verify.command(['node', 'typed.mjs'], 'package-ts-typed', cwd=consumer)
+    (consumer / 'types.ts').write_text(TS_DECLARATIONS)
+    verify.command(['node', ROOT / 'ts/node_modules/typescript/bin/tsc', '--noEmit', '--strict',
+        '--target', 'ES2022', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--skipLibCheck', 'types.ts'],
+        'package-ts-declarations', cwd=consumer)
     if shutil.which('dune') and shutil.which('ocamlc'):
         verify.command(['dune', 'build', '-p', 'candidx'], 'package-ocaml', cwd=ROOT / 'ocaml')
     else:
@@ -186,7 +208,7 @@ hex = "0.4"
     report = {'status': 'pass', 'profile': 'cx', 'completed_utc': datetime.now(timezone.utc).isoformat(),
         'package_versions': versions, 'license': 'MIT',
         'rust_package': 'extracted crate tests --no-default-features/--all-features; isolated direct native-value consumer',
-        'typescript_package': 'local npm tarball; SDK-free import; isolated direct consumer with ordinary serializer callbacks disabled',
+        'typescript_package': 'local npm tarball; SDK-free import; direct consumer with ordinary serializer callbacks disabled; CanonicalBytes client capture and public TypeScript declarations',
         'ocaml_package': 'copied installed package with LICENSE; isolated direct native-record and multi-argument consumer',
         'direct_consumer_goldens': ['evolution-record-old', 'bool-null', 'empty-args', 'empty-blob'],
         'crate_sha256': sha256(crate.read_bytes()).hexdigest(),

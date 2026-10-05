@@ -1,6 +1,7 @@
 import { IDL, idlLabelToId } from '@icp-sdk/core/candid';
 import { MAX_DEPTH, MAX_INTEGER_BYTES, MAX_ITEMS, Shape, Shapes, Writer, fail, textLength, writeHeader } from './codec.js';
-export { decodeCompatible } from './decode.js';
+export { decodeCompatible, decoderType } from './decode.js';
+export { CanonicalBytes } from './canonical-bytes.js';
 
 class Kinds extends IDL.Visitor<void, number> {
   visitType<T>(_type: IDL.Type<T>): number { return fail('unsupported or decoding-only schema'); }

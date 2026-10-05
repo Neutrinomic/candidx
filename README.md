@@ -79,7 +79,12 @@ vectors are ordered data.
 This is stability under **unused schema extensions**, not all Candid subtype
 coercions. An older typed decoder can discard new present fields. Verify the
 full original canonical bytes before projecting into an older schema; sending
-each canonical block as a `blob` preserves them. This produces a different
+each canonical block as a `blob` preserves them. The TypeScript client can also
+use [`CanonicalBytes` in its return decoder](ts/README.md#capture-canonical-transactions-before-projection)
+to obtain each nested transaction as standalone canonical bytes, retaining new
+present fields without changing the canister API. See the
+[client verification report](research/client_canonical_bytes.md) for individual
+`phash` chain and cross-backend capture tests. This produces a different
 digest from the existing ICRC-3 `Value` hash. It is an encoding foundation for
 a separate typed block format; archive endpoints and certification are outside
 this library.
@@ -119,7 +124,9 @@ compares external SHA-256 hashes. It decodes every encoder's output with Rust
 and TypeScript and compares it with independently constructed original values;
 native Motoko also checks original-value recovery. Separate mutation checks
 verify that these comparisons catch changed data. It also checks the native
-Motoko fallback and inbound normalizers. Pass `--runtime-moc wasm/moc` to additionally exercise
+Motoko fallback, inbound normalizers, and TypeScript client captures against
+the standalone producer bytes and independently constructed original values.
+Pass `--runtime-moc wasm/moc` to additionally exercise
 the direct compiler operator; the standalone Wasm artifact is checked when
 available. Failures save the input schema, data, seed, and messages for
 replay. [tests/README.md](tests/README.md) explains coverage and limitations.
